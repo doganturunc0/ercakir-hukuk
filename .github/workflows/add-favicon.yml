@@ -1,0 +1,36 @@
+name: Add favicon links
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-favicon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-favicon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add favicon to HTML heads
+        shell: python
+        run: |
+          from pathlib import Path
+          for p in Path('.').glob('*.html'):
+              s = p.read_text(encoding='utf-8')
+              if 'rel="icon"' in s:
+                  continue
+              marker = '<meta name="viewport" content="width=device-width,initial-scale=1">'
+              if marker in s:
+                  s = s.replace(marker, marker + '\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="shortcut icon" href="/favicon.svg">', 1)
+                  p.write_text(s, encoding='utf-8')
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "SEO: link Erçakır favicon across site"
+          git push
