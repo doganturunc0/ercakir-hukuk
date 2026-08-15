@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://avbusraturunc.com/sitemap.xml
+Sitemap: https://doganturunc0.github.io/ercakir-hukuk/sitemap.xml
