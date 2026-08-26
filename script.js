@@ -1,3 +1,4 @@
+(()=>{if(window.__ercakirGA4Loaded)return;window.__ercakirGA4Loaded=true;const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-1E6W6P6281';document.head.appendChild(s);window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('js',new Date());window.gtag('config','G-1E6W6P6281');})();
 const fmt=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2}).format(n||0);
 const daysBetween=(a,b)=>Math.max(0,Math.floor((b-a)/86400000));
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('pageLoader')?.classList.add('hide'),280));
