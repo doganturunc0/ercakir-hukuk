@@ -1,0 +1,55 @@
+name: Self-host hero image
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move hero image to repository
+        run: |
+          set -e
+          mkdir -p assets
+          curl -L --fail --retry 3 'https://static.wixstatic.com/media/8fe0de_53498bec1baa472f9e4d84b0cd99f3f0~mv2.png' -o assets/hero-main.png
+          python - <<'PY'
+          from pathlib import Path
+          wix='https://static.wixstatic.com/media/8fe0de_53498bec1baa472f9e4d84b0cd99f3f0~mv2.png'
+          local='https://avbusraturunc.com/assets/hero-main.png'
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace(wix, local)
+          s=s.replace('<link rel="preconnect" href="https://static.wixstatic.com" crossorigin>','')
+          s=s.replace('<link rel="dns-prefetch" href="//static.wixstatic.com">','')
+          s=s.replace("img-src 'self' data: https:;", "img-src 'self' data:;")
+          p.write_text(s,encoding='utf-8')
+
+          css=Path('design-refresh.css')
+          t=css.read_text(encoding='utf-8').replace(wix,'/assets/hero-main.png')
+          css.write_text(t,encoding='utf-8')
+
+          wf=Path('.github/workflows/pages.yml')
+          q=wf.read_text(encoding='utf-8')
+          q=q.replace("img-src 'self' data: https:;", "img-src 'self' data:;")
+          wf.write_text(q,encoding='utf-8')
+          PY
+
+      - name: Commit self-hosted asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/hero-main.png index.html design-refresh.css .github/workflows/pages.yml
+          git commit -m "Hero görselini Wix'ten çıkar ve yerel barındır [skip ci]"
+          git push origin HEAD:main
