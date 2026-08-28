@@ -32,21 +32,23 @@ jobs:
           from pathlib import Path
           import re
 
-          stamp = '20260828-13'
+          stamp = '20260828-14'
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
           s = s.replace('Ceza, aile, iş, icra ve diğer hukuk alanlarına ilişkin bilgilendirme.',
                         'Hukuki ihtiyaçların niteliğine göre ele alınan başlıca çalışma alanları.')
 
-          s = re.sub(r'<link rel="stylesheet" href="design-refresh\.css\?v=[^"]+">>?', '', s)
-          s = re.sub(r'<link rel="stylesheet" href="layout-fix\.css\?v=[^"]+">>?', '', s)
+          for css in ['design-refresh.css','layout-fix.css','home-polish.css']:
+              s = re.sub(rf'<link rel="stylesheet" href="{re.escape(css)}\?v=[^"]+">>?', '', s)
           s = re.sub(r'href="styles\.css(?:\?v=[^"]+)?"', f'href="styles.css?v={stamp}"', s)
           anchor = f'<link rel="stylesheet" href="styles.css?v={stamp}">'
-          links = anchor + f'\n<link rel="stylesheet" href="design-refresh.css?v={stamp}">\n<link rel="stylesheet" href="layout-fix.css?v={stamp}">'
+          links = anchor + f'\n<link rel="stylesheet" href="design-refresh.css?v={stamp}">\n<link rel="stylesheet" href="layout-fix.css?v={stamp}">\n<link rel="stylesheet" href="home-polish.css?v={stamp}">'
           s = s.replace(anchor, links)
 
           s = re.sub(r'src="script\.js(?:\?v=[^"]+)?"', f'src="script.js?v={stamp}"', s)
+          s = re.sub(r'<script src="home-polish\.js\?v=[^"]+" defer></script>', '', s)
+          s = s.replace(f'<script src="script.js?v={stamp}" defer></script>', f'<script src="script.js?v={stamp}" defer></script><script src="home-polish.js?v={stamp}" defer></script>')
 
           s = re.sub(
               r'<div class="hero-meta">.*?</div>',
@@ -65,7 +67,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add index.html
-            git commit -m "Ana sayfa yerleşim düzeltmelerini sabitle [skip ci]"
+            git commit -m "Harita ve faaliyet alanı güncel tasarımını sabitle [skip ci]"
             git push origin HEAD:main
           fi
 
