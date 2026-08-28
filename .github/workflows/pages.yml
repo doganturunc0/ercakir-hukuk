@@ -32,7 +32,7 @@ jobs:
           from pathlib import Path
           import re
 
-          stamp = '20260828-14'
+          stamp = '20260828-15'
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
@@ -57,17 +57,25 @@ jobs:
               count=1,
               flags=re.S,
           )
-
           p.write_text(s, encoding='utf-8')
+
+          # Faaliyet alanı içerik sayfalarında content.css önbelleğini kır.
+          for page in Path('.').glob('*.html'):
+              if page.name == 'index.html':
+                  continue
+              t = page.read_text(encoding='utf-8')
+              if 'content.css' in t:
+                  t = re.sub(r'href="content\.css(?:\?v=[^"]+)?"', f'href="content.css?v={stamp}"', t)
+                  page.write_text(t, encoding='utf-8')
           PY
 
-      - name: Persist homepage source
+      - name: Persist source updates
         run: |
-          if ! git diff --quiet -- index.html; then
+          if ! git diff --quiet -- '*.html'; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html
-            git commit -m "Harita ve faaliyet alanı güncel tasarımını sabitle [skip ci]"
+            git add '*.html'
+            git commit -m "Güncel arayüz dosyalarını sabitle [skip ci]"
             git push origin HEAD:main
           fi
 
