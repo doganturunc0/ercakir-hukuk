@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -23,100 +23,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: SEO, güvenlik ve içerik denetimi
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          stamp = '20260828-16'
-          csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
-          security_meta = f'<meta http-equiv="Content-Security-Policy" content="{csp}">\n<meta name="referrer" content="strict-origin-when-cross-origin">'
-
-          for page in Path('.').glob('*.html'):
-              s = page.read_text(encoding='utf-8')
-
-              # Güvenlik: tekrar eklemeyi önle ve tüm HTML sayfalarında temel CSP/referrer politikası kullan.
-              s = re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>\s*', '', s, flags=re.I)
-              s = re.sub(r'<meta name="referrer"[^>]*>\s*', '', s, flags=re.I)
-              s = s.replace('<meta name="viewport" content="width=device-width,initial-scale=1">', '<meta name="viewport" content="width=device-width,initial-scale=1">\n' + security_meta)
-
-              # Harici yeni sekme bağlantılarında opener izolasyonu.
-              s = re.sub(r'target="_blank"(?![^>]*rel=)', 'target="_blank" rel="noopener noreferrer"', s)
-              s = s.replace('rel="noopener"', 'rel="noopener noreferrer"')
-
-              if page.name == 'index.html':
-                  # Reklam dili ve SEO: marka/kişi odaklı, doğal başlık.
-                  s = re.sub(r'<title>.*?</title>', '<title>Av. Büşra Turunç | Erçakır Hukuk Bürosu | Salihli, Manisa</title>', s, count=1, flags=re.S)
-                  s = s.replace('Hukuki süreçlerde özenli, sistemli ve açık bir çalışma anlayışı.', 'Hukuki süreçler hakkında genel bilgilendirme ve dosya bazlı değerlendirme.')
-                  s = s.replace('Tek ekranda pratik ön hesaplar.', 'Genel nitelikte hesaplama araçları.')
-                  s = s.replace('Büro yaklaşımını görüntüle →', 'Çalışma esasları hakkında →')
-                  s = s.replace("Erçakır Hukuk Bürosunun Salihli'deki ofis konumu", "Erçakır Hukuk Bürosu'nun Salihli'deki ofis konumu")
-
-                  # Kurumsal konum düğmesine erişilebilir SVG ikon ekle.
-                  s = re.sub(
-                      r'(<a class="header-map"[^>]*>)(?:<svg.*?</svg>\s*)?Konuma Git(</a>)',
-                      r'\1<svg class="header-map-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Konuma Git\2',
-                      s,
-                      count=1,
-                      flags=re.S,
-                  )
-
-                  # Kurumsal varlık tutarlılığı için resmi sosyal profilleri yapılandırılmış veriye ekle.
-                  old = '"sameAs":["https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r+Hukuk+B%C3%BCrosu+Salihli+Manisa"]'
-                  new = '"sameAs":["https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r+Hukuk+B%C3%BCrosu+Salihli+Manisa","https://www.instagram.com/ercakirhukuk/","https://www.facebook.com/share/1BNR7MiHaj/?mibextid=wwXIfr"]'
-                  s = s.replace(old, new)
-
-                  # Ana sayfa stil/JS cache sürümü.
-                  for css in ['design-refresh.css','layout-fix.css','home-polish.css']:
-                      s = re.sub(rf'<link rel="stylesheet" href="{re.escape(css)}\?v=[^"]+">>?', '', s)
-                  s = re.sub(r'href="styles\.css(?:\?v=[^"]+)?"', f'href="styles.css?v={stamp}"', s)
-                  anchor = f'<link rel="stylesheet" href="styles.css?v={stamp}">'
-                  links = anchor + f'\n<link rel="stylesheet" href="design-refresh.css?v={stamp}">\n<link rel="stylesheet" href="layout-fix.css?v={stamp}">\n<link rel="stylesheet" href="home-polish.css?v={stamp}">'
-                  s = s.replace(anchor, links)
-                  s = re.sub(r'src="script\.js(?:\?v=[^"]+)?"', f'src="script.js?v={stamp}"', s)
-                  s = re.sub(r'<script src="home-polish\.js\?v=[^"]+" defer></script>', '', s)
-                  s = s.replace(f'<script src="script.js?v={stamp}" defer></script>', f'<script src="script.js?v={stamp}" defer></script><script src="home-polish.js?v={stamp}" defer></script>')
-
-              elif page.name == 'articles.html':
-                  # 163 karakterlik açıklamayı daha temiz SERP uzunluğuna çek.
-                  s = re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="Ceza, aile, iş, icra, taşınmaz ve diğer hukuk alanlarında genel bilgilendirme yazıları. İçerikler somut dosya değerlendirmesinin yerine geçmez.">', s, count=1)
-
-              # İçerik sayfalarında ortak tema cache sürümü.
-              if 'content.css' in s:
-                  s = re.sub(r'href="content\.css(?:\?v=[^"]+)?"', f'href="content.css?v={stamp}"', s)
-
-              page.write_text(s, encoding='utf-8')
-
-          # JS içindeki çalışma dili de statik HTML ile aynı ve reklamdan uzak olsun.
-          js = Path('script.js')
-          if js.exists():
-              t = js.read_text(encoding='utf-8')
-              t = re.sub(r"const stamp='[^']+'", f"const stamp='{stamp}'", t, count=1)
-              t = t.replace("if(h)h.textContent='Hukuki süreçlerde açık ve sistemli yaklaşım.';", "if(h)h.textContent='Hukuki süreçler hakkında genel bilgilendirme ve dosya bazlı değerlendirme.';")
-              t = t.replace("if(p)p.textContent='Uyuşmazlığın hukuki çerçevesi, mevcut deliller ve izlenecek usul birlikte değerlendirilerek süreç hakkında anlaşılır bilgi sunulur.';", "if(p)p.textContent='Uyuşmazlığın hukuki çerçevesi, mevcut belgeler ve uygulanacak usul birlikte değerlendirilerek süreç hakkında genel bilgi sunulur.';")
-              js.write_text(t, encoding='utf-8')
-          PY
-
-      - name: Persist source updates
-        run: |
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add '*.html' script.js
-            git commit -m "SEO, güvenlik ve içerik denetimi düzeltmeleri [skip ci]"
-            git push origin HEAD:main
-          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
