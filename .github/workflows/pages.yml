@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -23,48 +23,53 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build refreshed homepage
+        with:
+          fetch-depth: 0
+
+      - name: Homepage assets and content
         run: |
           python - <<'PY'
           from pathlib import Path
-          stamp = '20260828-7'
+          import re
+
+          stamp = '20260828-12'
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace('Ceza, aile, iş, icra ve diğer hukuk alanlarına ilişkin bilgilendirme.', 'Hukuki ihtiyaçların niteliğine göre ele alınan başlıca çalışma alanları.')
-          s = s.replace('href="styles.css"', f'href="styles.css?v={stamp}"\n<link rel="stylesheet" href="design-refresh.css?v={stamp}">')
-          s = s.replace('src="script.js"', f'src="script.js?v={stamp}"')
+
+          s = s.replace('Ceza, aile, iş, icra ve diğer hukuk alanlarına ilişkin bilgilendirme.',
+                        'Hukuki ihtiyaçların niteliğine göre ele alınan başlıca çalışma alanları.')
+
+          # Stylesheet links: remove previous generated design-refresh links and add one clean versioned link.
+          s = re.sub(r'<link rel="stylesheet" href="design-refresh\.css\?v=[^"]+">>?', '', s)
+          s = re.sub(r'href="styles\.css(?:\?v=[^"]+)?"', f'href="styles.css?v={stamp}"', s)
+          if f'design-refresh.css?v={stamp}' not in s:
+              s = s.replace(f'<link rel="stylesheet" href="styles.css?v={stamp}">',
+                            f'<link rel="stylesheet" href="styles.css?v={stamp}">\n<link rel="stylesheet" href="design-refresh.css?v={stamp}">')
+
+          s = re.sub(r'src="script\.js(?:\?v=[^"]+)?"', f'src="script.js?v={stamp}"', s)
+
+          # Hero meta is now native HTML, not dependent on JS.
+          s = re.sub(
+              r'<div class="hero-meta">.*?</div>',
+              '<div class="hero-meta"><a class="hero-infaz-btn" href="infaz-hesaplama.html" aria-label="İnfaz hesaplama aracını aç"><span><small>HESAPLAMA ARACI</small>İnfaz Hesaplama</span><b>Aracı Aç <span aria-hidden="true">→</span></b></a></div>',
+              s,
+              count=1,
+              flags=re.S,
+          )
+
           p.write_text(s, encoding='utf-8')
-          css = Path('design-refresh.css')
-          extra = """
-          /* 2026-08-28 kurumsal renk ve erişilebilirlik revizyonu */
-          :root{--ercakir-navy:#183447;--ercakir-navy-2:#24495f;--ercakir-cream:#f5f1e8;--ercakir-paper:#fbfaf7;--ercakir-text:#1d2d36;--ercakir-muted:#536771;--ercakir-gold:#b78a2c;--ercakir-copper:#b85e3b;--ercakir-green:#177a55}
-          body{background:var(--ercakir-paper)!important;color:var(--ercakir-text)!important}
-          .site-header{background:rgba(24,52,71,.98)!important;border-bottom:1px solid rgba(255,255,255,.12)!important}
-          .site-header .brand,.site-header nav a,.site-header .menu-btn{color:#fff!important}
-          .site-header .brand small{color:#d7e1e7!important}.header-map{background:#fff!important;color:var(--ercakir-navy)!important;border-color:#fff!important}
-          .hero{background:var(--ercakir-cream)!important}.hero-picture{background-color:#dfe6e8!important}
-          .hero-panel{background:linear-gradient(180deg,#f7f3eb 0%,#f1ece2 100%)!important;color:var(--ercakir-text)!important;border-bottom:1px solid #e0d8ca!important}
-          .hero-panel .eyebrow{color:#8a641b!important}.hero h1{color:#173447!important}.hero-panel .hero-lead{color:#465b66!important}
-          .hero-panel .hero-actions .gold{background:var(--ercakir-navy)!important;border-color:var(--ercakir-navy)!important;color:#fff!important;box-shadow:none!important}
-          .hero-panel .hero-actions .light{background:#fff!important;border-color:#bac7ce!important;color:var(--ercakir-navy)!important;backdrop-filter:none!important;box-shadow:none!important}
-          .hero-infaz-btn{background:linear-gradient(135deg,#b65335 0%,#d77a4f 100%)!important;border-color:#a94d31!important;color:#fff!important;box-shadow:0 14px 32px rgba(120,55,35,.22)!important}
-          .hero-infaz-btn>span,.hero-infaz-btn b,.hero-infaz-btn small{color:#fff!important}.hero-infaz-btn small{opacity:.88!important}
-          .hero-infaz-btn:hover{background:linear-gradient(135deg,#a84b2f 0%,#c86b43 100%)!important}
-          .intro-section,.practice-section,.articles-section,.contact-section{background:#fff!important;color:var(--ercakir-text)!important}
-          .section-heading h2,.intro-section h2,.contact-section h2,.home-faq h2{color:#173447!important}.section-heading p,.intro-copy p,.contact-copy p{color:#526570!important}
-          .practice-card{background:#fbfaf7!important;color:#173447!important;border-color:#dce3e7!important}.practice-card p{color:#566a75!important}.practice-card b{color:#876318!important}
-          .calculator-wrap{background:#edf2f4!important;color:var(--ercakir-text)!important}.calc-shell{background:#fff!important;border:1px solid #d6e0e4!important}.calc-panel,.calc-panel h3,.calc-panel label,.result{color:#243842!important}.calc-tabs button{color:#344b58!important}.calc-tabs button.active{background:var(--ercakir-navy)!important;color:#fff!important}
-          .process-section{background:linear-gradient(145deg,#24495f 0%,#183447 100%)!important}.process-heading p,.process-card p{color:#e1e9ed!important}.process-card{background:rgba(255,255,255,.10)!important;border-color:rgba(255,255,255,.18)!important}.process-card h3{color:#fff!important}
-          .home-faq{background:#f3f6f7!important}.home-faq summary{color:#1c3747!important}.home-faq details p{color:#526670!important}
-          .map-card{background:#eaf0f2!important;color:#173447!important;border:1px solid #d3dfe4!important}.map-card p,.map-card span{color:#526670!important}
-          .social-links a{background:#fff!important;color:#173447!important;border-color:#cfdbe0!important}.social-links b{color:#795817!important}
-          footer,.site-footer{background:#173447!important;color:#eaf0f3!important}footer a,.site-footer a{color:#fff!important}footer p,.site-footer p{color:#d4dfe5!important}
-          .contact-dock{flex-direction:column!important}.dock-phone{background:#24506a!important;color:#fff!important}.dock-whatsapp{background:#177a55!important;color:#fff!important}
-          .contact-dock svg{stroke-width:1.75!important}.dock-phone svg{width:23px!important;height:23px!important}.dock-whatsapp svg{width:24px!important;height:24px!important}
-          @media(max-width:720px){.hero-panel{padding:32px 20px 44px!important}.hero h1{font-size:clamp(36px,9.5vw,46px)!important}.contact-dock{right:12px!important;bottom:14px!important;flex-direction:column!important}.contact-dock a{width:46px!important;height:46px!important}.site-header #mainNav{background:#183447!important}.site-header #mainNav a{color:#fff!important}}
-          """
-          css.write_text(css.read_text(encoding='utf-8') + extra, encoding='utf-8')
           PY
+
+      - name: Persist homepage source
+        run: |
+          if ! git diff --quiet -- index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Ana sayfa tasarım bağlantılarını ve içeriklerini sabitle [skip ci]"
+            git push origin HEAD:main
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site
