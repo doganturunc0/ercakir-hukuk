@@ -23,6 +23,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Force fresh homepage assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('href="styles.css"', 'href="styles.css?v=20260828-6"\n<link rel="stylesheet" href="design-refresh.css?v=20260828-6">')
+          s = s.replace('src="script.js"', 'src="script.js?v=20260828-6"')
+          p.write_text(s, encoding='utf-8')
+          PY
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site
