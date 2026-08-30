@@ -26,6 +26,8 @@ Entity relationship: Av. Büşra Turunç is the lawyer associated with Erçakır
 
 ## Legal information and tools
 - Hukuki Bilgilendirmeler: https://avbusraturunc.com/articles.html
+- Hukuki İçerikler: https://avbusraturunc.com/hukuki-icerikler.html
+- Tutuklama Kararına İtiraz ve Tutukluluğun İncelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
 - İnfaz Hesaplama: https://avbusraturunc.com/infaz-hesaplama.html
 - RSS: https://avbusraturunc.com/rss.xml
 - Sitemap: https://avbusraturunc.com/sitemap.xml
