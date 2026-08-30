@@ -15,19 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Normalize analytics and favicon
-        shell: python
         run: |
+          python3 - <<'PY'
           from pathlib import Path
 
           measurement_id = 'G-1E6W6P6281'
           analytics = '''<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1E6W6P6281"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-1E6W6P6281');
-</script>'''
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-1E6W6P6281"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-1E6W6P6281');
+          </script>'''
 
           for p in Path('.').glob('*.html'):
               s = p.read_text(encoding='utf-8')
@@ -47,7 +47,7 @@ jobs:
 
               if s != original:
                   p.write_text(s, encoding='utf-8')
-
+          PY
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
