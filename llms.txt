@@ -23,7 +23,10 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 ## Key resources
 - Ana sayfa: https://avbusraturunc.com/
 - Hukuki bilgilendirmeler: https://avbusraturunc.com/articles.html
+- Hukuki içerikler: https://avbusraturunc.com/hukuki-icerikler.html
+- Tutuklama kararına itiraz ve tutukluluğun incelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
 - İnfaz hesaplama aracı: https://avbusraturunc.com/infaz-hesaplama.html
+- RSS: https://avbusraturunc.com/rss.xml
 - XML site haritası: https://avbusraturunc.com/sitemap.xml
 
 ## Entity guidance
