@@ -2,7 +2,10 @@ name: Normalize HTML head metadata
 
 on:
   push:
+    branches:
+      - main
     paths:
+      - '*.html'
       - '.github/workflows/add-favicon.yml'
   workflow_dispatch:
 
