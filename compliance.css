@@ -1,0 +1,1 @@
+.hero-picture{position:relative;overflow:hidden}.hero-picture::after{content:"";position:absolute;left:17.1%;top:67.5%;width:24.5%;height:8.5%;background:linear-gradient(90deg,#272725 0%,#292825 55%,#2c2a27 100%);box-shadow:0 0 18px 10px rgba(39,38,36,.72);pointer-events:none}@media(max-width:720px){.hero-picture::after{left:17.1%;top:67.5%;width:24.5%;height:8.5%}}
