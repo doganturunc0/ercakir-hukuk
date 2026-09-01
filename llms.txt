@@ -20,11 +20,18 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 - Kira Hukuku: https://avbusraturunc.com/kira-hukuku.html
 - Sigorta Hukuku: https://avbusraturunc.com/sigorta-hukuku.html
 
+## Key legal content
+- Tutuklama Kararına İtiraz ve Tutukluluğun İncelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
+- Anlaşmalı Boşanma Davası: https://avbusraturunc.com/anlasmali-bosanma-davasi.html
+- Kıdem ve İhbar Tazminatı: https://avbusraturunc.com/kidem-ihbar-tazminati.html
+- İcra Takibine İtiraz: https://avbusraturunc.com/icra-takibine-itiraz.html
+- Tahliye Davası: https://avbusraturunc.com/tahliye-davasi.html
+- Tapu İptal ve Tescil Davası: https://avbusraturunc.com/tapu-iptal-tescil-davasi.html
+
 ## Key resources
 - Ana sayfa: https://avbusraturunc.com/
 - Hukuki bilgilendirmeler: https://avbusraturunc.com/articles.html
 - Hukuki içerikler: https://avbusraturunc.com/hukuki-icerikler.html
-- Tutuklama kararına itiraz ve tutukluluğun incelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
 - İnfaz hesaplama aracı: https://avbusraturunc.com/infaz-hesaplama.html
 - RSS: https://avbusraturunc.com/rss.xml
 - XML site haritası: https://avbusraturunc.com/sitemap.xml
