@@ -4,6 +4,11 @@ on:
   push:
     branches: ["main"]
     paths:
+      - "*.html"
+      - "*.css"
+      - "*.js"
+      - "sitemap.xml"
+      - "robots.txt"
       - ".github/workflows/full-site-audit.yml"
   workflow_dispatch:
 
@@ -20,7 +25,6 @@ jobs:
         run: |
           from pathlib import Path
           import json, re, sys
-          from urllib.parse import urlparse
 
           domain = 'https://avbusraturunc.com/'
           html_files = sorted(Path('.').glob('*.html'))
@@ -85,8 +89,7 @@ jobs:
               for href in re.findall(r'<a\b[^>]*\bhref=["\']([^"\']+)["\']', t, re.I):
                   if href.startswith(('#','mailto:','tel:','https://','http://')): continue
                   target = href.split('#',1)[0].split('?',1)[0]
-                  if not target: continue
-                  if target == '/': continue
+                  if not target or target == '/': continue
                   if target.startswith('/'):
                       target = target[1:]
                   if target and not Path(target).exists(): errors.append(f'{p.name}: kırık iç bağlantı -> {href}')
