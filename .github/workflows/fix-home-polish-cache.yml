@@ -1,0 +1,46 @@
+name: Fix homepage legal styles cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-home-polish-cache.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch homepage CSS and JS references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          css = '<link rel="stylesheet" href="home-polish.css?v=20260901-3">'
+          if 'home-polish.css?' not in s:
+              s = s.replace('<link rel="stylesheet" href="site.css?v=20260828-17">', '<link rel="stylesheet" href="site.css?v=20260828-17">\n' + css)
+          else:
+              import re
+              s = re.sub(r'<link rel="stylesheet" href="home-polish\.css\?v=[^"]+">', css, s)
+          s = s.replace('home-polish.js?v=20260901-1', 'home-polish.js?v=20260901-3')
+          s = s.replace('home-polish.js?v=20260901-2', 'home-polish.js?v=20260901-3')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Verify patch
+        run: |
+          grep -q 'home-polish.css?v=20260901-3' index.html
+          grep -q 'home-polish.js?v=20260901-3' index.html
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Fix homepage legal section stylesheet loading'
+          git push
