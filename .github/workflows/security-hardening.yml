@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Audit and harden HTML
         shell: bash
@@ -26,7 +26,7 @@ jobs:
           from pathlib import Path
           import re
 
-          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
 
           changed = []
@@ -93,6 +93,8 @@ jobs:
                   problems.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in t:
                   problems.append(f'{p.name}: referrer policy eksik')
+              if "script-src 'self' 'unsafe-inline'" in t or "style-src 'self' 'unsafe-inline'" in t:
+                  problems.append(f'{p.name}: CSP unsafe-inline içeriyor')
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
                   if not re.search(r'rel=["\'][^"\']*noopener', a, flags=re.I):
                       problems.append(f'{p.name}: target=_blank noopener eksik')
