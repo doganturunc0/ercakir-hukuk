@@ -1,4 +1,7 @@
+/* Privacy-first analytics gate.
+ * Analytics remains disabled unless a future explicit opt-in mechanism
+ * deliberately enables it. No Google Analytics configuration is executed
+ * by default, so visiting the site does not start analytics tracking here.
+ */
 window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-1E6W6P6281');
+window.ercakirAnalyticsEnabled = false;
