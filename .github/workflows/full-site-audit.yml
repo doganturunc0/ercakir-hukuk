@@ -9,6 +9,9 @@ on:
       - "*.js"
       - "sitemap.xml"
       - "robots.txt"
+      - "rss.xml"
+      - "llms.txt"
+      - "llms-full.txt"
       - ".github/workflows/full-site-audit.yml"
   workflow_dispatch:
 
@@ -20,23 +23,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Audit SEO, links, structured data and security
+      - name: Audit SEO, links, structured data, content and security
         shell: python
         run: |
           from pathlib import Path
           import json, re, sys
+          from itertools import combinations
 
           domain = 'https://avbusraturunc.com/'
           html_files = sorted(Path('.').glob('*.html'))
           errors, warnings = [], []
           titles, descriptions, canonicals = {}, {}, {}
+          page_texts = {}
+          content_pages = [
+              'tutuklama-kararina-itiraz.html',
+              'anlasmali-bosanma-davasi.html',
+              'kidem-ihbar-tazminati.html',
+              'icra-takibine-itiraz.html',
+              'tahliye-davasi.html',
+              'tapu-iptal-tescil-davasi.html',
+          ]
 
           def add_dupe(bucket, value, name):
               bucket.setdefault(value, []).append(name)
 
+          def visible_main_text(html):
+              m = re.search(r'<main\b[^>]*>(.*?)</main>', html, re.I | re.S)
+              body = m.group(1) if m else html
+              body = re.sub(r'<script\b[^>]*>.*?</script>', ' ', body, flags=re.I | re.S)
+              body = re.sub(r'<style\b[^>]*>.*?</style>', ' ', body, flags=re.I | re.S)
+              body = re.sub(r'<[^>]+>', ' ', body)
+              body = re.sub(r'&[a-zA-Z0-9#]+;', ' ', body)
+              return re.sub(r'\s+', ' ', body).strip().lower()
+
+          def shingles(text, size=7):
+              words = re.findall(r'[a-zçğıöşü0-9]+', text, re.I)
+              if len(words) < size:
+                  return set()
+              return {' '.join(words[i:i+size]) for i in range(len(words)-size+1)}
+
           for p in html_files:
               t = p.read_text(encoding='utf-8')
               low = t.lower()
+              main_text = visible_main_text(t)
+              page_texts[p.name] = main_text
 
               if not re.search(r'<html\b[^>]*\blang=["\']tr["\']', t, re.I): errors.append(f'{p.name}: html lang=tr eksik')
               tm = re.search(r'<title>(.*?)</title>', t, re.I | re.S)
@@ -95,9 +125,23 @@ jobs:
                       target = target[1:]
                   if target and not Path(target).exists(): errors.append(f'{p.name}: kırık iç bağlantı -> {href}')
 
+              word_count = len(re.findall(r'[a-zçğıöşü0-9]+', main_text, re.I))
+              if p.name in content_pages and word_count < 300:
+                  warnings.append(f'{p.name}: ayrıntılı içerik kısa görünüyor ({word_count} kelime)')
+
           for label, bucket in [('title', titles), ('description', descriptions), ('canonical', canonicals)]:
               for value, names in bucket.items():
                   if len(names) > 1: warnings.append(f'duplicate {label}: {names} :: {value}')
+
+          for a, b in combinations(content_pages, 2):
+              if a not in page_texts or b not in page_texts:
+                  continue
+              sa, sb = shingles(page_texts[a]), shingles(page_texts[b])
+              if not sa or not sb:
+                  continue
+              similarity = len(sa & sb) / len(sa | sb)
+              if similarity >= 0.60:
+                  warnings.append(f'yüksek içerik benzerliği: {a} <-> {b} ({similarity:.0%})')
 
           sitemap = Path('sitemap.xml')
           if not sitemap.exists(): errors.append('sitemap.xml eksik')
@@ -110,6 +154,25 @@ jobs:
           robots = Path('robots.txt')
           if not robots.exists(): errors.append('robots.txt eksik')
           elif domain + 'sitemap.xml' not in robots.read_text(encoding='utf-8'): errors.append('robots.txt sitemap bildirimi eksik')
+
+          rss = Path('rss.xml')
+          if not rss.exists():
+              errors.append('rss.xml eksik')
+          else:
+              r = rss.read_text(encoding='utf-8')
+              for page in content_pages:
+                  if domain + page not in r:
+                      errors.append(f'rss eksik içerik: {page}')
+
+          for llms_name in ('llms.txt', 'llms-full.txt'):
+              llms = Path(llms_name)
+              if not llms.exists():
+                  errors.append(f'{llms_name} eksik')
+                  continue
+              lt = llms.read_text(encoding='utf-8')
+              for page in content_pages:
+                  if domain + page not in lt:
+                      warnings.append(f'{llms_name} güncel içerik listesinde yok: {page}')
 
           print(f'Audited HTML files: {len(html_files)}')
           print('\nWARNINGS:')
