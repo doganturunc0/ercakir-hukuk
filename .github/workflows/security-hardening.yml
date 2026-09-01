@@ -1,0 +1,126 @@
+name: Site-wide security hardening
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/security-hardening.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit and harden HTML
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
+
+          changed = []
+          audited = []
+          warnings = []
+
+          for p in sorted(Path('.').glob('*.html')):
+              text = p.read_text(encoding='utf-8')
+              original = text
+              audited.append(p.name)
+
+              # Add browser-enforced meta policies where they are missing.
+              additions = []
+              if 'http-equiv="Content-Security-Policy"' not in text and "http-equiv='Content-Security-Policy'" not in text:
+                  additions.append(csp)
+              if 'name="referrer"' not in text and "name='referrer'" not in text:
+                  additions.append(referrer)
+              if additions:
+                  marker = '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                  if marker in text:
+                      text = text.replace(marker, marker + '\n' + '\n'.join(additions), 1)
+                  else:
+                      text = re.sub(r'(<meta[^>]+viewport[^>]*>)', r'\1\n' + '\n'.join(additions), text, count=1, flags=re.I)
+
+              # Force same-site absolute links to HTTPS.
+              text = text.replace('http://avbusraturunc.com', 'https://avbusraturunc.com')
+
+              # Harden target=_blank anchors without touching ordinary links.
+              def harden_anchor(match):
+                  tag = match.group(0)
+                  if not re.search(r'target\s*=\s*["\']_blank["\']', tag, re.I):
+                      return tag
+                  relm = re.search(r'rel\s*=\s*(["\'])(.*?)\1', tag, re.I)
+                  if relm:
+                      vals = relm.group(2).split()
+                      for token in ('noopener','noreferrer'):
+                          if token not in vals:
+                              vals.append(token)
+                      replacement = 'rel=' + relm.group(1) + ' '.join(vals) + relm.group(1)
+                      return tag[:relm.start()] + replacement + tag[relm.end():]
+                  return tag[:-1] + ' rel="noopener noreferrer">'
+
+              text = re.sub(r'<a\b[^>]*>', harden_anchor, text, flags=re.I)
+
+              # Audit markers only; do not fake server response headers in HTML.
+              if 'javascript:' in text.lower():
+                  warnings.append(f'{p.name}: javascript: URL bulundu')
+              if re.search(r'(?<!https:)//[^\s"\']+', text):
+                  pass
+
+              if text != original:
+                  p.write_text(text, encoding='utf-8')
+                  changed.append(p.name)
+
+          print('Audited:', ', '.join(audited))
+          print('Changed:', ', '.join(changed) if changed else 'none')
+          if warnings:
+              print('Warnings:')
+              for w in warnings:
+                  print('-', w)
+          PY
+
+      - name: Verify baseline
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, sys
+          problems=[]
+          for p in sorted(Path('.').glob('*.html')):
+              t=p.read_text(encoding='utf-8')
+              if 'http-equiv="Content-Security-Policy"' not in t:
+                  problems.append(f'{p.name}: CSP meta eksik')
+              if 'name="referrer"' not in t:
+                  problems.append(f'{p.name}: referrer policy eksik')
+              for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
+                  if not re.search(r'rel=["\'][^"\']*noopener', a, flags=re.I):
+                      problems.append(f'{p.name}: target=_blank noopener eksik')
+                  if not re.search(r'rel=["\'][^"\']*noreferrer', a, flags=re.I):
+                      problems.append(f'{p.name}: target=_blank noreferrer eksik')
+              if 'http://avbusraturunc.com' in t:
+                  problems.append(f'{p.name}: HTTP site içi bağlantı')
+          if problems:
+              print('\n'.join(problems))
+              sys.exit(1)
+          print('HTML security baseline verification passed.')
+          PY
+
+      - name: Commit hardened pages
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No HTML changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html'
+          git commit -m "Harden security metadata across site"
+          git push
