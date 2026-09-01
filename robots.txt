@@ -1,7 +1,8 @@
 User-agent: *
 Allow: /
 
-# OpenAI discovery and user-requested browsing
+# Public legal information site; no private or administrative crawl paths are exposed.
+# AI discovery and user-requested browsing
 User-agent: GPTBot
 Allow: /
 
@@ -12,5 +13,4 @@ User-agent: OAI-SearchBot
 Allow: /
 
 # Google and Bing search crawlers are covered by the wildcard rule above.
-# No private or administrative paths are exposed by this static site.
 Sitemap: https://avbusraturunc.com/sitemap.xml
