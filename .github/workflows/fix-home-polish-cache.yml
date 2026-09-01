@@ -8,9 +8,18 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  fix:
+  fix-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,16 +29,15 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           css = '<link rel="stylesheet" href="home-polish.css?v=20260901-3">'
           if 'home-polish.css?' not in s:
               s = s.replace('<link rel="stylesheet" href="site.css?v=20260828-17">', '<link rel="stylesheet" href="site.css?v=20260828-17">\n' + css)
           else:
-              import re
               s = re.sub(r'<link rel="stylesheet" href="home-polish\.css\?v=[^"]+">', css, s)
-          s = s.replace('home-polish.js?v=20260901-1', 'home-polish.js?v=20260901-3')
-          s = s.replace('home-polish.js?v=20260901-2', 'home-polish.js?v=20260901-3')
+          s = re.sub(r'home-polish\.js\?v=[^"\']+', 'home-polish.js?v=20260901-3', s)
           p.write_text(s, encoding='utf-8')
           PY
       - name: Verify patch
@@ -41,6 +49,16 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'Fix homepage legal section stylesheet loading'
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m 'Fix homepage legal section stylesheet loading'
+            git push
+          fi
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
