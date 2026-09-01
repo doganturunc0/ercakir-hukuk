@@ -1,0 +1,143 @@
+name: Harden infaz calculator runtime CSP
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/harden-infaz-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Externalize runtime JavaScript and inline attributes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          html_path = Path('infaz-hesaplama.html')
+          css_path = Path('infaz-hesaplama.inline.css')
+          s = html_path.read_text(encoding='utf-8')
+          css = css_path.read_text(encoding='utf-8') if css_path.exists() else ''
+
+          # Convert inline style attributes to generated CSS classes.
+          generated = []
+          style_counter = 0
+          tag_re = re.compile(r'<(?!script\b|style\b)([a-zA-Z][\w:-]*)([^<>]*?)>', re.S)
+          def convert_style(match):
+              nonlocal_style = None
+              tag, attrs = match.group(1), match.group(2)
+              sm = re.search(r'\sstyle\s*=\s*(["\'])(.*?)\1', attrs, re.I | re.S)
+              if not sm:
+                  return match.group(0)
+              global style_counter
+              style_counter += 1
+              cls = f'inline-style-{style_counter}'
+              style_value = sm.group(2).strip()
+              generated.append(f'.{cls}{{{style_value}}}')
+              attrs2 = attrs[:sm.start()] + attrs[sm.end():]
+              cm = re.search(r'\sclass\s*=\s*(["\'])(.*?)\1', attrs2, re.I | re.S)
+              if cm:
+                  new_class = cm.group(2).strip() + ' ' + cls
+                  attrs2 = attrs2[:cm.start()] + f' class={cm.group(1)}{new_class}{cm.group(1)}' + attrs2[cm.end():]
+              else:
+                  attrs2 += f' class="{cls}"'
+              return f'<{tag}{attrs2}>'
+          s = tag_re.sub(convert_style, s)
+          if generated:
+              css = css.rstrip() + '\n' + '\n'.join(generated) + '\n'
+              css_path.write_text(css, encoding='utf-8')
+
+          # Replace inline click handlers with IDs and add listeners externally.
+          s = re.sub(r'<button\b([^>]*?)\sonclick=["\']calculateExecution\(\)["\']([^>]*)>', r'<button\1 id="calculateBtn"\2>', s, flags=re.I)
+          s = re.sub(r'<button\b([^>]*?)\sonclick=["\']resetForm\(\)["\']([^>]*)>', r'<button\1 id="resetBtn"\2>', s, flags=re.I)
+
+          # Externalize each non-JSON-LD inline script in place to preserve execution order/location.
+          runtime_files = []
+          counter = 0
+          script_re = re.compile(r'<script\b([^>]*)>(.*?)</script>', re.I | re.S)
+          def externalize_script(match):
+              nonlocal_marker = None
+              attrs, body = match.group(1), match.group(2)
+              if re.search(r'\bsrc\s*=', attrs, re.I):
+                  return match.group(0)
+              tm = re.search(r'\btype\s*=\s*(["\'])([^"\']+)\1', attrs, re.I)
+              if tm and tm.group(2).lower().strip() == 'application/ld+json':
+                  return match.group(0)
+              if not body.strip():
+                  return ''
+              global counter
+              counter += 1
+              name = f'infaz-hesaplama.runtime-{counter}.js'
+              Path(name).write_text(body.strip() + '\n', encoding='utf-8')
+              runtime_files.append(name)
+              return f'<script src="{name}"></script>'
+          s = script_re.sub(externalize_script, s)
+
+          events = Path('infaz-hesaplama-events.js')
+          events.write_text(
+              "document.getElementById('calculateBtn')?.addEventListener('click', calculateExecution);\n"
+              "document.getElementById('resetBtn')?.addEventListener('click', resetForm);\n",
+              encoding='utf-8'
+          )
+          event_tag = '<script src="infaz-hesaplama-events.js"></script>'
+          if event_tag not in s:
+              s = s.replace('</body>', event_tag + '\n</body>', 1)
+
+          # Tighten CSP only after runtime code/attributes are externalized.
+          if not re.search(r'<script\b(?![^>]*\bsrc=)(?![^>]*type=["\']application/ld\+json["\'])[^>]*>\s*\S', s, re.I | re.S) and not re.search(r'\son\w+\s*=', s, re.I):
+              s = s.replace("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com", "script-src 'self' https://www.googletagmanager.com")
+          if not re.search(r'\sstyle\s*=', s, re.I) and not re.search(r'<style\b', s, re.I):
+              s = s.replace("style-src 'self' 'unsafe-inline'", "style-src 'self'")
+
+          html_path.write_text(s, encoding='utf-8')
+
+      - name: Verify strict infaz CSP
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, sys
+          s = Path('infaz-hesaplama.html').read_text(encoding='utf-8')
+          bad=[]
+          for m in re.finditer(r'<script\b([^>]*)>(.*?)</script>', s, re.I|re.S):
+              attrs, body=m.group(1),m.group(2)
+              if re.search(r'\bsrc\s*=', attrs, re.I): continue
+              tm=re.search(r'\btype\s*=\s*(["\'])([^"\']+)\1',attrs,re.I)
+              if tm and tm.group(2).lower().strip()=='application/ld+json': continue
+              if body.strip(): bad.append('runtime inline script remains')
+          if re.search(r'\son\w+\s*=', s, re.I): bad.append('inline event handler remains')
+          if re.search(r'\sstyle\s*=', s, re.I): bad.append('inline style attribute remains')
+          if re.search(r'<style\b', s, re.I): bad.append('style block remains')
+          if "script-src 'self' 'unsafe-inline'" in s: bad.append('script unsafe-inline remains')
+          if "style-src 'self' 'unsafe-inline'" in s: bad.append('style unsafe-inline remains')
+          if not Path('infaz-hesaplama-events.js').exists(): bad.append('events JS missing')
+          if not list(Path('.').glob('infaz-hesaplama.runtime-*.js')): bad.append('runtime JS missing')
+          if bad:
+              print('\n'.join(bad)); sys.exit(1)
+          print('Infaz calculator runtime and CSP are fully externalized.')
+
+      - name: Commit infaz hardening
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add infaz-hesaplama.html infaz-hesaplama.inline.css infaz-hesaplama-events.js infaz-hesaplama.runtime-*.js
+          if git diff --cached --quiet; then echo 'No changes'; else git commit -m 'Externalize infaz calculator runtime code'; git push; fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
