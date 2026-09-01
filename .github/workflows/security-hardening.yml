@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Audit and harden HTML
         shell: bash
@@ -105,7 +105,7 @@ jobs:
               if re.search(r'<(?:object|embed|applet)\b', t, flags=re.I):
                   problems.append(f'{p.name}: object/embed/applet etiketi bulundu')
               for src in re.findall(r'<script\b[^>]*\bsrc=["\']([^"\']+)["\']', t, flags=re.I):
-                  if src.startswith(('script.js','home-polish.js','./','/')):
+                  if src.startswith(('script.js','home-polish.js','analytics.js','./','/')):
                       continue
                   if src.startswith('https://www.googletagmanager.com/'):
                       continue
