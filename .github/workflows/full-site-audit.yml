@@ -22,7 +22,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       - name: Audit SEO, links, structured data, content and security
         shell: python
         run: |
@@ -173,6 +173,21 @@ jobs:
               for page in content_pages:
                   if domain + page not in lt:
                       warnings.append(f'{llms_name} güncel içerik listesinde yok: {page}')
+
+          # Homepage regressions that previously caused SEO/schema duplication.
+          home = Path('index.html').read_text(encoding='utf-8')
+          home_js = Path('home-polish.js').read_text(encoding='utf-8')
+          if home.count('id="hukuki-icerikler-home"') != 1:
+              errors.append('index.html: hukuki içerik vitrini statik HTML içinde tekil değil')
+          for page in content_pages:
+              if page not in home:
+                  errors.append(f'index.html: ana sayfa hukuki içerik bağlantısı eksik: {page}')
+          if 'hasOfferCatalog' in home:
+              errors.append('index.html: nötr olmayan hasOfferCatalog schema kaldı')
+          if 'facebook.com/share/' in home:
+              errors.append('index.html: sameAs içinde kalıcı olmayan Facebook paylaşım URLsi kaldı')
+          if 'section.innerHTML' in home_js or 'data-home-polish-css' in home_js:
+              errors.append('home-polish.js: statik vitrin veya çift CSS enjeksiyonu mantığı geri geldi')
 
           print(f'Audited HTML files: {len(html_files)}')
           print('\nWARNINGS:')
