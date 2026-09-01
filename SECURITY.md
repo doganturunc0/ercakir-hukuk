@@ -9,3 +9,5 @@ Bildirimde mümkünse etkilenen sayfa, sorunun kısa açıklaması ve tekrar ür
 Kullanıcı verilerine erişmeye, hizmeti kesintiye uğratmaya, veri değiştirmeye veya üçüncü kişileri etkilemeye yönelik testler yapılmamalıdır.
 
 Güvenlik bildirimleri iyi niyetli şekilde değerlendirilir ve gerekli düzeltmeler mümkün olan en kısa sürede ele alınır.
+
+<!-- pages-redeploy: 2026-09-01T20:35+03:00 -->
