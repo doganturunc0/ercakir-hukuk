@@ -1,6 +1,10 @@
 name: Harden content page CSP
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/harden-content-csp.yml"
   workflow_dispatch:
 
 permissions:
@@ -18,7 +22,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Replace inline analytics and tighten CSP
         shell: python
         run: |
@@ -29,7 +33,6 @@ jobs:
               s=p.read_text(encoding='utf-8')
               s=re.sub(r'<script>\s*window\.dataLayer = window\.dataLayer \|\| \[\];\s*function gtag\(\)\{dataLayer\.push\(arguments\);\}\s*gtag\(\x27js\x27, new Date\(\)\);\s*gtag\(\x27config\x27, \x27G-1E6W6P6281\x27\);\s*</script>', '<script src="analytics.js"></script>', s, flags=re.S)
               s=s.replace("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com", "script-src 'self' https://www.googletagmanager.com")
-              # CSS on these pages is external; remove unsafe-inline only when no inline style blocks/attributes remain.
               if '<style' not in s.lower() and ' style=' not in s.lower():
                   s=s.replace("style-src 'self' 'unsafe-inline'", "style-src 'self'")
               p.write_text(s,encoding='utf-8')
@@ -54,7 +57,7 @@ jobs:
           git add $PAGES
           if git diff --cached --quiet; then echo 'No changes'; else git commit -m 'Harden CSP across content pages'; git push; fi
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: .
       - name: Deploy to GitHub Pages
