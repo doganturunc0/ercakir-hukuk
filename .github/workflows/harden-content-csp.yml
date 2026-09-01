@@ -36,20 +36,29 @@ jobs:
                   tm = re.search(r'\btype\s*=\s*(["\x27])([^"\x27]+)\1', attrs, re.I)
                   if tm and tm.group(2).lower().strip() == 'application/ld+json':
                       continue
+                  body = m.group(2)
+                  if 'dataLayer' in body and 'G-1E6W6P6281' in body and 'gtag' in body:
+                      continue
                   return True
               return False
+
+          def externalize_analytics(html):
+              def repl(m):
+                  attrs = m.group(1)
+                  body = m.group(2)
+                  if re.search(r'\bsrc\s*=', attrs, re.I):
+                      return m.group(0)
+                  if 'dataLayer' in body and 'G-1E6W6P6281' in body and 'gtag' in body:
+                      return '<script src="analytics.js"></script>'
+                  return m.group(0)
+              return re.sub(r'<script\b([^>]*)>(.*?)</script>', repl, html, flags=re.I | re.S)
 
           for name in os.environ['PAGES'].split():
               p = pathlib.Path(name)
               if not p.exists():
                   continue
               s = p.read_text(encoding='utf-8')
-              s = re.sub(
-                  r'<script>\s*window\.dataLayer = window\.dataLayer \|\| \[\];\s*function gtag\(\)\{dataLayer\.push\(arguments\);\}\s*gtag\(\x27js\x27, new Date\(\)\);\s*gtag\(\x27config\x27, \x27G-1E6W6P6281\x27\);\s*</script>',
-                  '<script src="analytics.js"></script>',
-                  s,
-                  flags=re.S,
-              )
+              s = externalize_analytics(s)
               if not has_runtime_inline_script(s):
                   s = s.replace("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com", "script-src 'self' https://www.googletagmanager.com")
               if '<style' not in s.lower() and ' style=' not in s.lower():
@@ -61,31 +70,39 @@ jobs:
         run: |
           import os, pathlib, re, sys
 
-          def has_runtime_inline_script(html):
+          def runtime_inline_scripts(html):
+              found=[]
               for m in re.finditer(r'<script\b([^>]*)>(.*?)</script>', html, re.I | re.S):
-                  attrs = m.group(1)
+                  attrs=m.group(1)
                   if re.search(r'\bsrc\s*=', attrs, re.I):
                       continue
-                  tm = re.search(r'\btype\s*=\s*(["\x27])([^"\x27]+)\1', attrs, re.I)
-                  if tm and tm.group(2).lower().strip() == 'application/ld+json':
+                  tm=re.search(r'\btype\s*=\s*(["\x27])([^"\x27]+)\1', attrs, re.I)
+                  if tm and tm.group(2).lower().strip()=='application/ld+json':
                       continue
-                  return True
-              return False
+                  found.append(m.group(2))
+              return found
 
-          bad = []
+          bad=[]
           for name in os.environ['PAGES'].split():
-              p = pathlib.Path(name)
+              p=pathlib.Path(name)
               if not p.exists():
                   continue
-              s = p.read_text(encoding='utf-8')
-              if 'window.dataLayer = window.dataLayer || []' in s:
-                  bad.append(name + ': inline analytics')
-              runtime_inline = has_runtime_inline_script(s)
-              if not runtime_inline and "script-src 'self' 'unsafe-inline'" in s:
+              s=p.read_text(encoding='utf-8')
+              for body in runtime_inline_scripts(s):
+                  if 'dataLayer' in body or 'G-1E6W6P6281' in body:
+                      bad.append(name + ': inline analytics remains')
+              runtime=runtime_inline_scripts(s)
+              if not runtime and "script-src 'self' 'unsafe-inline'" in s:
                   bad.append(name + ': removable script unsafe-inline remains')
+              if 'http://avbusraturunc.com' in s or 'http://www.avbusraturunc.com' in s:
+                  bad.append(name + ': insecure same-site URL')
+              if 'name="referrer"' not in s:
+                  bad.append(name + ': referrer policy missing')
+              if 'http-equiv="Content-Security-Policy"' not in s:
+                  bad.append(name + ': CSP missing')
           if bad:
-              print('\n'.join(bad))
-              sys.exit(1)
+              print('\n'.join(bad)); sys.exit(1)
+          print('Content CSP audit passed.')
 
       - name: Commit hardening
         run: |
