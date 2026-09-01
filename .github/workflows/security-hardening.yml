@@ -28,14 +28,12 @@ jobs:
 
           changed = []
           audited = []
-          warnings = []
 
           for p in sorted(Path('.').glob('*.html')):
               text = p.read_text(encoding='utf-8')
               original = text
               audited.append(p.name)
 
-              # Add browser-enforced meta policies where they are missing.
               additions = []
               if 'http-equiv="Content-Security-Policy"' not in text and "http-equiv='Content-Security-Policy'" not in text:
                   additions.append(csp)
@@ -48,10 +46,11 @@ jobs:
                   else:
                       text = re.sub(r'(<meta[^>]+viewport[^>]*>)', r'\1\n' + '\n'.join(additions), text, count=1, flags=re.I)
 
-              # Force same-site absolute links to HTTPS.
+              # Never allow same-site links to fall back to cleartext HTTP.
               text = text.replace('http://avbusraturunc.com', 'https://avbusraturunc.com')
+              text = text.replace('http://www.avbusraturunc.com', 'https://www.avbusraturunc.com')
 
-              # Harden target=_blank anchors without touching ordinary links.
+              # Prevent reverse-tabnabbing on links that open a new tab.
               def harden_anchor(match):
                   tag = match.group(0)
                   if not re.search(r'target\s*=\s*["\']_blank["\']', tag, re.I):
@@ -68,22 +67,12 @@ jobs:
 
               text = re.sub(r'<a\b[^>]*>', harden_anchor, text, flags=re.I)
 
-              # Audit markers only; do not fake server response headers in HTML.
-              if 'javascript:' in text.lower():
-                  warnings.append(f'{p.name}: javascript: URL bulundu')
-              if re.search(r'(?<!https:)//[^\s"\']+', text):
-                  pass
-
               if text != original:
                   p.write_text(text, encoding='utf-8')
                   changed.append(p.name)
 
           print('Audited:', ', '.join(audited))
           print('Changed:', ', '.join(changed) if changed else 'none')
-          if warnings:
-              print('Warnings:')
-              for w in warnings:
-                  print('-', w)
           PY
 
       - name: Verify baseline
@@ -92,24 +81,46 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re, sys
+
           problems=[]
           for p in sorted(Path('.').glob('*.html')):
               t=p.read_text(encoding='utf-8')
+
               if 'http-equiv="Content-Security-Policy"' not in t:
                   problems.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in t:
                   problems.append(f'{p.name}: referrer policy eksik')
+
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
                   if not re.search(r'rel=["\'][^"\']*noopener', a, flags=re.I):
                       problems.append(f'{p.name}: target=_blank noopener eksik')
                   if not re.search(r'rel=["\'][^"\']*noreferrer', a, flags=re.I):
                       problems.append(f'{p.name}: target=_blank noreferrer eksik')
-              if 'http://avbusraturunc.com' in t:
-                  problems.append(f'{p.name}: HTTP site içi bağlantı')
+
+              # Dangerous URL schemes must never be used in links or resources.
+              if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, flags=re.I):
+                  problems.append(f'{p.name}: javascript: URL bulundu')
+
+              # Block mixed-content links/resources.
+              if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, flags=re.I):
+                  problems.append(f'{p.name}: güvensiz HTTP bağlantısı/kaynağı bulundu')
+
+              # Legacy plugin/object surfaces are not needed on this site.
+              if re.search(r'<(?:object|embed|applet)\b', t, flags=re.I):
+                  problems.append(f'{p.name}: object/embed/applet etiketi bulundu')
+
+              # Only explicitly allowlisted external scripts may be loaded.
+              for src in re.findall(r'<script\b[^>]*\bsrc=["\']([^"\']+)["\']', t, flags=re.I):
+                  if src.startswith(('script.js','home-polish.js','./','/')):
+                      continue
+                  if src.startswith('https://www.googletagmanager.com/'):
+                      continue
+                  problems.append(f'{p.name}: izin verilmeyen dış script: {src}')
+
           if problems:
               print('\n'.join(problems))
               sys.exit(1)
-          print('HTML security baseline verification passed.')
+          print('Extended HTML security verification passed.')
           PY
 
       - name: Commit hardened pages
