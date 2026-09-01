@@ -1,0 +1,62 @@
+name: Harden content page CSP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  PAGES: "aile-bosanma-hukuku.html anlasmali-bosanma-davasi.html articles.html ceza-hukuku.html gayrimenkul-hukuku.html hukuki-icerikler.html icra-iflas-hukuku.html idare-hukuku.html infaz-hesaplama.html is-hukuku.html kira-hukuku.html miras-hukuku.html sigorta-hukuku.html ticaret-hukuku.html tutuklama-kararina-itiraz.html"
+
+jobs:
+  harden-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace inline analytics and tighten CSP
+        shell: python
+        run: |
+          import os, pathlib, re
+          for name in os.environ['PAGES'].split():
+              p=pathlib.Path(name)
+              if not p.exists(): continue
+              s=p.read_text(encoding='utf-8')
+              s=re.sub(r'<script>\s*window\.dataLayer = window\.dataLayer \|\| \[\];\s*function gtag\(\)\{dataLayer\.push\(arguments\);\}\s*gtag\(\x27js\x27, new Date\(\)\);\s*gtag\(\x27config\x27, \x27G-1E6W6P6281\x27\);\s*</script>', '<script src="analytics.js"></script>', s, flags=re.S)
+              s=s.replace("script-src 'self' 'unsafe-inline' https://www.googletagmanager.com", "script-src 'self' https://www.googletagmanager.com")
+              # CSS on these pages is external; remove unsafe-inline only when no inline style blocks/attributes remain.
+              if '<style' not in s.lower() and ' style=' not in s.lower():
+                  s=s.replace("style-src 'self' 'unsafe-inline'", "style-src 'self'")
+              p.write_text(s,encoding='utf-8')
+      - name: Verify hardened pages
+        shell: python
+        run: |
+          import os, pathlib, re, sys
+          bad=[]
+          for name in os.environ['PAGES'].split():
+              p=pathlib.Path(name)
+              if not p.exists(): continue
+              s=p.read_text(encoding='utf-8')
+              if "script-src 'self' 'unsafe-inline'" in s: bad.append(name+': script unsafe-inline')
+              if 'window.dataLayer = window.dataLayer || []' in s: bad.append(name+': inline analytics')
+              if re.search(r'<script(?![^>]*src=)(?![^>]*type=["\x27]application/ld\+json)',s,re.I): bad.append(name+': unexpected inline script')
+          if bad:
+              print('\n'.join(bad)); sys.exit(1)
+      - name: Commit hardening
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add $PAGES
+          if git diff --cached --quiet; then echo 'No changes'; else git commit -m 'Harden CSP across content pages'; git push; fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
