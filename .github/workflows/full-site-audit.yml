@@ -1,0 +1,116 @@
+name: Full site technical audit
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/full-site-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Audit SEO, links, structured data and security
+        shell: python
+        run: |
+          from pathlib import Path
+          import json, re, sys
+          from urllib.parse import urlparse
+
+          domain = 'https://avbusraturunc.com/'
+          html_files = sorted(Path('.').glob('*.html'))
+          errors, warnings = [], []
+          titles, descriptions, canonicals = {}, {}, {}
+
+          def add_dupe(bucket, value, name):
+              bucket.setdefault(value, []).append(name)
+
+          for p in html_files:
+              t = p.read_text(encoding='utf-8')
+              low = t.lower()
+
+              if not re.search(r'<html\b[^>]*\blang=["\']tr["\']', t, re.I): errors.append(f'{p.name}: html lang=tr eksik')
+              tm = re.search(r'<title>(.*?)</title>', t, re.I | re.S)
+              if not tm or not tm.group(1).strip(): errors.append(f'{p.name}: title eksik')
+              else: add_dupe(titles, re.sub(r'\s+', ' ', tm.group(1).strip()), p.name)
+              dm = re.search(r'<meta\b[^>]*\bname=["\']description["\'][^>]*\bcontent=["\']([^"\']*)["\']', t, re.I)
+              if not dm: dm = re.search(r'<meta\b[^>]*\bcontent=["\']([^"\']*)["\'][^>]*\bname=["\']description["\']', t, re.I)
+              if not dm or not dm.group(1).strip(): errors.append(f'{p.name}: meta description eksik')
+              else: add_dupe(descriptions, re.sub(r'\s+', ' ', dm.group(1).strip()), p.name)
+              cm = re.search(r'<link\b[^>]*\brel=["\']canonical["\'][^>]*\bhref=["\']([^"\']+)["\']', t, re.I)
+              if not cm: cm = re.search(r'<link\b[^>]*\bhref=["\']([^"\']+)["\'][^>]*\brel=["\']canonical["\']', t, re.I)
+              if not cm: errors.append(f'{p.name}: canonical eksik')
+              else:
+                  c = cm.group(1)
+                  if not c.startswith(domain): errors.append(f'{p.name}: canonical alan adı uyumsuz: {c}')
+                  add_dupe(canonicals, c, p.name)
+
+              if 'name="robots"' not in low and "name='robots'" not in low: errors.append(f'{p.name}: robots meta eksik')
+              if 'content-security-policy' not in low: errors.append(f'{p.name}: CSP meta eksik')
+              if 'name="referrer"' not in low and "name='referrer'" not in low: errors.append(f'{p.name}: referrer policy eksik')
+
+              h1s = re.findall(r'<h1\b', t, re.I)
+              if len(h1s) != 1: errors.append(f'{p.name}: H1 sayısı {len(h1s)}')
+
+              if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, re.I): errors.append(f'{p.name}: http:// kaynak/bağlantı var')
+              if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, re.I): errors.append(f'{p.name}: javascript: URL var')
+              if re.search(r'<(?:object|embed|applet)\b', t, re.I): errors.append(f'{p.name}: object/embed/applet var')
+
+              for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, re.I):
+                  if not re.search(r'rel=["\'][^"\']*noopener', a, re.I) or not re.search(r'rel=["\'][^"\']*noreferrer', a, re.I):
+                      errors.append(f'{p.name}: target=_blank rel güvenliği eksik')
+
+              for sm in re.finditer(r'<script\b([^>]*)>(.*?)</script>', t, re.I | re.S):
+                  attrs, body = sm.group(1), sm.group(2)
+                  if re.search(r'\bsrc\s*=', attrs, re.I):
+                      continue
+                  typ = re.search(r'\btype=["\']([^"\']+)["\']', attrs, re.I)
+                  if typ and typ.group(1).lower() == 'application/ld+json':
+                      try: json.loads(body)
+                      except Exception as e: errors.append(f'{p.name}: geçersiz JSON-LD: {e}')
+                      continue
+                  if 'window.datalayer' in body.lower() or 'gtag(' in body.lower():
+                      errors.append(f'{p.name}: inline analytics kaldı')
+                  elif body.strip(): warnings.append(f'{p.name}: runtime inline script mevcut')
+
+              if '<style' in low or re.search(r'\sstyle=["\']', t, re.I): warnings.append(f'{p.name}: inline style mevcut')
+              if "script-src 'self' 'unsafe-inline'" in t: warnings.append(f'{p.name}: script unsafe-inline mevcut')
+              if "style-src 'self' 'unsafe-inline'" in t: warnings.append(f'{p.name}: style unsafe-inline mevcut')
+
+              for href in re.findall(r'<a\b[^>]*\bhref=["\']([^"\']+)["\']', t, re.I):
+                  if href.startswith(('#','mailto:','tel:','https://','http://')): continue
+                  target = href.split('#',1)[0].split('?',1)[0]
+                  if not target: continue
+                  if target == '/': continue
+                  if target.startswith('/'):
+                      target = target[1:]
+                  if target and not Path(target).exists(): errors.append(f'{p.name}: kırık iç bağlantı -> {href}')
+
+          for label, bucket in [('title', titles), ('description', descriptions), ('canonical', canonicals)]:
+              for value, names in bucket.items():
+                  if len(names) > 1: warnings.append(f'duplicate {label}: {names} :: {value}')
+
+          sitemap = Path('sitemap.xml')
+          if not sitemap.exists(): errors.append('sitemap.xml eksik')
+          else:
+              s = sitemap.read_text(encoding='utf-8')
+              for p in html_files:
+                  expected = domain if p.name == 'index.html' else domain + p.name
+                  if expected not in s: errors.append(f'sitemap eksik URL: {expected}')
+
+          robots = Path('robots.txt')
+          if not robots.exists(): errors.append('robots.txt eksik')
+          elif domain + 'sitemap.xml' not in robots.read_text(encoding='utf-8'): errors.append('robots.txt sitemap bildirimi eksik')
+
+          print(f'Audited HTML files: {len(html_files)}')
+          print('\nWARNINGS:')
+          print('\n'.join(sorted(set(warnings))) if warnings else 'none')
+          print('\nERRORS:')
+          print('\n'.join(sorted(set(errors))) if errors else 'none')
+          if errors:
+              sys.exit(1)
