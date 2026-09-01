@@ -24,10 +24,17 @@ Entity relationship: Av. Büşra Turunç is the lawyer associated with Erçakır
 - Kira Hukuku: https://avbusraturunc.com/kira-hukuku.html
 - Sigorta Hukuku: https://avbusraturunc.com/sigorta-hukuku.html
 
+## Detailed legal information
+- Tutuklama Kararına İtiraz ve Tutukluluğun İncelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
+- Anlaşmalı Boşanma Davası: https://avbusraturunc.com/anlasmali-bosanma-davasi.html
+- Kıdem ve İhbar Tazminatı: https://avbusraturunc.com/kidem-ihbar-tazminati.html
+- İcra Takibine İtiraz: https://avbusraturunc.com/icra-takibine-itiraz.html
+- Tahliye Davası: https://avbusraturunc.com/tahliye-davasi.html
+- Tapu İptal ve Tescil Davası: https://avbusraturunc.com/tapu-iptal-tescil-davasi.html
+
 ## Legal information and tools
 - Hukuki Bilgilendirmeler: https://avbusraturunc.com/articles.html
 - Hukuki İçerikler: https://avbusraturunc.com/hukuki-icerikler.html
-- Tutuklama Kararına İtiraz ve Tutukluluğun İncelenmesi: https://avbusraturunc.com/tutuklama-kararina-itiraz.html
 - İnfaz Hesaplama: https://avbusraturunc.com/infaz-hesaplama.html
 - RSS: https://avbusraturunc.com/rss.xml
 - Sitemap: https://avbusraturunc.com/sitemap.xml
