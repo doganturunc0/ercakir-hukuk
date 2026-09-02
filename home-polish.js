@@ -1,7 +1,7 @@
 (()=>{
   const mapCard=document.querySelector('.map-card');
   if(mapCard){
-    const openUrl=mapCard.getAttribute('href')||mapCard.querySelector('.map-overlay-link')?.getAttribute('href')||'https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r+Hukuk+B%C3%BCrosu+Salihli+Manisa';
+    const openUrl=mapCard.getAttribute('href')||mapCard.querySelector('.map-overlay-link')?.getAttribute('href')||'https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r%20Hukuk%20B%C3%BCrosu%20Salihli%20Manisa';
 
     // Privacy-first map card: do not embed Google Maps or contact a
     // third-party map service until the visitor explicitly clicks.
@@ -23,4 +23,12 @@
     cover.innerHTML=link.innerHTML;
     link.replaceWith(cover);
   });
+
+  const footer=document.querySelector('footer');
+  if(footer && !footer.querySelector('[data-legal-footer]')){
+    const legal=document.createElement('p');
+    legal.setAttribute('data-legal-footer','');
+    legal.innerHTML='<a href="iletisim.html">İletişim</a> · <a href="kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a> · <a href="gizlilik-cerez-politikasi.html">Gizlilik ve Çerez Politikası</a>';
+    footer.appendChild(legal);
+  }
 })();
