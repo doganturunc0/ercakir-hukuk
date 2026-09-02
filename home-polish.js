@@ -28,7 +28,7 @@
   if(footer && !footer.querySelector('[data-legal-footer]')){
     const legal=document.createElement('p');
     legal.setAttribute('data-legal-footer','');
-    legal.innerHTML='<a href="iletisim.html">İletişim</a> · <a href="kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a> · <a href="gizlilik-cerez-politikasi.html">Gizlilik ve Çerez Politikası</a>';
+    legal.innerHTML='<a href="hakkimizda.html">Hakkımızda</a> · <a href="iletisim.html">İletişim</a> · <a href="kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a> · <a href="gizlilik-cerez-politikasi.html">Gizlilik ve Çerez Politikası</a>';
     footer.appendChild(legal);
   }
 })();
