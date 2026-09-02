@@ -1,0 +1,86 @@
+name: Link integrity audit
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "*.html"
+      - ".github/workflows/link-integrity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Check empty, broken and fragment links
+        shell: python
+        run: |
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          import sys
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.ids=set(); self.links=[]; self.anchor_without_href=[]
+              def handle_starttag(self, tag, attrs):
+                  d=dict(attrs)
+                  if 'id' in d and d['id']:
+                      self.ids.add(d['id'])
+                  if tag == 'a':
+                      if 'href' not in d:
+                          self.anchor_without_href.append(d)
+                      else:
+                          self.links.append(d.get('href'))
+
+          html_files=sorted(Path('.').glob('*.html'))
+          parsed={}
+          errors=[]
+
+          for f in html_files:
+              p=P(); p.feed(f.read_text(encoding='utf-8'))
+              parsed[f.name]=p
+              if p.anchor_without_href:
+                  errors.append(f'{f.name}: href olmayan <a> etiketi var ({len(p.anchor_without_href)})')
+              for href in p.links:
+                  if href is None or not href.strip():
+                      errors.append(f'{f.name}: boş href var')
+                      continue
+                  href=href.strip()
+                  if href == '#':
+                      errors.append(f'{f.name}: boşa düşen href="#" var')
+                      continue
+                  if href.startswith(('mailto:','tel:','javascript:')):
+                      continue
+                  u=urlparse(href)
+                  if u.scheme in ('http','https'):
+                      if u.netloc not in ('avbusraturunc.com','www.avbusraturunc.com'):
+                          continue
+                      path=unquote(u.path.lstrip('/')) or 'index.html'
+                      frag=u.fragment
+                  else:
+                      raw=href
+                      if raw.startswith('#'):
+                          path=f.name
+                          frag=raw[1:]
+                      else:
+                          path=unquote(u.path.lstrip('/')) or 'index.html'
+                          frag=u.fragment
+                  if path not in parsed and not Path(path).exists():
+                      errors.append(f'{f.name}: kırık iç bağlantı -> {href}')
+                      continue
+                  if frag:
+                      target_name=path if path.endswith('.html') else f.name
+                      if target_name in parsed and frag not in parsed[target_name].ids:
+                          errors.append(f'{f.name}: olmayan bölüm bağlantısı -> {href}')
+
+          print(f'Audited HTML files: {len(html_files)}')
+          if errors:
+              print('\n'.join(sorted(set(errors))))
+              sys.exit(1)
+          print('No empty, broken or missing-fragment internal links found.')
