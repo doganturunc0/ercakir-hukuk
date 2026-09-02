@@ -1,0 +1,48 @@
+name: Patch homepage local SEO NAP
+
+on:
+  push:
+    paths:
+      - '.github/workflows/local-seo-nap-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-homepage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch homepage NAP and entity links
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          replacements={
+            '"telephone":"+90 553 321 85 93","logo"':'"telephone":"+90 553 321 85 93","email":"avbusraturunc45@gmail.com","logo"',
+            '"address":{"@type":"PostalAddress","addressLocality":"Salihli","addressRegion":"Manisa","addressCountry":"TR"}':'"address":{"@type":"PostalAddress","streetAddress":"Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1, Kat: 3, No: 316","addressLocality":"Salihli","addressRegion":"Manisa","addressCountry":"TR"}',
+            '"sameAs":["https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r+Hukuk+B%C3%BCrosu+Salihli+Manisa","https://www.instagram.com/ercakirhukuk/"]':'"sameAs":["https://www.instagram.com/ercakirhukuk/","https://avukatbilgisi.com/manisa-barosu-avukatlari/301601-busra-turunc"]',
+            '<p class="contact-phone"><strong>Telefon:</strong> <a href="tel:+905533218593" title="0553 321 85 93">0553 321 85 93</a></p>':'<p class="contact-phone"><strong>Telefon:</strong> <a href="tel:+905533218593" title="0553 321 85 93">0553 321 85 93</a></p><p class="contact-address"><strong>Adres:</strong> Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1, Kat: 3, No: 316 · Salihli / Manisa</p><p class="contact-email"><strong>E-posta:</strong> <a href="mailto:avbusraturunc45@gmail.com">avbusraturunc45@gmail.com</a></p>'
+          }
+          changed=False
+          for old,new in replacements.items():
+            if old in s:
+              s=s.replace(old,new,1); changed=True
+            elif new not in s:
+              raise SystemExit(f'Expected pattern missing: {old[:80]}')
+          if changed:
+            p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit change when needed
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'local-seo: publish verified NAP and profile signals'
+          git push
