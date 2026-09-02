@@ -1,0 +1,81 @@
+name: Live response security audit
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/live-response-security-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  headers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check HTTP redirect and HTTPS response headers
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "== HTTP redirect =="
+          curl -sS --max-time 20 -o /dev/null -D http-headers.txt http://avbusraturunc.com/
+          cat http-headers.txt
+
+          echo "== HTTPS final response =="
+          curl -sS --max-time 20 -L -o /dev/null -D redirect-chain.txt https://avbusraturunc.com/
+          cat redirect-chain.txt
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          http = Path('http-headers.txt').read_text(errors='replace')
+          chain = Path('redirect-chain.txt').read_text(errors='replace')
+
+          blocks = [b.strip() for b in re.split(r'\r?\n\r?\n', chain) if b.strip().startswith('HTTP/')]
+          final = blocks[-1] if blocks else chain
+
+          def headers(block):
+              out = {}
+              for line in block.splitlines()[1:]:
+                  if ':' in line:
+                      k, v = line.split(':', 1)
+                      out[k.strip().lower()] = v.strip()
+              return out
+
+          h = headers(final)
+          print('\n== Parsed final response ==')
+          print(final)
+
+          required = {
+              'strict-transport-security': 'HSTS',
+              'x-content-type-options': 'MIME sniffing protection',
+              'referrer-policy': 'Referrer Policy',
+              'permissions-policy': 'Permissions Policy',
+          }
+          frame_ok = 'x-frame-options' in h or ('content-security-policy' in h and 'frame-ancestors' in h['content-security-policy'].lower())
+
+          print('\n== Security header assessment ==')
+          for key, label in required.items():
+              if key in h:
+                  print(f'PASS {label}: {h[key]}')
+              else:
+                  print(f'MISSING {label}')
+          if frame_ok:
+              print('PASS Clickjacking protection: X-Frame-Options or CSP frame-ancestors present')
+          else:
+              print('MISSING Clickjacking response protection (X-Frame-Options / CSP frame-ancestors)')
+
+          acao = h.get('access-control-allow-origin')
+          print(f'INFO Access-Control-Allow-Origin: {acao if acao is not None else "not present"}')
+
+          http_status = http.splitlines()[0] if http.splitlines() else ''
+          location = headers(http).get('location','')
+          if not re.search(r'HTTP/\S+\s+30[1278]\b', http_status):
+              raise SystemExit(f'FAIL HTTP endpoint is not redirecting: {http_status}')
+          if not location.lower().startswith('https://'):
+              raise SystemExit(f'FAIL HTTP redirect is not HTTPS: {location}')
+          print(f'PASS HTTP -> HTTPS redirect: {http_status} -> {location}')
+          PY
