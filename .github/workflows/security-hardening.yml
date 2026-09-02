@@ -26,9 +26,8 @@ jobs:
           from pathlib import Path
           import re
 
-          # Analytics is intentionally disabled. Keep CSP limited to resources
-          # that the current static site actually needs.
-          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          # Privacy-first CSP: no analytics, no third-party scripts, no iframes.
+          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
 
           changed = []
@@ -39,19 +38,15 @@ jobs:
               original = text
               audited.append(p.name)
 
-              # Remove the legacy Google tag loader. The site does not enable
-              # analytics, so this third-party request is unnecessary.
-              text = re.sub(
-                  r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*',
-                  '\n', text, flags=re.I
-              )
+              # Remove the legacy Google tag loader. Analytics is intentionally
+              # disabled, so this third-party request is unnecessary.
+              text = re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*', '\n', text, flags=re.I)
               text = re.sub(
                   r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*',
                   '\n', text, flags=re.I
               )
 
-              # Normalize every page to the current CSP instead of leaving
-              # stale Google Analytics / Tag Manager allowances behind.
+              # Normalize every page to the current CSP.
               if re.search(r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>', text, re.I):
                   text = re.sub(
                       r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>',
@@ -120,6 +115,8 @@ jobs:
                   problems.append(f'{p.name}: CSP unsafe-inline içeriyor')
               if 'googletagmanager.com' in low or 'google-analytics.com' in low:
                   problems.append(f'{p.name}: gereksiz Google analytics/tag manager kaynağı kaldı')
+              if '<iframe' in low:
+                  problems.append(f'{p.name}: üçüncü taraf iframe kaldı')
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
                   if not re.search(r'rel=["\'][^"\']*noopener', a, flags=re.I):
                       problems.append(f'{p.name}: target=_blank noopener eksik')
