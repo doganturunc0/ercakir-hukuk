@@ -26,7 +26,9 @@ jobs:
           from pathlib import Path
           import re
 
-          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          # Analytics is intentionally disabled. Keep CSP limited to resources
+          # that the current static site actually needs.
+          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
 
           changed = []
@@ -37,17 +39,37 @@ jobs:
               original = text
               audited.append(p.name)
 
-              additions = []
-              if 'http-equiv="Content-Security-Policy"' not in text and "http-equiv='Content-Security-Policy'" not in text:
-                  additions.append(csp)
-              if 'name="referrer"' not in text and "name='referrer'" not in text:
-                  additions.append(referrer)
-              if additions:
+              # Remove the legacy Google tag loader. The site does not enable
+              # analytics, so this third-party request is unnecessary.
+              text = re.sub(
+                  r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*',
+                  '\n', text, flags=re.I
+              )
+              text = re.sub(
+                  r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*',
+                  '\n', text, flags=re.I
+              )
+
+              # Normalize every page to the current CSP instead of leaving
+              # stale Google Analytics / Tag Manager allowances behind.
+              if re.search(r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>', text, re.I):
+                  text = re.sub(
+                      r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>',
+                      csp, text, count=1, flags=re.I
+                  )
+              else:
                   marker = '<meta name="viewport" content="width=device-width,initial-scale=1">'
                   if marker in text:
-                      text = text.replace(marker, marker + '\n' + '\n'.join(additions), 1)
+                      text = text.replace(marker, marker + '\n' + csp, 1)
                   else:
-                      text = re.sub(r'(<meta[^>]+viewport[^>]*>)', r'\1\n' + '\n'.join(additions), text, count=1, flags=re.I)
+                      text = re.sub(r'(<meta[^>]+viewport[^>]*>)', r'\1\n' + csp, text, count=1, flags=re.I)
+
+              if 'name="referrer"' not in text and "name='referrer'" not in text:
+                  marker = '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                  if marker in text:
+                      text = text.replace(marker, marker + '\n' + referrer, 1)
+                  else:
+                      text = re.sub(r'(<meta[^>]+viewport[^>]*>)', r'\1\n' + referrer, text, count=1, flags=re.I)
 
               text = text.replace('http://avbusraturunc.com', 'https://avbusraturunc.com')
               text = text.replace('http://www.avbusraturunc.com', 'https://www.avbusraturunc.com')
@@ -89,12 +111,15 @@ jobs:
 
           for p in html_files:
               t=p.read_text(encoding='utf-8')
-              if 'http-equiv="Content-Security-Policy"' not in t:
+              low=t.lower()
+              if 'http-equiv="content-security-policy"' not in low:
                   problems.append(f'{p.name}: CSP meta eksik')
-              if 'name="referrer"' not in t:
+              if 'name="referrer"' not in low:
                   problems.append(f'{p.name}: referrer policy eksik')
               if "script-src 'self' 'unsafe-inline'" in t or "style-src 'self' 'unsafe-inline'" in t:
                   problems.append(f'{p.name}: CSP unsafe-inline içeriyor')
+              if 'googletagmanager.com' in low or 'google-analytics.com' in low:
+                  problems.append(f'{p.name}: gereksiz Google analytics/tag manager kaynağı kaldı')
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
                   if not re.search(r'rel=["\'][^"\']*noopener', a, flags=re.I):
                       problems.append(f'{p.name}: target=_blank noopener eksik')
@@ -108,8 +133,6 @@ jobs:
                   problems.append(f'{p.name}: object/embed/applet etiketi bulundu')
               for src in re.findall(r'<script\b[^>]*\bsrc=["\']([^"\']+)["\']', t, flags=re.I):
                   if src.startswith(('script.js','home-polish.js','analytics.js','infaz-hesaplama-events.js','infaz-hesaplama.runtime-','./','/')):
-                      continue
-                  if src.startswith('https://www.googletagmanager.com/'):
                       continue
                   problems.append(f'{p.name}: izin verilmeyen dış script: {src}')
 
@@ -134,5 +157,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '*.html'
-          git commit -m "Harden security metadata across site"
+          git commit -m "Harden privacy and security metadata across site"
           git push
