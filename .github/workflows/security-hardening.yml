@@ -7,6 +7,9 @@ on:
       - "*.html"
       - "*.js"
       - "*.css"
+      - "SECURITY.md"
+      - "security.txt"
+      - ".well-known/security.txt"
       - ".github/workflows/security-hardening.yml"
 
 permissions:
@@ -104,6 +107,22 @@ jobs:
           html_files=sorted(Path('.').glob('*.html'))
           text_files=html_files + sorted(Path('.').glob('*.js')) + sorted(Path('.').glob('*.css'))
 
+          required_pages = {
+              'kvkk-aydinlatma-metni.html': ('KVKK', '6698'),
+              'gizlilik-cerez-politikasi.html': ('Gizlilik', 'Çerez'),
+              'iletisim.html': ('İletişim', 'tel:+905533218593'),
+              '404.html': ('noindex', 'Sayfa bulunamadı'),
+          }
+          for name, markers in required_pages.items():
+              p=Path(name)
+              if not p.exists():
+                  problems.append(f'{name}: zorunlu hukuk/güvenlik sayfası eksik')
+                  continue
+              body=p.read_text(encoding='utf-8')
+              for marker in markers:
+                  if marker.lower() not in body.lower():
+                      problems.append(f'{name}: beklenen içerik eksik -> {marker}')
+
           for p in html_files:
               t=p.read_text(encoding='utf-8')
               low=t.lower()
@@ -113,6 +132,10 @@ jobs:
                   problems.append(f'{p.name}: referrer policy eksik')
               if "script-src 'self' 'unsafe-inline'" in t or "style-src 'self' 'unsafe-inline'" in t:
                   problems.append(f'{p.name}: CSP unsafe-inline içeriyor')
+              if "frame-src 'none'" not in t:
+                  problems.append(f'{p.name}: CSP frame-src none eksik')
+              if "object-src 'none'" not in t:
+                  problems.append(f'{p.name}: CSP object-src none eksik')
               if 'googletagmanager.com' in low or 'google-analytics.com' in low:
                   problems.append(f'{p.name}: gereksiz Google analytics/tag manager kaynağı kaldı')
               if '<iframe' in low:
@@ -133,6 +156,49 @@ jobs:
                       continue
                   problems.append(f'{p.name}: izin verilmeyen dış script: {src}')
 
+          # Contact page must remain form-free unless a dedicated KVKK-compliant
+          # collection/consent flow is deliberately introduced.
+          contact=Path('iletisim.html').read_text(encoding='utf-8') if Path('iletisim.html').exists() else ''
+          if re.search(r'<form\b', contact, flags=re.I):
+              problems.append('iletisim.html: kişisel veri toplayan form beklenmedik şekilde eklendi')
+
+          # Privacy-first analytics must remain disabled by default.
+          analytics=Path('analytics.js')
+          if not analytics.exists():
+              problems.append('analytics.js: privacy gate dosyası eksik')
+          else:
+              a=analytics.read_text(encoding='utf-8')
+              if 'window.ercakirAnalyticsEnabled = false;' not in a:
+                  problems.append('analytics.js: analytics varsayılan kapalı değil')
+              if re.search(r'\bgtag\s*\(', a, flags=re.I):
+                  problems.append('analytics.js: doğrudan gtag çağrısı bulundu')
+
+          # Responsible disclosure files must be complete and canonical.
+          sec=Path('.well-known/security.txt')
+          if not sec.exists():
+              problems.append('.well-known/security.txt: eksik')
+          else:
+              s=sec.read_text(encoding='utf-8')
+              for marker in (
+                  'Contact: https://avbusraturunc.com/#iletisim',
+                  'Canonical: https://avbusraturunc.com/.well-known/security.txt',
+                  'Policy: https://avbusraturunc.com/SECURITY.md',
+                  'Expires:'
+              ):
+                  if marker not in s:
+                      problems.append(f'.well-known/security.txt: eksik alan -> {marker}')
+          if not Path('SECURITY.md').exists():
+              problems.append('SECURITY.md: sorumlu bildirim politikası eksik')
+
+          # Homepage must expose the legal/privacy pages either statically or via
+          # its deliberately loaded first-party footer script.
+          home=Path('index.html').read_text(encoding='utf-8')
+          polish=Path('home-polish.js').read_text(encoding='utf-8') if Path('home-polish.js').exists() else ''
+          combined=home + '\n' + polish
+          for target in ('iletisim.html','kvkk-aydinlatma-metni.html','gizlilik-cerez-politikasi.html'):
+              if target not in combined:
+                  problems.append(f'homepage footer/legal navigation eksik -> {target}')
+
           for p in text_files:
               t=p.read_text(encoding='utf-8')
               if 'http://avbusraturunc.com' in t or 'http://www.avbusraturunc.com' in t:
@@ -141,7 +207,7 @@ jobs:
           if problems:
               print('\n'.join(sorted(set(problems))))
               sys.exit(1)
-          print('Extended site security verification passed.')
+          print('Extended security, KVKK and privacy verification passed.')
           PY
 
       - name: Commit hardened pages
