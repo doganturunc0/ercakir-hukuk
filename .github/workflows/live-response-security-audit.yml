@@ -14,7 +14,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check HTTP redirect and HTTPS response headers
+      - name: Check HTTP redirect, HTTPS headers and legal endpoints
         shell: bash
         run: |
           set -euo pipefail
@@ -29,8 +29,9 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
-          import re
+          import re, subprocess
 
+          base = 'https://avbusraturunc.com'
           http = Path('http-headers.txt').read_text(errors='replace')
           chain = Path('redirect-chain.txt').read_text(errors='replace')
           blocks = [b.strip() for b in re.split(r'\r?\n\r?\n', chain) if b.strip().startswith('HTTP/')]
@@ -44,6 +45,11 @@ jobs:
                       out[k.strip().lower()] = v.strip()
               return out
 
+          def status(path):
+              return subprocess.check_output([
+                  'curl','-sS','--max-time','20','-o','/dev/null','-w','%{http_code}',base + path
+              ], text=True).strip()
+
           h = headers(final)
           required = {
               'strict-transport-security': 'HSTS',
@@ -53,11 +59,7 @@ jobs:
           }
           frame_ok = 'x-frame-options' in h or ('content-security-policy' in h and 'frame-ancestors' in h['content-security-policy'].lower())
 
-          report = []
-          report.append('## Live response security audit')
-          report.append('')
-          report.append('| Control | Result |')
-          report.append('|---|---|')
+          report = ['## Live response security audit', '', '| Control | Result |', '|---|---|']
           for key, label in required.items():
               value = h.get(key)
               report.append(f'| {label} | {"✅ " + value if value else "⚠️ Missing"} |')
@@ -70,12 +72,37 @@ jobs:
           redirect_ok = bool(re.search(r'HTTP/\S+\s+30[1278]\b', http_status)) and location.lower().startswith('https://')
           report.append(f'| HTTP → HTTPS | {"✅ " + http_status + " → " + location if redirect_ok else "❌ Redirect problem"} |')
 
-          print('\n'.join(report))
-          summary = Path('/tmp/live-security-summary.md')
-          summary.write_text('\n'.join(report) + '\n', encoding='utf-8')
+          endpoints = {
+              '/hakkimizda.html': 'Hakkımızda',
+              '/iletisim.html': 'İletişim',
+              '/kvkk-aydinlatma-metni.html': 'KVKK Aydınlatma Metni',
+              '/gizlilik-cerez-politikasi.html': 'Gizlilik ve Çerez Politikası',
+              '/.well-known/security.txt': 'security.txt',
+              '/SECURITY.md': 'Security policy',
+          }
+          endpoint_failures = []
+          for path, label in endpoints.items():
+              code = status(path)
+              ok = code == '200'
+              report.append(f'| {label} endpoint | {"✅ 200" if ok else "❌ " + code} |')
+              if not ok:
+                  endpoint_failures.append(f'{path} returned {code}')
 
+          missing_code = status('/this-page-must-not-exist-security-check-8a35d.html')
+          missing_ok = missing_code == '404'
+          report.append(f'| Custom missing-page HTTP status | {"✅ 404" if missing_ok else "❌ " + missing_code} |')
+
+          print('\n'.join(report))
+          Path('/tmp/live-security-summary.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
+
+          failures = []
           if not redirect_ok:
-              raise SystemExit('HTTP endpoint is not safely redirecting to HTTPS')
+              failures.append('HTTP endpoint is not safely redirecting to HTTPS')
+          failures.extend(endpoint_failures)
+          if not missing_ok:
+              failures.append(f'unknown page returned {missing_code}, expected 404')
+          if failures:
+              raise SystemExit('\n'.join(failures))
           PY
 
           cat /tmp/live-security-summary.md >> "$GITHUB_STEP_SUMMARY"
