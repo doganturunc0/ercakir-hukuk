@@ -12,6 +12,8 @@ Entity relationship: Av. Büşra Turunç is the lawyer associated with Erçakır
 - Organization: Erçakır Hukuk Bürosu
 - Location: Salihli, Manisa, Türkiye
 - Website: https://avbusraturunc.com/
+- About: https://avbusraturunc.com/hakkimizda.html
+- Contact: https://avbusraturunc.com/iletisim.html
 - Canonical organization entity: https://avbusraturunc.com/#office
 - Canonical person entity: https://avbusraturunc.com/#busra
 - Canonical website entity: https://avbusraturunc.com/#website
@@ -36,7 +38,11 @@ Entity relationship: Av. Büşra Turunç is the lawyer associated with Erçakır
 - Tahliye Davası: https://avbusraturunc.com/tahliye-davasi.html
 - Tapu İptal ve Tescil Davası: https://avbusraturunc.com/tapu-iptal-tescil-davasi.html
 
-## Legal information and tools
+## Legal information, privacy and tools
+- Hakkımızda: https://avbusraturunc.com/hakkimizda.html
+- İletişim: https://avbusraturunc.com/iletisim.html
+- KVKK Aydınlatma Metni: https://avbusraturunc.com/kvkk-aydinlatma-metni.html
+- Gizlilik ve Çerez Politikası: https://avbusraturunc.com/gizlilik-cerez-politikasi.html
 - Hukuki Bilgilendirmeler: https://avbusraturunc.com/articles.html
 - Hukuki İçerikler: https://avbusraturunc.com/hukuki-icerikler.html
 - İnfaz Hesaplama: https://avbusraturunc.com/infaz-hesaplama.html
