@@ -27,14 +27,16 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import json, re, sys
+          from html.parser import HTMLParser
           from itertools import combinations
+          import json, re, sys
 
           domain = 'https://avbusraturunc.com/'
           html_files = sorted(Path('.').glob('*.html'))
           errors, warnings = [], []
           titles, descriptions, canonicals = {}, {}, {}
           page_texts = {}
+          indexable_pages = []
           content_pages = [
               'tutuklama-kararina-itiraz.html',
               'anlasmali-bosanma-davasi.html',
@@ -43,6 +45,23 @@ jobs:
               'tahliye-davasi.html',
               'tapu-iptal-tescil-davasi.html',
           ]
+
+          class HeadParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.title = ''
+                  self.in_title = False
+                  self.meta = []
+                  self.links = []
+              def handle_starttag(self, tag, attrs):
+                  a = dict(attrs)
+                  if tag.lower() == 'title': self.in_title = True
+                  elif tag.lower() == 'meta': self.meta.append(a)
+                  elif tag.lower() == 'link': self.links.append(a)
+              def handle_endtag(self, tag):
+                  if tag.lower() == 'title': self.in_title = False
+              def handle_data(self, data):
+                  if self.in_title: self.title += data
 
           def add_dupe(bucket, value, name):
               bucket.setdefault(value, []).append(name)
@@ -58,39 +77,40 @@ jobs:
 
           def shingles(text, size=7):
               words = re.findall(r'[a-zçğıöşü0-9]+', text, re.I)
-              if len(words) < size:
-                  return set()
+              if len(words) < size: return set()
               return {' '.join(words[i:i+size]) for i in range(len(words)-size+1)}
 
           for p in html_files:
               t = p.read_text(encoding='utf-8')
               low = t.lower()
+              parser = HeadParser(); parser.feed(t)
               main_text = visible_main_text(t)
               page_texts[p.name] = main_text
 
-              if not re.search(r'<html\b[^>]*\blang=["\']tr["\']', t, re.I): errors.append(f'{p.name}: html lang=tr eksik')
-              tm = re.search(r'<title>(.*?)</title>', t, re.I | re.S)
-              if not tm or not tm.group(1).strip(): errors.append(f'{p.name}: title eksik')
-              else: add_dupe(titles, re.sub(r'\s+', ' ', tm.group(1).strip()), p.name)
-              dm = re.search(r'<meta\b[^>]*\bname=["\']description["\'][^>]*\bcontent=["\']([^"\']*)["\']', t, re.I)
-              if not dm: dm = re.search(r'<meta\b[^>]*\bcontent=["\']([^"\']*)["\'][^>]*\bname=["\']description["\']', t, re.I)
-              if not dm or not dm.group(1).strip(): errors.append(f'{p.name}: meta description eksik')
-              else: add_dupe(descriptions, re.sub(r'\s+', ' ', dm.group(1).strip()), p.name)
-              cm = re.search(r'<link\b[^>]*\brel=["\']canonical["\'][^>]*\bhref=["\']([^"\']+)["\']', t, re.I)
-              if not cm: cm = re.search(r'<link\b[^>]*\bhref=["\']([^"\']+)["\'][^>]*\brel=["\']canonical["\']', t, re.I)
-              if not cm: errors.append(f'{p.name}: canonical eksik')
-              else:
-                  c = cm.group(1)
-                  if not c.startswith(domain): errors.append(f'{p.name}: canonical alan adı uyumsuz: {c}')
-                  add_dupe(canonicals, c, p.name)
+              metas = {(m.get('name') or m.get('property') or '').lower(): m.get('content','').strip() for m in parser.meta}
+              canonical = next((l.get('href','').strip() for l in parser.links if (l.get('rel') or '').lower() == 'canonical'), '')
+              robots_value = metas.get('robots','').lower()
+              is_noindex = 'noindex' in robots_value
 
-              if 'name="robots"' not in low and "name='robots'" not in low: errors.append(f'{p.name}: robots meta eksik')
+              if not re.search(r'<html\b[^>]*\blang=["\']tr["\']', t, re.I): errors.append(f'{p.name}: html lang=tr eksik')
+              title = re.sub(r'\s+', ' ', parser.title).strip()
+              if not title: errors.append(f'{p.name}: title eksik')
+              else: add_dupe(titles, title, p.name)
+              description = metas.get('description','')
+              if not description: errors.append(f'{p.name}: meta description eksik')
+              else: add_dupe(descriptions, description, p.name)
+              if not canonical: errors.append(f'{p.name}: canonical eksik')
+              else:
+                  if not canonical.startswith(domain): errors.append(f'{p.name}: canonical alan adı uyumsuz: {canonical}')
+                  add_dupe(canonicals, canonical, p.name)
+
+              if not robots_value: errors.append(f'{p.name}: robots meta eksik')
+              if not is_noindex: indexable_pages.append(p.name)
               if 'content-security-policy' not in low: errors.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in low and "name='referrer'" not in low: errors.append(f'{p.name}: referrer policy eksik')
 
               h1s = re.findall(r'<h1\b', t, re.I)
               if len(h1s) != 1: errors.append(f'{p.name}: H1 sayısı {len(h1s)}')
-
               if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, re.I): errors.append(f'{p.name}: http:// kaynak/bağlantı var')
               if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, re.I): errors.append(f'{p.name}: javascript: URL var')
               if re.search(r'<(?:object|embed|applet)\b', t, re.I): errors.append(f'{p.name}: object/embed/applet var')
@@ -102,15 +122,13 @@ jobs:
 
               for sm in re.finditer(r'<script\b([^>]*)>(.*?)</script>', t, re.I | re.S):
                   attrs, body = sm.group(1), sm.group(2)
-                  if re.search(r'\bsrc\s*=', attrs, re.I):
-                      continue
+                  if re.search(r'\bsrc\s*=', attrs, re.I): continue
                   typ = re.search(r'\btype=["\']([^"\']+)["\']', attrs, re.I)
                   if typ and typ.group(1).lower() == 'application/ld+json':
                       try: json.loads(body)
                       except Exception as e: errors.append(f'{p.name}: geçersiz JSON-LD: {e}')
                       continue
-                  if 'window.datalayer' in body.lower() or 'gtag(' in body.lower():
-                      errors.append(f'{p.name}: inline analytics kaldı')
+                  if 'window.datalayer' in body.lower() or 'gtag(' in body.lower(): errors.append(f'{p.name}: inline analytics kaldı')
                   elif body.strip(): warnings.append(f'{p.name}: runtime inline script mevcut')
 
               if '<style' in low or re.search(r'\sstyle=["\']', t, re.I): warnings.append(f'{p.name}: inline style mevcut')
@@ -121,78 +139,66 @@ jobs:
                   if href.startswith(('#','mailto:','tel:','https://','http://')): continue
                   target = href.split('#',1)[0].split('?',1)[0]
                   if not target or target == '/': continue
-                  if target.startswith('/'):
-                      target = target[1:]
+                  if target.startswith('/'): target = target[1:]
                   if target and not Path(target).exists(): errors.append(f'{p.name}: kırık iç bağlantı -> {href}')
 
               word_count = len(re.findall(r'[a-zçğıöşü0-9]+', main_text, re.I))
-              if p.name in content_pages and word_count < 300:
-                  warnings.append(f'{p.name}: ayrıntılı içerik kısa görünüyor ({word_count} kelime)')
+              if p.name in content_pages and word_count < 300: warnings.append(f'{p.name}: ayrıntılı içerik kısa görünüyor ({word_count} kelime)')
 
           for label, bucket in [('title', titles), ('description', descriptions), ('canonical', canonicals)]:
               for value, names in bucket.items():
                   if len(names) > 1: warnings.append(f'duplicate {label}: {names} :: {value}')
 
           for a, b in combinations(content_pages, 2):
-              if a not in page_texts or b not in page_texts:
-                  continue
+              if a not in page_texts or b not in page_texts: continue
               sa, sb = shingles(page_texts[a]), shingles(page_texts[b])
-              if not sa or not sb:
-                  continue
+              if not sa or not sb: continue
               similarity = len(sa & sb) / len(sa | sb)
-              if similarity >= 0.60:
-                  warnings.append(f'yüksek içerik benzerliği: {a} <-> {b} ({similarity:.0%})')
+              if similarity >= 0.60: warnings.append(f'yüksek içerik benzerliği: {a} <-> {b} ({similarity:.0%})')
 
           sitemap = Path('sitemap.xml')
           if not sitemap.exists(): errors.append('sitemap.xml eksik')
           else:
               s = sitemap.read_text(encoding='utf-8')
+              for name in indexable_pages:
+                  expected = domain if name == 'index.html' else domain + name
+                  if expected not in s: errors.append(f'sitemap eksik indexlenebilir URL: {expected}')
               for p in html_files:
-                  expected = domain if p.name == 'index.html' else domain + p.name
-                  if expected not in s: errors.append(f'sitemap eksik URL: {expected}')
+                  if p.name not in indexable_pages:
+                      expected = domain + p.name
+                      if expected in s: errors.append(f'sitemap noindex URL içeriyor: {expected}')
 
           robots = Path('robots.txt')
           if not robots.exists(): errors.append('robots.txt eksik')
           elif domain + 'sitemap.xml' not in robots.read_text(encoding='utf-8'): errors.append('robots.txt sitemap bildirimi eksik')
 
           rss = Path('rss.xml')
-          if not rss.exists():
-              errors.append('rss.xml eksik')
+          if not rss.exists(): errors.append('rss.xml eksik')
           else:
               r = rss.read_text(encoding='utf-8')
               for page in content_pages:
-                  if domain + page not in r:
-                      errors.append(f'rss eksik içerik: {page}')
+                  if domain + page not in r: errors.append(f'rss eksik içerik: {page}')
 
           for llms_name in ('llms.txt', 'llms-full.txt'):
               llms = Path(llms_name)
-              if not llms.exists():
-                  errors.append(f'{llms_name} eksik')
-                  continue
+              if not llms.exists(): errors.append(f'{llms_name} eksik'); continue
               lt = llms.read_text(encoding='utf-8')
               for page in content_pages:
-                  if domain + page not in lt:
-                      warnings.append(f'{llms_name} güncel içerik listesinde yok: {page}')
+                  if domain + page not in lt: warnings.append(f'{llms_name} güncel içerik listesinde yok: {page}')
 
-          # Homepage regressions that previously caused SEO/schema duplication.
           home = Path('index.html').read_text(encoding='utf-8')
           home_js = Path('home-polish.js').read_text(encoding='utf-8')
-          if home.count('id="hukuki-icerikler-home"') != 1:
-              errors.append('index.html: hukuki içerik vitrini statik HTML içinde tekil değil')
+          if home.count('id="hukuki-icerikler-home"') != 1: errors.append('index.html: hukuki içerik vitrini statik HTML içinde tekil değil')
           for page in content_pages:
-              if page not in home:
-                  errors.append(f'index.html: ana sayfa hukuki içerik bağlantısı eksik: {page}')
-          if 'hasOfferCatalog' in home:
-              errors.append('index.html: nötr olmayan hasOfferCatalog schema kaldı')
-          if 'facebook.com/share/' in home:
-              errors.append('index.html: sameAs içinde kalıcı olmayan Facebook paylaşım URLsi kaldı')
-          if 'section.innerHTML' in home_js or 'data-home-polish-css' in home_js:
-              errors.append('home-polish.js: statik vitrin veya çift CSS enjeksiyonu mantığı geri geldi')
+              if page not in home: errors.append(f'index.html: ana sayfa hukuki içerik bağlantısı eksik: {page}')
+          if 'hasOfferCatalog' in home: errors.append('index.html: nötr olmayan hasOfferCatalog schema kaldı')
+          if 'facebook.com/share/' in home: errors.append('index.html: sameAs içinde kalıcı olmayan Facebook paylaşım URLsi kaldı')
+          if 'section.innerHTML' in home_js or 'data-home-polish-css' in home_js: errors.append('home-polish.js: statik vitrin veya çift CSS enjeksiyonu mantığı geri geldi')
 
           print(f'Audited HTML files: {len(html_files)}')
+          print(f'Indexable HTML files: {len(indexable_pages)}')
           print('\nWARNINGS:')
           print('\n'.join(sorted(set(warnings))) if warnings else 'none')
           print('\nERRORS:')
           print('\n'.join(sorted(set(errors))) if errors else 'none')
-          if errors:
-              sys.exit(1)
+          if errors: sys.exit(1)
