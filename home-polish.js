@@ -1,13 +1,18 @@
 (()=>{
   const mapCard=document.querySelector('.map-card');
   if(mapCard){
-    const mapsUrl='https://www.google.com/maps?q=Er%C3%A7ak%C4%B1r%20Hukuk%20B%C3%BCrosu%20Salihli%20Manisa&output=embed';
     const openUrl=mapCard.getAttribute('href')||mapCard.querySelector('.map-overlay-link')?.getAttribute('href')||'https://www.google.com/maps/search/?api=1&query=Er%C3%A7ak%C4%B1r+Hukuk+B%C3%BCrosu+Salihli+Manisa';
 
-    const replacement=document.createElement('div');
+    // Privacy-first map card: do not embed Google Maps or contact a
+    // third-party map service until the visitor explicitly clicks.
+    const replacement=document.createElement('a');
     replacement.className=mapCard.className;
-    replacement.setAttribute('title','GOOGLE MAPS Erçakır Hukuk Bürosu Salihli, Manisa');
-    replacement.innerHTML='<iframe class="office-map-frame" title="Erçakır Hukuk Bürosu harita konumu" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'+mapsUrl+'"></iframe><a class="map-overlay-link" href="'+openUrl+'" target="_blank" rel="noopener noreferrer">Google Maps’te Aç ↗</a>';
+    replacement.href=openUrl;
+    replacement.target='_blank';
+    replacement.rel='noopener noreferrer';
+    replacement.setAttribute('title','Google Maps üzerinde Erçakır Hukuk Bürosu konumunu aç');
+    replacement.setAttribute('aria-label','Google Maps üzerinde Erçakır Hukuk Bürosu konumunu aç');
+    replacement.innerHTML='<span class="map-overlay-link">Google Maps’te Konumu Aç ↗</span>';
 
     mapCard.replaceWith(replacement);
   }
