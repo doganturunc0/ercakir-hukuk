@@ -80,4 +80,42 @@ window.ercakirAnalyticsEnabled = false;
     schema.textContent = JSON.stringify(graph);
     head.appendChild(schema);
   }
+
+  /* Keep footer legal/navigation links consistent without altering page copy.
+   * Existing links are preserved; only missing links are appended.
+   */
+  function ensureFooterLinks() {
+    var footer = document.querySelector('footer');
+    if (!footer) return;
+
+    var links = [
+      { href: 'kvkk-aydinlatma-metni.html', label: 'KVKK Aydınlatma Metni' },
+      { href: 'gizlilik-cerez-politikasi.html', label: 'Gizlilik ve Çerez Politikası' },
+      { href: 'iletisim.html', label: 'İletişim' }
+    ];
+
+    links.forEach(function (item) {
+      var exists = Array.prototype.some.call(
+        footer.querySelectorAll('a[href]'),
+        function (anchor) {
+          var href = anchor.getAttribute('href') || '';
+          return href === item.href || href.endsWith('/' + item.href);
+        }
+      );
+
+      if (!exists) {
+        footer.appendChild(document.createTextNode(' · '));
+        var anchor = document.createElement('a');
+        anchor.href = item.href;
+        anchor.textContent = item.label;
+        footer.appendChild(anchor);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureFooterLinks, { once: true });
+  } else {
+    ensureFooterLinks();
+  }
 })();
