@@ -20,11 +20,11 @@ Allow: /
 User-agent: Claude-User
 Allow: /
 
-# Model-training crawlers are not required for search visibility.
+# AI model crawlers: allowed for maximum AI crawler accessibility.
 User-agent: GPTBot
-Disallow: /
+Allow: /
 
 User-agent: ClaudeBot
-Disallow: /
+Allow: /
 
 Sitemap: https://avbusraturunc.com/sitemap.xml
