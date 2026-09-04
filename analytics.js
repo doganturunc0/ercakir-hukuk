@@ -17,50 +17,38 @@ window.ercakirAnalyticsEnabled = false;
     head.appendChild(meta);
   }
 
+  var pageTitle = document.title || 'Erçakır Hukuk Bürosu';
+  var descriptionNode = head.querySelector('meta[name="description"]');
+  var pageDescription = descriptionNode ? descriptionNode.getAttribute('content') : '';
+  var canonicalNode = head.querySelector('link[rel="canonical"]');
+  var pageUrl = canonicalNode ? canonicalNode.href : window.location.href.split('#')[0];
+
   addMeta('meta[name="author"]', {name: 'author', content: 'Av. Büşra Turunç'});
+  addMeta('meta[property="og:type"]', {property: 'og:type', content: 'website'});
+  addMeta('meta[property="og:locale"]', {property: 'og:locale', content: 'tr_TR'});
+  addMeta('meta[property="og:site_name"]', {property: 'og:site_name', content: 'Erçakır Hukuk Bürosu'});
+  addMeta('meta[property="og:title"]', {property: 'og:title', content: pageTitle});
+  if (pageDescription) addMeta('meta[property="og:description"]', {property: 'og:description', content: pageDescription});
+  addMeta('meta[property="og:url"]', {property: 'og:url', content: pageUrl});
   addMeta('meta[property="og:image"]', {property: 'og:image', content: 'https://avbusraturunc.com/assets/hero-main.webp'});
   addMeta('meta[property="og:image:alt"]', {property: 'og:image:alt', content: 'Erçakır Hukuk Bürosu - Salihli, Manisa'});
-  addMeta('meta[property="og:site_name"]', {property: 'og:site_name', content: 'Erçakır Hukuk Bürosu'});
-  addMeta('meta[property="og:locale"]', {property: 'og:locale', content: 'tr_TR'});
+  addMeta('meta[name="twitter:card"]', {name: 'twitter:card', content: 'summary_large_image'});
+  addMeta('meta[name="twitter:title"]', {name: 'twitter:title', content: pageTitle});
+  if (pageDescription) addMeta('meta[name="twitter:description"]', {name: 'twitter:description', content: pageDescription});
+  addMeta('meta[name="twitter:image"]', {name: 'twitter:image', content: 'https://avbusraturunc.com/assets/hero-main.webp'});
 
   var hasCanonicalEntities = Array.prototype.some.call(
     head.querySelectorAll('script[type="application/ld+json"]'),
-    function (node) {
-      return node.textContent.indexOf('https://avbusraturunc.com/#office') !== -1;
-    }
+    function (node) { return node.textContent.indexOf('https://avbusraturunc.com/#office') !== -1; }
   );
 
   if (!hasCanonicalEntities) {
     var graph = {
       '@context': 'https://schema.org',
       '@graph': [
-        {
-          '@type': ['Organization', 'LegalService'],
-          '@id': 'https://avbusraturunc.com/#office',
-          'name': 'Erçakır Hukuk Bürosu',
-          'url': 'https://avbusraturunc.com/',
-          'areaServed': [
-            {'@type': 'City', 'name': 'Salihli'},
-            {'@type': 'AdministrativeArea', 'name': 'Manisa'}
-          ]
-        },
-        {
-          '@type': 'Person',
-          '@id': 'https://avbusraturunc.com/#busra',
-          'name': 'Büşra Turunç',
-          'honorificPrefix': 'Av.',
-          'jobTitle': 'Avukat',
-          'url': 'https://avbusraturunc.com/',
-          'worksFor': {'@id': 'https://avbusraturunc.com/#office'}
-        },
-        {
-          '@type': 'WebSite',
-          '@id': 'https://avbusraturunc.com/#website',
-          'url': 'https://avbusraturunc.com/',
-          'name': 'Erçakır Hukuk Bürosu',
-          'inLanguage': 'tr-TR',
-          'publisher': {'@id': 'https://avbusraturunc.com/#office'}
-        }
+        {'@type': ['Organization', 'LegalService'], '@id': 'https://avbusraturunc.com/#office', 'name': 'Erçakır Hukuk Bürosu', 'url': 'https://avbusraturunc.com/', 'areaServed': [{'@type': 'City', 'name': 'Salihli'}, {'@type': 'AdministrativeArea', 'name': 'Manisa'}]},
+        {'@type': 'Person', '@id': 'https://avbusraturunc.com/#busra', 'name': 'Büşra Turunç', 'honorificPrefix': 'Av.', 'jobTitle': 'Avukat', 'url': 'https://avbusraturunc.com/', 'worksFor': {'@id': 'https://avbusraturunc.com/#office'}},
+        {'@type': 'WebSite', '@id': 'https://avbusraturunc.com/#website', 'url': 'https://avbusraturunc.com/', 'name': 'Erçakır Hukuk Bürosu', 'inLanguage': 'tr-TR', 'publisher': {'@id': 'https://avbusraturunc.com/#office'}}
       ]
     };
     var schema = document.createElement('script');
@@ -92,16 +80,12 @@ window.ercakirAnalyticsEnabled = false;
       });
     }
 
-    /* Remove only paragraph-like tooltip titles. Short, useful link titles stay. */
     Array.prototype.forEach.call(document.querySelectorAll('[title]'), function (node) {
       var value = (node.getAttribute('title') || '').trim();
       if (value.length > 180) node.removeAttribute('title');
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', finalizeSharedPageQuality, { once: true });
-  } else {
-    finalizeSharedPageQuality();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalizeSharedPageQuality, { once: true });
+  else finalizeSharedPageQuality();
 })();
