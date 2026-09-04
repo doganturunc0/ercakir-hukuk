@@ -6,34 +6,22 @@
 window.dataLayer = window.dataLayer || [];
 window.ercakirAnalyticsEnabled = false;
 
-/* Shared SEO/GEO entity supplement.
- * Keeps content pages tied to the same canonical person, office and website
- * entities without changing page copy or starting analytics tracking.
- */
 (function () {
   var head = document.head;
   if (!head) return;
 
-  if (!head.querySelector('meta[name="author"]')) {
-    var author = document.createElement('meta');
-    author.name = 'author';
-    author.content = 'Av. Büşra Turunç';
-    head.appendChild(author);
+  function addMeta(selector, attrs) {
+    if (head.querySelector(selector)) return;
+    var meta = document.createElement('meta');
+    Object.keys(attrs).forEach(function (key) { meta.setAttribute(key, attrs[key]); });
+    head.appendChild(meta);
   }
 
-  if (!head.querySelector('meta[property="og:image"]')) {
-    var image = document.createElement('meta');
-    image.setAttribute('property', 'og:image');
-    image.content = 'https://avbusraturunc.com/assets/hero-main.webp';
-    head.appendChild(image);
-  }
-
-  if (!head.querySelector('meta[property="og:image:alt"]')) {
-    var imageAlt = document.createElement('meta');
-    imageAlt.setAttribute('property', 'og:image:alt');
-    imageAlt.content = 'Erçakır Hukuk Bürosu - Salihli, Manisa';
-    head.appendChild(imageAlt);
-  }
+  addMeta('meta[name="author"]', {name: 'author', content: 'Av. Büşra Turunç'});
+  addMeta('meta[property="og:image"]', {property: 'og:image', content: 'https://avbusraturunc.com/assets/hero-main.webp'});
+  addMeta('meta[property="og:image:alt"]', {property: 'og:image:alt', content: 'Erçakır Hukuk Bürosu - Salihli, Manisa'});
+  addMeta('meta[property="og:site_name"]', {property: 'og:site_name', content: 'Erçakır Hukuk Bürosu'});
+  addMeta('meta[property="og:locale"]', {property: 'og:locale', content: 'tr_TR'});
 
   var hasCanonicalEntities = Array.prototype.some.call(
     head.querySelectorAll('script[type="application/ld+json"]'),
@@ -89,16 +77,11 @@ window.ercakirAnalyticsEnabled = false;
         { href: 'gizlilik-cerez-politikasi.html', label: 'Gizlilik ve Çerez Politikası' },
         { href: 'iletisim.html', label: 'İletişim' }
       ];
-
       links.forEach(function (item) {
-        var exists = Array.prototype.some.call(
-          footer.querySelectorAll('a[href]'),
-          function (anchor) {
-            var href = anchor.getAttribute('href') || '';
-            return href === item.href || href.endsWith('/' + item.href);
-          }
-        );
-
+        var exists = Array.prototype.some.call(footer.querySelectorAll('a[href]'), function (anchor) {
+          var href = anchor.getAttribute('href') || '';
+          return href === item.href || href.endsWith('/' + item.href);
+        });
         if (!exists) {
           footer.appendChild(document.createTextNode(' · '));
           var anchor = document.createElement('a');
@@ -109,9 +92,7 @@ window.ercakirAnalyticsEnabled = false;
       });
     }
 
-    /* Remove only paragraph-like tooltip titles. Short, useful link titles stay.
-     * This does not alter visible copy, headings, metadata, canonicals or schema.
-     */
+    /* Remove only paragraph-like tooltip titles. Short, useful link titles stay. */
     Array.prototype.forEach.call(document.querySelectorAll('[title]'), function (node) {
       var value = (node.getAttribute('title') || '').trim();
       if (value.length > 180) node.removeAttribute('title');
