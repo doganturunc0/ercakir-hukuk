@@ -1,0 +1,96 @@
+name: One-time static HTML cleanup
+
+on:
+  push:
+    paths:
+      - '.github/workflows/static-html-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clean static HTML source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, html
+
+          policy = ' · <a href="kvkk-aydinlatma-metni.html">KVKK</a> · <a href="gizlilik-cerez-politikasi.html">Gizlilik ve Çerez</a> · <a href="iletisim.html">İletişim</a>'
+
+          changed=[]
+          for p in sorted(Path('.').glob('*.html')):
+              s=p.read_text(encoding='utf-8')
+              old=s
+
+              # analytics.js must never be a parser-blocking head script.
+              s=s.replace('<script src="analytics.js"></script>', '<script src="analytics.js" defer></script>')
+
+              # Remove only verbose tooltip attributes; short useful titles remain.
+              s=re.sub(r'\s+title="([^"]{80,})"', '', s)
+
+              # Ensure static author metadata on indexable pages.
+              robots=re.search(r'<meta\s+name="robots"\s+content="([^"]*)"', s, re.I)
+              indexable=not (robots and 'noindex' in robots.group(1).lower())
+              if indexable and not re.search(r'<meta\s+name="author"\b', s, re.I):
+                  s=s.replace('</title>', '</title><meta name="author" content="Av. Büşra Turunç">', 1)
+
+              # Add complete static Open Graph metadata where it is absent.
+              if indexable and not re.search(r'<meta\s+property="og:title"\b', s, re.I):
+                  title=re.search(r'<title>(.*?)</title>', s, re.I|re.S)
+                  desc=re.search(r'<meta\s+name="description"\s+content="([^"]*)"', s, re.I)
+                  canon=re.search(r'<link\s+rel="canonical"\s+href="([^"]*)"', s, re.I)
+                  if title and desc and canon:
+                      t=html.escape(re.sub(r'\s+',' ',title.group(1)).strip(), quote=True)
+                      d=html.escape(desc.group(1), quote=True)
+                      u=html.escape(canon.group(1), quote=True)
+                      og=(f'<meta property="og:type" content="website"><meta property="og:locale" content="tr_TR">'
+                          f'<meta property="og:title" content="{t}"><meta property="og:description" content="{d}">'
+                          f'<meta property="og:url" content="{u}"><meta property="og:site_name" content="Erçakır Hukuk Bürosu">'
+                          f'<meta property="og:image" content="https://avbusraturunc.com/assets/hero-main.webp">'
+                          f'<meta property="og:image:alt" content="Erçakır Hukuk Bürosu - Salihli, Manisa">')
+                      s=s.replace('</head>', og+'</head>', 1)
+
+              # Policy/contact links must exist in source footer, not be JS-injected.
+              m=re.search(r'<footer\b[^>]*>(.*?)</footer>', s, re.I|re.S)
+              if m and p.name!='404.html' and 'kvkk-aydinlatma-metni.html' not in m.group(1):
+                  replacement=m.group(0).replace('</footer>', policy+'</footer>')
+                  s=s[:m.start()]+replacement+s[m.end():]
+
+              if s!=old:
+                  p.write_text(s,encoding='utf-8')
+                  changed.append(p.name)
+          print('Changed:', ', '.join(changed) if changed else 'none')
+          PY
+      - name: Verify cleanup invariants
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, sys
+          errors=[]
+          for p in sorted(Path('.').glob('*.html')):
+              s=p.read_text(encoding='utf-8')
+              if re.search(r'\s+title="[^"]{80,}"',s): errors.append(f'{p}: verbose title remains')
+              if '<script src="analytics.js"></script>' in s: errors.append(f'{p}: blocking analytics script')
+              robots=re.search(r'<meta\s+name="robots"\s+content="([^"]*)"',s,re.I)
+              indexable=not (robots and 'noindex' in robots.group(1).lower())
+              if indexable:
+                  for needle,label in [('name="author"','author'),('property="og:title"','og:title'),('property="og:url"','og:url'),('property="og:image"','og:image')]:
+                      if needle not in s: errors.append(f'{p}: missing {label}')
+              m=re.search(r'<footer\b[^>]*>(.*?)</footer>',s,re.I|re.S)
+              if m and p.name!='404.html' and 'kvkk-aydinlatma-metni.html' not in m.group(1): errors.append(f'{p}: footer policy links missing')
+          if errors:
+              print('\n'.join(errors)); sys.exit(1)
+          print('Static HTML cleanup verification passed.')
+          PY
+      - name: Commit source-level cleanup
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html'
+          git commit -m 'Complete source-level HTML cleanup across site'
+          git push
