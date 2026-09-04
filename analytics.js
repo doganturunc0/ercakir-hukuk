@@ -81,41 +81,46 @@ window.ercakirAnalyticsEnabled = false;
     head.appendChild(schema);
   }
 
-  /* Keep footer legal/navigation links consistent without altering page copy.
-   * Existing links are preserved; only missing links are appended.
-   */
-  function ensureFooterLinks() {
+  function finalizeSharedPageQuality() {
     var footer = document.querySelector('footer');
-    if (!footer) return;
+    if (footer) {
+      var links = [
+        { href: 'kvkk-aydinlatma-metni.html', label: 'KVKK Aydınlatma Metni' },
+        { href: 'gizlilik-cerez-politikasi.html', label: 'Gizlilik ve Çerez Politikası' },
+        { href: 'iletisim.html', label: 'İletişim' }
+      ];
 
-    var links = [
-      { href: 'kvkk-aydinlatma-metni.html', label: 'KVKK Aydınlatma Metni' },
-      { href: 'gizlilik-cerez-politikasi.html', label: 'Gizlilik ve Çerez Politikası' },
-      { href: 'iletisim.html', label: 'İletişim' }
-    ];
+      links.forEach(function (item) {
+        var exists = Array.prototype.some.call(
+          footer.querySelectorAll('a[href]'),
+          function (anchor) {
+            var href = anchor.getAttribute('href') || '';
+            return href === item.href || href.endsWith('/' + item.href);
+          }
+        );
 
-    links.forEach(function (item) {
-      var exists = Array.prototype.some.call(
-        footer.querySelectorAll('a[href]'),
-        function (anchor) {
-          var href = anchor.getAttribute('href') || '';
-          return href === item.href || href.endsWith('/' + item.href);
+        if (!exists) {
+          footer.appendChild(document.createTextNode(' · '));
+          var anchor = document.createElement('a');
+          anchor.href = item.href;
+          anchor.textContent = item.label;
+          footer.appendChild(anchor);
         }
-      );
+      });
+    }
 
-      if (!exists) {
-        footer.appendChild(document.createTextNode(' · '));
-        var anchor = document.createElement('a');
-        anchor.href = item.href;
-        anchor.textContent = item.label;
-        footer.appendChild(anchor);
-      }
+    /* Remove only paragraph-like tooltip titles. Short, useful link titles stay.
+     * This does not alter visible copy, headings, metadata, canonicals or schema.
+     */
+    Array.prototype.forEach.call(document.querySelectorAll('[title]'), function (node) {
+      var value = (node.getAttribute('title') || '').trim();
+      if (value.length > 180) node.removeAttribute('title');
     });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureFooterLinks, { once: true });
+    document.addEventListener('DOMContentLoaded', finalizeSharedPageQuality, { once: true });
   } else {
-    ensureFooterLinks();
+    finalizeSharedPageQuality();
   }
 })();
