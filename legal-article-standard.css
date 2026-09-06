@@ -1,0 +1,58 @@
+/* Legal article visual standard — aligned with the Adli Kontrol article. */
+html,body{max-width:100%;overflow-x:hidden}
+
+/* Linear article template (Adli Kontrol / Tutuklama / standardized pages) */
+main.article-page{max-width:900px;margin:auto;padding:72px 6vw 100px;box-sizing:border-box;background:#fff;color:#465963}
+main.article-page .back{display:inline-block;margin-bottom:34px;color:#805d0d;font-weight:700;text-decoration:none}
+main.article-page .eyebrow{margin:0 0 10px;color:#805d0d;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+main.article-page h1{font:400 clamp(42px,6vw,68px)/1.04 Georgia,serif;color:#173448;margin:12px 0 24px;letter-spacing:-.02em}
+main.article-page h2{font:400 clamp(28px,4vw,38px)/1.15 Georgia,serif;color:#173448;margin:48px 0 16px}
+main.article-page h3{font:400 25px/1.25 Georgia,serif;color:#173448;margin:34px 0 12px}
+main.article-page p,main.article-page li{font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.85;color:#465963}
+main.article-page ul,main.article-page ol{padding-left:22px}
+main.article-page a{color:#805d0d}
+main.article-page .article-meta{padding:18px 20px;border-left:3px solid #c69a2b;background:#f1f3f5;margin:24px 0 38px;color:#566874;font-family:Arial,Helvetica,sans-serif;line-height:1.6}
+main.article-page .article-meta small{font-size:13px;color:#6b7b84}
+main.article-page .legal-note,main.article-page .article-note{margin-top:54px;padding:22px;background:#edf3f6;border-radius:8px;color:#465963}
+main.article-page .sources{margin-top:50px;padding-top:30px;border-top:1px solid #dce1e5}
+main.article-page .sources a{color:#805d0d;text-decoration:underline;text-underline-offset:3px}
+main.article-page .related,main.article-page .article-links{margin-top:44px;padding-top:26px;border-top:1px solid #dce1e5;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+main.article-page .related a,main.article-page .article-links a{padding:10px 14px;border:1px solid #dce1e5;border-radius:6px;color:#173448;font-weight:700;text-decoration:none}
+
+/* Older split hero/body article template — rendered with the same standard. */
+body.article-page{margin:0!important;background:#fff!important;color:#465963!important;font-family:Arial,Helvetica,sans-serif!important}
+body.article-page .article-hero{padding:72px 6vw 0!important;background:transparent!important;color:#465963!important;border:0!important}
+body.article-page .article-hero .wrap{max-width:900px!important;width:auto!important;margin:auto!important;padding:0!important;box-sizing:border-box!important}
+body.article-page .article-hero .article-back,body.article-page .article-hero .back{display:inline-block!important;margin:0 0 34px!important;color:#805d0d!important;font-weight:700!important;text-decoration:none!important}
+body.article-page .article-hero .tag,body.article-page .article-hero .eyebrow{margin:0 0 10px!important;color:#805d0d!important;font-size:12px!important;font-weight:800!important;letter-spacing:.12em!important;text-transform:uppercase!important}
+body.article-page .article-hero h1{font:400 clamp(42px,6vw,68px)/1.04 Georgia,serif!important;color:#173448!important;margin:12px 0 24px!important;letter-spacing:-.02em!important;max-width:none!important}
+body.article-page .article-hero p{max-width:none!important;margin:0!important;font-family:Arial,Helvetica,sans-serif!important;font-size:17px!important;line-height:1.85!important;color:#465963!important}
+body.article-page .article-hero .article-meta{padding:18px 20px!important;border-left:3px solid #c69a2b!important;background:#f1f3f5!important;margin:24px 0 38px!important;color:#566874!important;font-family:Arial,Helvetica,sans-serif!important;line-height:1.6!important}
+body.article-page .article-body{max-width:900px!important;width:auto!important;margin:auto!important;padding:0 6vw 100px!important;box-sizing:border-box!important;background:#fff!important}
+body.article-page .article-body>.article-back{display:none!important}
+body.article-page .article-body h2{font:400 clamp(28px,4vw,38px)/1.15 Georgia,serif!important;color:#173448!important;margin:48px 0 16px!important}
+body.article-page .article-body h3{font:400 25px/1.25 Georgia,serif!important;color:#173448!important;margin:34px 0 12px!important}
+body.article-page .article-body p,body.article-page .article-body li{font-family:Arial,Helvetica,sans-serif!important;font-size:17px!important;line-height:1.85!important;color:#465963!important}
+body.article-page .article-body ul,body.article-page .article-body ol{padding-left:22px!important}
+body.article-page .article-body a{color:#805d0d!important}
+body.article-page .article-note{margin-top:54px!important;padding:22px!important;background:#edf3f6!important;border:0!important;border-radius:8px!important;color:#465963!important}
+body.article-page .article-links{margin-top:44px!important;padding-top:26px!important;border-top:1px solid #dce1e5!important;display:flex!important;flex-wrap:wrap!important;gap:12px!important;align-items:center!important}
+body.article-page .article-links a{padding:10px 14px!important;border:1px solid #dce1e5!important;border-radius:6px!important;color:#173448!important;font-weight:700!important;text-decoration:none!important}
+
+.info-footer{background:#183447;color:#dce5e9;text-align:center;padding:30px;font-size:10px;letter-spacing:.04em}
+.info-footer a{color:#dce5e9}
+
+@media(max-width:720px){
+  main.article-page{padding:46px 22px 78px}
+  main.article-page h1{font-size:40px}
+  main.article-page h2{font-size:30px;margin-top:38px}
+  main.article-page h3{font-size:23px}
+  main.article-page p,main.article-page li{font-size:16px;line-height:1.75}
+  body.article-page .article-hero{padding:46px 22px 0!important}
+  body.article-page .article-hero h1{font-size:40px!important}
+  body.article-page .article-hero p{font-size:16px!important;line-height:1.75!important}
+  body.article-page .article-body{padding:0 22px 78px!important}
+  body.article-page .article-body h2{font-size:30px!important;margin-top:38px!important}
+  body.article-page .article-body h3{font-size:23px!important}
+  body.article-page .article-body p,body.article-page .article-body li{font-size:16px!important;line-height:1.75!important}
+}
