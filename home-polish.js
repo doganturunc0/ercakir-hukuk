@@ -23,6 +23,7 @@
   };
   addLegalCard('adli-kontrol-kararina-itiraz.html','CEZA MUHAKEMESİ','CEZA HUKUKU','Adli Kontrol Kararına İtiraz ve Kaldırılması','Adli kontrolün koşulları, yükümlülüklerin değiştirilmesi veya kaldırılması, itiraz yolu ve sürelerin genel çerçevesi.');
   addLegalCard('cekismeli-bosanma-davasi.html','AİLE HUKUKU','BOŞANMA HUKUKU','Çekişmeli Boşanma Davası','Süreç, hukuka uygun deliller, geçici önlemler, velayet, nafaka ve tazminat taleplerinin genel çerçevesi.');
+  addLegalCard('velayet-davasi-velayetin-degistirilmesi.html','AİLE HUKUKU','VELAYET','Velayet Davası ve Velayetin Değiştirilmesi','Çocuğun üstün yararı, velayetin belirlenmesi ve değişen koşullarda velayet düzeninin değiştirilmesinin genel çerçevesi.');
 
   document.querySelectorAll('a.legal-content-cover-link').forEach(link=>{
     const cover=document.createElement('div');
