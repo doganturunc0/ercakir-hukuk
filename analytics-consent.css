@@ -2,6 +2,6 @@
 /* Lighthouse a11y: only selectors reported by the mobile audit; no content/layout rewrite. */
 .intro-section .eyebrow,.home-faq .eyebrow{color:#6f4d20!important}.legal-content-body>span{color:#765522!important}
 @media(max-width:720px){.legal-content-title-link{display:inline-flex;align-items:center;min-height:44px;padding:4px 0}.home-faq summary{min-height:44px;padding:8px 0}.contact-phone>a,.contact-copy .hero-actions>a.btn{min-height:44px;display:inline-flex;align-items:center}.legal-content-read-link{min-height:44px;display:inline-flex;align-items:center;padding:6px 0}}
-/* Final Lighthouse contrast targets. */
-.all-articles-link{color:#102f3d!important}
-footer,footer p,footer a{color:#fff!important}.footer-brand{color:#ffe08a!important}
+/* Exact Lighthouse contrast targets: explicit foreground + background for deterministic audit. */
+.all-articles-link{color:#0b2430!important;background:#f8f5ef!important;text-shadow:none!important}
+footer{background:#0b2430!important;color:#fff!important}footer p,footer a,footer .footer-brand{color:#fff!important;text-shadow:none!important}
