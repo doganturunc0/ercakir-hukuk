@@ -25,18 +25,6 @@
   addLegalCard('cekismeli-bosanma-davasi.html','AİLE HUKUKU','BOŞANMA HUKUKU','Çekişmeli Boşanma Davası','Süreç, hukuka uygun deliller, geçici önlemler, velayet, nafaka ve tazminat taleplerinin genel çerçevesi.');
   addLegalCard('velayet-davasi-velayetin-degistirilmesi.html','AİLE HUKUKU','VELAYET','Velayet Davası ve Velayetin Değiştirilmesi','Çocuğun üstün yararı, velayetin belirlenmesi ve değişen koşullarda velayet düzeninin değiştirilmesinin genel çerçevesi.');
 
-  document.querySelectorAll('a.legal-content-cover-link').forEach(link=>{
-    const cover=document.createElement('div');
-    cover.className=link.className;
-    cover.innerHTML=link.innerHTML;
-    link.replaceWith(cover);
-  });
-
-  const footer=document.querySelector('footer');
-  if(footer && !footer.querySelector('[data-legal-footer]')){
-    const legal=document.createElement('p');
-    legal.setAttribute('data-legal-footer','');
-    legal.innerHTML='<a href="hakkimizda.html">Hakkımızda</a> · <a href="iletisim.html">İletişim</a> · <a href="kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a> · <a href="gizlilik-cerez-politikasi.html">Gizlilik ve Çerez Politikası</a>';
-    footer.appendChild(legal);
-  }
+  /* GEO/LLM readability: keep existing semantic links and footer markup untouched.
+     Avoid replacing valid server-rendered anchors or appending duplicate footer nodes at runtime. */
 })();
