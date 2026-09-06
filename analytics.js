@@ -57,7 +57,69 @@ window.ercakirAnalyticsEnabled = false;
     head.appendChild(schema);
   }
 
+  function formatArticleDate(value) {
+    if (!value) return '';
+    var parts = String(value).slice(0, 10).split('-');
+    if (parts.length !== 3) return '';
+    var months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    var monthIndex = Number(parts[1]) - 1;
+    if (monthIndex < 0 || monthIndex > 11) return '';
+    return Number(parts[2]) + ' ' + months[monthIndex] + ' ' + parts[0];
+  }
+
+  function getArticleModifiedDate() {
+    var scripts = head.querySelectorAll('script[type="application/ld+json"]');
+    for (var i = 0; i < scripts.length; i++) {
+      try {
+        var data = JSON.parse(scripts[i].textContent || '{}');
+        var nodes = [];
+        if (data['@graph'] && Array.isArray(data['@graph'])) nodes = data['@graph'];
+        else nodes = [data];
+        for (var j = 0; j < nodes.length; j++) {
+          var type = nodes[j] && nodes[j]['@type'];
+          var isArticle = type === 'Article' || (Array.isArray(type) && type.indexOf('Article') !== -1);
+          if (isArticle && nodes[j].dateModified) return formatArticleDate(nodes[j].dateModified);
+        }
+      } catch (e) {}
+    }
+    return '';
+  }
+
+  function standardizeLegalArticles() {
+    var splitHero = document.querySelector('body.article-page .article-hero');
+    var splitBody = document.querySelector('body.article-page .article-body');
+    var linearArticle = document.querySelector('main.article-page');
+    if (!splitHero && !linearArticle) return;
+
+    if (!head.querySelector('link[data-legal-article-standard]')) {
+      var standardCss = document.createElement('link');
+      standardCss.rel = 'stylesheet';
+      standardCss.href = 'legal-article-standard.css?v=20260906-1';
+      standardCss.setAttribute('data-legal-article-standard', 'true');
+      head.appendChild(standardCss);
+    }
+
+    if (splitHero && splitBody) {
+      var wrap = splitHero.querySelector('.wrap');
+      var oldBack = splitBody.querySelector('.article-back');
+      if (wrap && oldBack && !wrap.querySelector('.article-back')) wrap.insertBefore(oldBack, wrap.firstChild);
+
+      if (wrap && !wrap.querySelector('.article-meta')) {
+        var h1 = wrap.querySelector('h1');
+        if (h1) {
+          var metaBox = document.createElement('div');
+          metaBox.className = 'article-meta';
+          var modified = getArticleModifiedDate();
+          metaBox.innerHTML = '<strong>İçerik sorumlusu:</strong> Av. Büşra Turunç · Erçakır Hukuk Bürosu' + (modified ? '<br><small>Son güncelleme: ' + modified + '</small>' : '');
+          h1.insertAdjacentElement('afterend', metaBox);
+        }
+      }
+    }
+  }
+
   function finalizeSharedPageQuality() {
+    standardizeLegalArticles();
+
     var footer = document.querySelector('footer');
     if (footer) {
       var links = [
