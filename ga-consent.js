@@ -1,6 +1,7 @@
 (() => {
   const MEASUREMENT_ID = 'G-1E6W6P6281';
   const STORAGE_KEY = 'ercakirAnalyticsConsent';
+  const SCRIPT_ID = 'ga4-script';
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
@@ -20,6 +21,20 @@
   })();
 
   let configured = false;
+  let loading = false;
+
+  const loadAnalyticsScript = () => {
+    if (document.getElementById(SCRIPT_ID) || loading) return;
+    loading = true;
+    const script = document.createElement('script');
+    script.id = SCRIPT_ID;
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(MEASUREMENT_ID)}`;
+    script.onload = () => { loading = false; };
+    script.onerror = () => { loading = false; };
+    document.head.appendChild(script);
+  };
+
   const enableAnalytics = () => {
     window.gtag('consent', 'update', {
       analytics_storage: 'granted',
@@ -35,6 +50,7 @@
       });
       configured = true;
     }
+    loadAnalyticsScript();
   };
 
   const disableAnalytics = () => {
