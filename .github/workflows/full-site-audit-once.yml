@@ -1,0 +1,181 @@
+name: Full site audit once
+
+on:
+  push:
+    branches: [full-audit-20260914]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: full-audit-20260914
+          fetch-depth: 0
+      - name: Run comprehensive SEO and integrity audit
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          import re, json, collections, sys
+
+          DOMAIN='https://avbusraturunc.com/'
+          HOST='avbusraturunc.com'
+          html_files=sorted(Path('.').glob('*.html'))
+          names={p.name for p in html_files}
+          errors=[]; warnings=[]
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.title=''; self.in_title=False; self.metas=[]; self.links=[]; self.anchors=[]; self.ids=set(); self.styles=[]
+              def handle_starttag(self, tag, attrs):
+                  d=dict(attrs); tag=tag.lower()
+                  if d.get('id'): self.ids.add(d['id'])
+                  if tag=='title': self.in_title=True
+                  elif tag=='meta': self.metas.append(d)
+                  elif tag=='link':
+                      self.links.append(d)
+                      rel=(d.get('rel') or '').lower()
+                      if 'stylesheet' in rel: self.styles.append(d.get('href',''))
+                  elif tag=='a': self.anchors.append(d.get('href'))
+              def handle_endtag(self, tag):
+                  if tag.lower()=='title': self.in_title=False
+              def handle_data(self,data):
+                  if self.in_title:self.title+=data
+
+          parsed={}; indexable=set(); incoming={n:set() for n in names}; titles={}; descs={}
+          for p in html_files:
+              txt=p.read_text(encoding='utf-8',errors='replace'); q=P(); q.feed(txt); parsed[p.name]=(q,txt)
+              meta={(m.get('name') or m.get('property') or '').lower(): (m.get('content') or '').strip() for m in q.metas}
+              robots=meta.get('robots','').lower()
+              if p.name!='404.html' and 'noindex' not in robots: indexable.add(p.name)
+              title=' '.join(q.title.split()); desc=meta.get('description','')
+              if p.name!='404.html':
+                  if not title: errors.append(f'{p.name}: missing title')
+                  if not desc: errors.append(f'{p.name}: missing meta description')
+                  h1c=len(re.findall(r'<h1\b',txt,re.I))
+                  if h1c!=1: errors.append(f'{p.name}: H1 count {h1c}')
+                  canonical=next((l.get('href','').strip() for l in q.links if (l.get('rel') or '').lower()=='canonical'),'')
+                  expected=DOMAIN if p.name=='index.html' else DOMAIN+p.name
+                  if canonical!=expected: errors.append(f'{p.name}: canonical mismatch -> {canonical!r}')
+                  ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',txt,re.I|re.S)
+                  if not ld: errors.append(f'{p.name}: missing JSON-LD')
+                  for i,b in enumerate(ld,1):
+                      try: json.loads(b)
+                      except Exception as e: errors.append(f'{p.name}: invalid JSON-LD #{i}: {e}')
+                  titles[p.name]=title; descs[p.name]=desc
+                  if len(title)>65: warnings.append(f'{p.name}: title long {len(title)}')
+                  if len(desc)>170: warnings.append(f'{p.name}: description long {len(desc)}')
+                  if len(desc)<70: warnings.append(f'{p.name}: description short {len(desc)}')
+              for href in q.styles:
+                  if not href or href.startswith(('http://','https://','//','data:')): continue
+                  path=href.split('?',1)[0].lstrip('/')
+                  if path and not Path(path).exists(): errors.append(f'{p.name}: missing stylesheet -> {href}')
+
+          # duplicate metadata
+          for label,data in [('title',titles),('description',descs)]:
+              rev=collections.defaultdict(list)
+              for f,v in data.items():
+                  if v: rev[v].append(f)
+              for v,fs in rev.items():
+                  if len(fs)>1: warnings.append(f'duplicate {label}: {fs}')
+
+          # link graph / fragments / orphan pages
+          def target(src,href):
+              if href is None:return None,None,'missing'
+              href=href.strip()
+              if not href:return None,None,'empty'
+              if href=='#':return None,None,'hash'
+              if href.startswith(('mailto:','tel:','javascript:','data:')):return None,None,'skip'
+              u=urlparse(href)
+              if u.scheme in ('http','https'):
+                  if u.netloc not in (HOST,'www.'+HOST):return None,None,'external'
+                  return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+              if u.scheme:return None,None,'external'
+              if href.startswith('#'):return src,href[1:],'internal'
+              return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+
+          for src,(q,txt) in parsed.items():
+              for href in q.anchors:
+                  path,frag,kind=target(src,href)
+                  if kind=='missing': errors.append(f'{src}: anchor missing href')
+                  elif kind=='empty': errors.append(f'{src}: empty href')
+                  elif kind=='hash': errors.append(f'{src}: href="#"')
+                  elif kind!='internal': continue
+                  else:
+                      if path not in names and not Path(path).exists():
+                          errors.append(f'{src}: broken internal link -> {href}'); continue
+                      if path in names:
+                          incoming[path].add(src)
+                          if frag and frag not in parsed[path][0].ids: errors.append(f'{src}: missing fragment -> {href}')
+
+          orphans=[]
+          for name in sorted(indexable):
+              if name=='index.html':continue
+              refs={x for x in incoming[name] if x!=name and x in indexable}
+              if not refs: orphans.append(name)
+          if orphans: errors.append('orphan pages: '+', '.join(orphans))
+
+          # sitemap coverage
+          sitemap=Path('sitemap.xml').read_text(encoding='utf-8') if Path('sitemap.xml').exists() else ''
+          sitemap_urls=re.findall(r'<loc>(.*?)</loc>',sitemap,re.I|re.S)
+          sm_names=set()
+          for u in sitemap_urls:
+              u=u.strip()
+              if u==DOMAIN: sm_names.add('index.html')
+              elif u.startswith(DOMAIN): sm_names.add(u[len(DOMAIN):])
+          missing=sorted(indexable-sm_names); extra=sorted(sm_names-indexable)
+          if missing: errors.append('indexable pages missing from sitemap: '+', '.join(missing))
+          if extra: warnings.append('sitemap URLs not indexable HTML: '+', '.join(extra))
+
+          # robots sitemap declaration
+          robots_txt=Path('robots.txt').read_text(encoding='utf-8',errors='replace') if Path('robots.txt').exists() else ''
+          if 'sitemap: https://avbusraturunc.com/sitemap.xml' not in robots_txt.lower(): errors.append('robots.txt missing sitemap declaration')
+
+          # CSS cleanup regression checks
+          if Path('styles.css').exists(): warnings.append('legacy styles.css still exists')
+          refs_styles=[]
+          for f,(q,txt) in parsed.items():
+              for href in q.styles:
+                  if href.split('?',1)[0].endswith('styles.css'): refs_styles.append(f)
+          if refs_styles: errors.append('HTML still references styles.css: '+', '.join(refs_styles))
+
+          # article template consistency for the 10 known legal articles
+          article_files=['adli-kontrol-kararina-itiraz.html','anlasmali-bosanma-davasi.html','cekismeli-bosanma-davasi.html','icra-takibine-itiraz.html','tahliye-davasi.html','tapu-iptal-tescil-davasi.html','tutuklama-kararina-itiraz.html','kidem-ihbar-tazminati.html','nafaka-artirim-davasi.html','ortakligin-giderilmesi-davasi.html']
+          present=[f for f in article_files if f in parsed]
+          article_ok=0
+          for f in present:
+              txt=parsed[f][1]
+              if re.search(r'<main\b[^>]*class=["\'][^"\']*article-page',txt,re.I): article_ok+=1
+              else: warnings.append(f'{f}: article-page template marker missing')
+
+          # local SEO / trust consistency
+          critical=['index.html','iletisim.html','hakkimizda.html']
+          nap_tokens=['Erçakır Hukuk Bürosu','Büşra Turunç','+90 553 321 85 93','Salihli','Manisa']
+          for f in critical:
+              txt=parsed[f][1]
+              for token in nap_tokens:
+                  if token not in txt: errors.append(f'{f}: local entity token missing -> {token}')
+          idx=parsed['index.html'][1]
+          for token in ['LocalBusiness','LegalService','areaServed','contactPoint','hasMap','sameAs']:
+              if token not in idx: errors.append(f'index.html: local schema token missing -> {token}')
+
+          print('=== FULL SITE AUDIT ===')
+          print(f'HTML files: {len(html_files)}')
+          print(f'Indexable pages: {len(indexable)}')
+          print(f'Sitemap URLs: {len(sitemap_urls)}')
+          print(f'Orphan pages: {len(orphans)}')
+          print(f'Known article templates matched: {article_ok}/{len(present)}')
+          print(f'Errors: {len(errors)}')
+          print(f'Warnings: {len(warnings)}')
+          print('\nERRORS:')
+          print('\n'.join(errors) if errors else 'none')
+          print('\nWARNINGS:')
+          print('\n'.join(warnings) if warnings else 'none')
+          if errors: sys.exit(1)
+          PY
