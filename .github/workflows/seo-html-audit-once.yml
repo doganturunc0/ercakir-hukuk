@@ -15,52 +15,96 @@ jobs:
         with:
           ref: seo-html-audit-20260914
           fetch-depth: 0
-      - name: Audit and safely fix SEO head metadata
+      - name: Fix and validate SEO metadata
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          from html.parser import HTMLParser
           import re, json, sys
 
+          titles = {
+            'adli-kontrol-kararina-itiraz.html':'Adli Kontrol Kararına İtiraz | Salihli | Av. Büşra Turunç',
+            'anlasmali-bosanma-davasi.html':'Anlaşmalı Boşanma Davası | Salihli | Av. Büşra Turunç',
+            'cekismeli-bosanma-davasi.html':'Çekişmeli Boşanma Davası | Salihli | Av. Büşra Turunç',
+            'gayrimenkul-hukuku.html':'Gayrimenkul Hukuku | Salihli, Manisa | Av. Büşra Turunç',
+            'icra-takibine-itiraz.html':'İcra Takibine İtiraz | Salihli | Av. Büşra Turunç',
+            'tahliye-davasi.html':'Tahliye Davası | Salihli | Av. Büşra Turunç',
+            'tapu-iptal-tescil-davasi.html':'Tapu İptal ve Tescil Davası | Salihli | Av. Büşra Turunç',
+          }
+          schemas = {
+            'kvkk-aydinlatma-metni.html': {
+              '@context':'https://schema.org','@type':'WebPage',
+              'name':'KVKK Aydınlatma Metni | Erçakır Hukuk Bürosu',
+              'url':'https://avbusraturunc.com/kvkk-aydinlatma-metni.html',
+              'inLanguage':'tr-TR'
+            },
+            'gizlilik-cerez-politikasi.html': {
+              '@context':'https://schema.org','@type':'WebPage',
+              'name':'Gizlilik ve Çerez Politikası | Erçakır Hukuk Bürosu',
+              'url':'https://avbusraturunc.com/gizlilik-cerez-politikasi.html',
+              'inLanguage':'tr-TR'
+            }
+          }
+
+          for name,newtitle in titles.items():
+              p=Path(name); s=p.read_text(encoding='utf-8')
+              s2=re.sub(r'<title>.*?</title>', f'<title>{newtitle}</title>', s, count=1, flags=re.I|re.S)
+              if s2!=s: p.write_text(s2,encoding='utf-8')
+
+          for name,obj in schemas.items():
+              p=Path(name); s=p.read_text(encoding='utf-8')
+              if 'application/ld+json' not in s.lower():
+                  block='<script type="application/ld+json">'+json.dumps(obj,ensure_ascii=False,separators=(',',':'))+'</script>'
+                  s=s.replace('</head>',block+'</head>',1)
+                  p.write_text(s,encoding='utf-8')
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.title=''; self.in_title=False; self.metas=[]; self.links=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag.lower()=='title': self.in_title=True
+                  elif tag.lower()=='meta': self.metas.append(a)
+                  elif tag.lower()=='link': self.links.append(a)
+              def handle_endtag(self,tag):
+                  if tag.lower()=='title': self.in_title=False
+              def handle_data(self,data):
+                  if self.in_title:self.title+=data
+
           domain='https://avbusraturunc.com/'
+          errors=[]; warnings=[]
           files=sorted(Path('.').glob('*.html'))
-          errors=[]; warnings=[]; changed=[]
-
-          def get1(pattern, text, flags=re.I|re.S):
-              m=re.search(pattern,text,flags); return m.group(1).strip() if m else ''
-
           for p in files:
-              html=p.read_text(encoding='utf-8')
-              if p.name=='404.html':
-                  continue
-              title=get1(r'<title>(.*?)</title>',html)
-              desc=get1(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']*)["\']',html)
-              if not desc:
-                  desc=get1(r'<meta\s+content=["\']([^"\']*)["\']\s+name=["\']description["\']',html)
-              h1s=re.findall(r'<h1\b[^>]*>(.*?)</h1>',html,re.I|re.S)
-              can=get1(r'<link\s+rel=["\']canonical["\']\s+href=["\']([^"\']+)["\']',html)
-              if not can:
-                  can=get1(r'<link\s+href=["\']([^"\']+)["\']\s+rel=["\']canonical["\']',html)
-              ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',html,re.I|re.S)
+              if p.name=='404.html': continue
+              s=p.read_text(encoding='utf-8'); parser=P(); parser.feed(s)
+              meta={(m.get('name') or m.get('property') or '').lower():m.get('content','').strip() for m in parser.metas}
+              canonical=next((l.get('href','').strip() for l in parser.links if (l.get('rel') or '').lower()=='canonical'),'')
               expected=domain if p.name=='index.html' else domain+p.name
-
+              h1s=re.findall(r'<h1\b',s,re.I)
+              ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',s,re.I|re.S)
+              title=' '.join(parser.title.split()); desc=meta.get('description','')
               if not title: errors.append(f'{p.name}: title missing')
               if not desc: errors.append(f'{p.name}: description missing')
               if len(h1s)!=1: errors.append(f'{p.name}: H1 count {len(h1s)}')
-              if can!=expected: errors.append(f'{p.name}: canonical {can!r} expected {expected!r}')
-              if not ld: warnings.append(f'{p.name}: JSON-LD missing')
-              for i,body in enumerate(ld,1):
-                  try: json.loads(body)
+              if canonical!=expected: errors.append(f'{p.name}: canonical mismatch')
+              if not ld: errors.append(f'{p.name}: JSON-LD missing')
+              for i,b in enumerate(ld,1):
+                  try: json.loads(b)
                   except Exception as e: errors.append(f'{p.name}: invalid JSON-LD #{i}: {e}')
               if len(title)>65: warnings.append(f'{p.name}: title long {len(title)}')
-              if len(desc)>165: warnings.append(f'{p.name}: description long {len(desc)}')
-              if title and len(title)<25: warnings.append(f'{p.name}: title short {len(title)}')
-              if desc and len(desc)<70: warnings.append(f'{p.name}: description short {len(desc)}')
+              if len(desc)>170: warnings.append(f'{p.name}: description long {len(desc)}')
+              if len(desc)<70: warnings.append(f'{p.name}: description short {len(desc)}')
 
-          print(f'Audited: {len(files)-1} indexable/non-404 HTML files')
-          print('WARNINGS:')
-          print('\n'.join(warnings) if warnings else 'none')
-          print('ERRORS:')
-          print('\n'.join(errors) if errors else 'none')
+          print(f'Audited: {len(files)-1} pages')
+          print('WARNINGS:'); print('\n'.join(warnings) if warnings else 'none')
+          print('ERRORS:'); print('\n'.join(errors) if errors else 'none')
           if errors: sys.exit(1)
           PY
+
+          git rm .github/workflows/seo-html-audit-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'seo: normalize titles and schema coverage'
+          git push origin HEAD:seo-html-audit-20260914
