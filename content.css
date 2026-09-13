@@ -20,19 +20,3 @@ body:has(>header.site-header>.container.nav)>main.article-page .article-note{mar
 body:has(>header.site-header>.container.nav)>main.article-page .article-sources{margin-top:50px!important;padding:30px 0 0!important;border:0!important;border-top:1px solid #dce1e5!important;border-radius:0!important}
 body:has(>header.site-header>.container.nav)>main.article-page .related-links{margin-top:44px!important;padding:26px 0 0!important;border:0!important;border-top:1px solid #dce1e5!important;border-radius:0!important}
 @media(max-width:720px){body:has(>header.site-header>.container.nav)>main.article-page{padding:46px 22px 78px!important}body:has(>header.site-header>.container.nav)>main.article-page h1{font-size:40px!important}body:has(>header.site-header>.container.nav)>main.article-page h2{font-size:30px!important;margin-top:38px!important}body:has(>header.site-header>.container.nav)>main.article-page h3{font-size:23px!important}body:has(>header.site-header>.container.nav)>main.article-page p,body:has(>header.site-header>.container.nav)>main.article-page li{font-size:16px!important;line-height:1.75!important}}
-
-/* Editorial reading system for legacy article-hero/article-body pages */
-body.article-page .article-hero .tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;line-height:1.2;letter-spacing:.14em;font-weight:800;color:#8a681d;background:#fbf7eb;border:1px solid #ead9a9;border-radius:999px;padding:8px 12px;margin:0 0 10px}
-body.article-page .article-body>p{max-width:78ch}
-body.article-page .article-body h2{position:relative;padding:0 0 13px 18px;border-bottom:1px solid #e5e9ec}
-body.article-page .article-body h2:before{content:"";position:absolute;left:0;top:.12em;width:4px;height:.95em;border-radius:4px;background:#c69a2b}
-body.article-page .article-body h3{padding-left:14px;border-left:3px solid #d9bd72;font-weight:600}
-body.article-page .article-body strong{color:#173448;font-weight:800}
-body.article-page .article-body ul{list-style:none;padding-left:0;margin:20px 0 28px}
-body.article-page .article-body li{position:relative;padding:10px 14px 10px 38px;margin:7px 0;background:#f7f9fa;border:1px solid #e5e9ec;border-radius:8px}
-body.article-page .article-body li:before{content:"✓";position:absolute;left:14px;top:10px;color:#9a741e;font-weight:900}
-body.article-page .article-note{border:1px solid #d7e1e7;border-left:4px solid #173448;box-shadow:0 8px 24px rgba(23,52,72,.05)}
-body.article-page .article-links{background:#faf8f2;border:1px solid #eadfbe;border-radius:10px;padding:20px 22px;margin-top:44px}
-body.article-page .article-links a{background:#fff;box-shadow:0 5px 16px rgba(23,52,72,.05);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-body.article-page .article-links a:hover{transform:translateY(-2px);border-color:#c69a2b;box-shadow:0 8px 20px rgba(23,52,72,.09)}
-@media(max-width:720px){body.article-page .article-body h2{padding-left:14px}body.article-page .article-links{padding:16px}}
