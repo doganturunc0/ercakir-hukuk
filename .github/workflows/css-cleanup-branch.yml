@@ -1,0 +1,95 @@
+name: Safe CSS cleanup
+
+on:
+  push:
+    branches: [css-cleanup-20260913]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: css-cleanup-20260913
+          fetch-depth: 0
+      - name: Audit and clean CSS safely
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          css_files = sorted(p for p in root.glob('*.css') if p.is_file())
+          scan_exts = {'.html','.htm','.js','.css','.xml','.txt','.md'}
+          scan_files = [p for p in root.rglob('*') if p.is_file() and p.suffix.lower() in scan_exts and '.git' not in p.parts]
+
+          refs = {}
+          for css in css_files:
+              name = css.name
+              users = []
+              for p in scan_files:
+                  if p == css:
+                      continue
+                  try:
+                      text = p.read_text(encoding='utf-8')
+                  except Exception:
+                      continue
+                  if name in text:
+                      users.append(str(p))
+              refs[name] = users
+
+          print('\nCSS reference map:')
+          for name, users in refs.items():
+              print(f'- {name}: {len(users)} reference(s)')
+              for u in users:
+                  print(f'    {u}')
+
+          protected = {
+              'site.css','styles.css','home-polish.css','mobile-fix.css','content.css',
+              'content-pages.css','analytics-consent.css','articles.inline.css',
+              'infaz-hesaplama.inline.css','tutuklama-kararina-itiraz.inline.css'
+          }
+
+          # Only remove a stylesheet if it is completely unreferenced anywhere in the text repo
+          # and is not one of the known active/structural stylesheets.
+          removed = []
+          for css in css_files:
+              if css.name not in protected and not refs.get(css.name):
+                  css.unlink()
+                  removed.append(css.name)
+
+          # Collapse styles.css into site.css only when byte-for-byte safe.
+          # This intentionally refuses a risky migration when the files differ.
+          styles = Path('styles.css')
+          site = Path('site.css')
+          migrated = False
+          if styles.exists() and site.exists():
+              s1 = styles.read_bytes()
+              s2 = site.read_bytes()
+              if s1 == s2:
+                  for p in root.glob('*.html'):
+                      text = p.read_text(encoding='utf-8')
+                      new = re.sub(r'href=["\']styles\.css(?:\?[^"\']*)?["\']', 'href="site.css?v=20260913-1"', text)
+                      if new != text:
+                          p.write_text(new, encoding='utf-8')
+                  styles.unlink()
+                  migrated = True
+
+          print(f'\nRemoved orphan CSS: {removed or "none"}')
+          print(f'Collapsed styles.css -> site.css: {migrated}')
+          PY
+
+          if git diff --quiet; then
+            echo 'No unsafe or orphan CSS changes were needed.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: remove verified orphan CSS'
+          git push origin HEAD:css-cleanup-20260913
