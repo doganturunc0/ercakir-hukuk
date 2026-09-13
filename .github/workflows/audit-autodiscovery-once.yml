@@ -1,0 +1,75 @@
+name: Audit autodiscovery migration once
+on:
+  push:
+    branches: [audit-autodiscovery-20260914]
+    paths:
+      - ".github/workflows/audit-autodiscovery-once.yml"
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit-autodiscovery-20260914
+      - name: Replace hard-coded article list with autodiscovery
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('.github/workflows/full-site-audit.yml')
+          s=p.read_text(encoding='utf-8')
+          old="""          content_pages = [
+              'tutuklama-kararina-itiraz.html',
+              'anlasmali-bosanma-davasi.html',
+              'kidem-ihbar-tazminati.html',
+              'icra-takibine-itiraz.html',
+              'tahliye-davasi.html',
+              'tapu-iptal-tescil-davasi.html',
+          ]
+"""
+          new="""          content_pages = sorted(
+              p.name for p in html_files
+              if re.search(r'<main\\b[^>]*\\bclass=[\"\\\'][^\"\\\']*\\barticle-page\\b', p.read_text(encoding='utf-8'), re.I)
+          )
+          if not content_pages:
+              errors.append('article-page sınıfına sahip ayrıntılı içerik bulunamadı')
+"""
+          assert old in s, 'hard-coded content_pages block not found'
+          s=s.replace(old,new,1)
+
+          marker="""          rss = Path('rss.xml')
+"""
+          extra="""          hub = Path('hukuki-icerikler.html')
+          if not hub.exists(): errors.append('hukuki-icerikler.html eksik')
+          else:
+              hub_text = hub.read_text(encoding='utf-8')
+              for page in content_pages:
+                  if page not in hub_text: errors.append(f'hukuki-icerikler.html ayrıntılı içerik bağlantısı eksik: {page}')
+
+          print(f'Autodiscovered detailed article pages: {len(content_pages)} -> {content_pages}')
+
+"""
+          assert marker in s, 'rss marker not found'
+          s=s.replace(marker,extra+marker,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Validate audit locally
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('.github/workflows/full-site-audit.yml').read_text(encoding='utf-8')
+          assert "'tutuklama-kararina-itiraz.html'," not in s
+          assert 'Autodiscovered detailed article pages:' in s
+          assert 'article-page' in s
+          print('migration validation passed')
+          PY
+      - name: Commit migration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/full-site-audit.yml
+          git commit -m "ci: autodiscover all detailed legal articles"
+          git push origin HEAD:audit-autodiscovery-20260914
