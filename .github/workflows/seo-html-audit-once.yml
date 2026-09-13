@@ -1,0 +1,66 @@
+name: SEO HTML audit once
+
+on:
+  push:
+    branches: [seo-html-audit-20260914]
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo-html-audit-20260914
+          fetch-depth: 0
+      - name: Audit and safely fix SEO head metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json, sys
+
+          domain='https://avbusraturunc.com/'
+          files=sorted(Path('.').glob('*.html'))
+          errors=[]; warnings=[]; changed=[]
+
+          def get1(pattern, text, flags=re.I|re.S):
+              m=re.search(pattern,text,flags); return m.group(1).strip() if m else ''
+
+          for p in files:
+              html=p.read_text(encoding='utf-8')
+              if p.name=='404.html':
+                  continue
+              title=get1(r'<title>(.*?)</title>',html)
+              desc=get1(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']*)["\']',html)
+              if not desc:
+                  desc=get1(r'<meta\s+content=["\']([^"\']*)["\']\s+name=["\']description["\']',html)
+              h1s=re.findall(r'<h1\b[^>]*>(.*?)</h1>',html,re.I|re.S)
+              can=get1(r'<link\s+rel=["\']canonical["\']\s+href=["\']([^"\']+)["\']',html)
+              if not can:
+                  can=get1(r'<link\s+href=["\']([^"\']+)["\']\s+rel=["\']canonical["\']',html)
+              ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',html,re.I|re.S)
+              expected=domain if p.name=='index.html' else domain+p.name
+
+              if not title: errors.append(f'{p.name}: title missing')
+              if not desc: errors.append(f'{p.name}: description missing')
+              if len(h1s)!=1: errors.append(f'{p.name}: H1 count {len(h1s)}')
+              if can!=expected: errors.append(f'{p.name}: canonical {can!r} expected {expected!r}')
+              if not ld: warnings.append(f'{p.name}: JSON-LD missing')
+              for i,body in enumerate(ld,1):
+                  try: json.loads(body)
+                  except Exception as e: errors.append(f'{p.name}: invalid JSON-LD #{i}: {e}')
+              if len(title)>65: warnings.append(f'{p.name}: title long {len(title)}')
+              if len(desc)>165: warnings.append(f'{p.name}: description long {len(desc)}')
+              if title and len(title)<25: warnings.append(f'{p.name}: title short {len(title)}')
+              if desc and len(desc)<70: warnings.append(f'{p.name}: description short {len(desc)}')
+
+          print(f'Audited: {len(files)-1} indexable/non-404 HTML files')
+          print('WARNINGS:')
+          print('\n'.join(warnings) if warnings else 'none')
+          print('ERRORS:')
+          print('\n'.join(errors) if errors else 'none')
+          if errors: sys.exit(1)
+          PY
