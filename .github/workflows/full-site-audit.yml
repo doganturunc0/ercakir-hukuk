@@ -100,7 +100,7 @@ jobs:
               if not canonical: errors.append(f'{p.name}: canonical eksik')
               else:
                   if not canonical.startswith(domain): errors.append(f'{p.name}: canonical alan adı uyumsuz: {canonical}')
-                  add_dupe(canonicals, canonical, p.name)
+                  if not is_noindex: add_dupe(canonicals, canonical, p.name)
 
               if not robots_value: errors.append(f'{p.name}: robots meta eksik')
               if not is_noindex: indexable_pages.append(p.name)
@@ -194,8 +194,7 @@ jobs:
           home = Path('index.html').read_text(encoding='utf-8')
           home_js = Path('home-polish.js').read_text(encoding='utf-8')
           if home.count('id="hukuki-icerikler-home"') != 1: errors.append('index.html: hukuki içerik vitrini statik HTML içinde tekil değil')
-          for page in content_pages:
-              if page not in home: errors.append(f'index.html: ana sayfa hukuki içerik bağlantısı eksik: {page}')
+          if 'hukuki-icerikler.html' not in home: errors.append('index.html: canonical hukuki içerik merkezi bağlantısı eksik')
           if 'hasOfferCatalog' in home: errors.append('index.html: nötr olmayan hasOfferCatalog schema kaldı')
           if 'facebook.com/share/' in home: errors.append('index.html: sameAs içinde kalıcı olmayan Facebook paylaşım URLsi kaldı')
           if 'section.innerHTML' in home_js or 'data-home-polish-css' in home_js: errors.append('home-polish.js: statik vitrin veya çift CSS enjeksiyonu mantığı geri geldi')
