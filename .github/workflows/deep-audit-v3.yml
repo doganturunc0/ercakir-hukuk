@@ -1,0 +1,131 @@
+name: Deep audit v3 corrected
+on:
+  push:
+    branches: [deep-audit-20260914-v2]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corrected structural audit
+        shell: python
+        run: |
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          import re,json,collections,xml.etree.ElementTree as ET,hashlib
+          BASE='https://avbusraturunc.com/'; HOST='avbusraturunc.com'
+          files=sorted(Path('.').glob('*.html')); names={p.name for p in files}
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids=set(); self.a=[]; self.links=[]; self.metas=[]; self.h1=0; self.title=''; self.intitle=False; self.imgs=[]; self.scripts=[]; self.main=[]
+              def handle_starttag(self,t,attrs):
+                  d=dict(attrs); t=t.lower()
+                  if d.get('id'): self.ids.add(d['id'])
+                  if t=='a':self.a.append(d)
+                  elif t=='link':self.links.append(d)
+                  elif t=='meta':self.metas.append(d)
+                  elif t=='h1':self.h1+=1
+                  elif t=='title':self.intitle=True
+                  elif t=='img':self.imgs.append(d)
+                  elif t=='script':self.scripts.append(d)
+                  elif t=='main':self.main.append(d.get('class',''))
+              def handle_endtag(self,t):
+                  if t.lower()=='title':self.intitle=False
+              def handle_data(self,d):
+                  if self.intitle:self.title+=d
+          parsed={}
+          for p in files:
+              txt=p.read_text(encoding='utf-8',errors='replace'); q=P(); q.feed(txt); parsed[p.name]=(q,txt)
+          errors=[]; warnings=[]; notes=[]; incoming={n:set() for n in names}; indexable=set(); titles=collections.defaultdict(list); descs=collections.defaultdict(list)
+          refs=set(); article_pages=[]
+          for n,(q,txt) in parsed.items():
+              meta={(m.get('name') or m.get('property') or '').lower():(m.get('content') or '').strip() for m in q.metas}
+              rob=meta.get('robots','').lower(); idx=(n!='404.html' and 'noindex' not in rob)
+              if idx:indexable.add(n)
+              if n!='404.html':
+                  title=' '.join(q.title.split()); desc=meta.get('description',''); can=next((l.get('href','').strip() for l in q.links if 'canonical' in (l.get('rel') or '').lower()),''); exp=BASE if n=='index.html' else BASE+n
+                  if not title:errors.append(f'{n}: title missing')
+                  if not desc:errors.append(f'{n}: description missing')
+                  if q.h1!=1:errors.append(f'{n}: H1 count {q.h1}')
+                  if can!=exp:errors.append(f'{n}: canonical mismatch')
+                  if not rob:errors.append(f'{n}: robots missing')
+                  titles[title].append(n); descs[desc].append(n)
+                  if len(title)>65:warnings.append(f'{n}: title long {len(title)}')
+                  if len(desc)>170:warnings.append(f'{n}: description long {len(desc)}')
+                  if len(desc)<70:warnings.append(f'{n}: description short {len(desc)}')
+                  ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',txt,re.I|re.S)
+                  if not ld:errors.append(f'{n}: JSON-LD missing')
+                  for b in ld:
+                      try:json.loads(b)
+                      except Exception as e:errors.append(f'{n}: invalid JSON-LD {e}')
+              if any('article-page' in c.split() for c in q.main):article_pages.append(n)
+              for l in q.links:
+                  href=(l.get('href') or '').strip(); rel=(l.get('rel') or '').lower()
+                  if ('stylesheet' in rel or 'icon' in rel or 'preload' in rel) and href and not href.startswith(('http://','https://','//','data:')):refs.add(href.split('?',1)[0].lstrip('/'))
+              for s in q.scripts:
+                  src=(s.get('src') or '').strip()
+                  if src and not src.startswith(('http://','https://','//')):refs.add(src.split('?',1)[0].lstrip('/'))
+              for im in q.imgs:
+                  src=(im.get('src') or '').strip()
+                  if src and not src.startswith(('http://','https://','//','data:')):refs.add(src.split('?',1)[0].lstrip('/'))
+                  if n!='404.html' and src and not (im.get('alt') or '').strip():warnings.append(f'{n}: img alt missing {src}')
+          for kind,b in [('title',titles),('description',descs)]:
+              for v,fs in b.items():
+                  if v and len(fs)>1:warnings.append(f'duplicate {kind}: {fs}')
+          def targ(src,h):
+              if h is None:return None,None,'missing'
+              h=h.strip()
+              if not h:return None,None,'empty'
+              if h=='#':return None,None,'hash'
+              if h.startswith(('mailto:','tel:','javascript:','data:')):return None,None,'skip'
+              u=urlparse(h)
+              if u.scheme in ('http','https'):
+                  if u.netloc not in (HOST,'www.'+HOST):return None,None,'external'
+                  return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+              if u.scheme:return None,None,'external'
+              if h.startswith('#'):return src,h[1:],'internal'
+              return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+          for src,(q,txt) in parsed.items():
+              for a in q.a:
+                  h=a.get('href'); path,frag,k=targ(src,h)
+                  if k in ('missing','empty','hash'):errors.append(f'{src}: bad href {h!r}')
+                  elif k=='internal':
+                      if path not in names and not Path(path).exists():errors.append(f'{src}: broken link {h}')
+                      elif path in names:
+                          incoming[path].add(src)
+                          if frag and frag not in parsed[path][0].ids:errors.append(f'{src}: missing fragment {h}')
+                  if (a.get('target') or '').lower()=='_blank':
+                      rel=(a.get('rel') or '').lower()
+                      if 'noopener' not in rel or 'noreferrer' not in rel:warnings.append(f'{src}: target blank rel incomplete {h}')
+          orphans=[]
+          for n in sorted(indexable):
+              if n=='index.html':continue
+              if not {x for x in incoming[n] if x!=n and x in indexable}:orphans.append(n)
+          if orphans:errors.append('orphan pages: '+', '.join(orphans))
+          root=ET.parse('sitemap.xml').getroot(); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; sm=[]
+          for u in root.findall('s:url',ns):sm.append((u.findtext('s:loc',default='',namespaces=ns).strip(),u.findtext('s:lastmod',default='',namespaces=ns).strip()))
+          exp={BASE if n=='index.html' else BASE+n for n in indexable}; act={x[0] for x in sm}
+          if exp-act:errors.append('sitemap missing '+', '.join(sorted(exp-act)))
+          if act-exp:warnings.append('sitemap extra '+', '.join(sorted(act-exp)))
+          if len(sm)!=len(act):errors.append('sitemap duplicate loc')
+          for loc,lm in sm:
+              if not re.fullmatch(r'\d{4}-\d{2}-\d{2}',lm):warnings.append(f'lastmod issue {loc} {lm}')
+          for a in refs:
+              if a and not Path(a).exists():errors.append(f'missing asset {a}')
+          root_assets=sorted(p.name for p in Path('.').iterdir() if p.is_file() and p.suffix in ('.css','.js')); unused=sorted(set(root_assets)-refs)
+          if unused:warnings.append('unreferenced root css/js: '+', '.join(unused))
+          article_pages=sorted(article_pages); notes.append('article-pages='+', '.join(article_pages))
+          for hub in ['articles.html','hukuki-icerikler.html']:
+              linked=set()
+              for a in parsed[hub][0].a:
+                  h=(a.get('href') or '').split('#',1)[0].split('?',1)[0]
+                  if h in article_pages:linked.add(h)
+              notes.append(f'{hub}-links={len(linked)}/{len(article_pages)}')
+          print('=== CORRECTED DEEP AUDIT V3 ===')
+          print(f'HTML={len(files)} INDEXABLE={len(indexable)} SITEMAP={len(sm)} ORPHANS={len(orphans)} ARTICLE_PAGES={len(article_pages)} ROOT_ASSETS={len(root_assets)} UNUSED={len(unused)}')
+          print('NOTES:'); print('\n'.join(notes))
+          print('ERRORS:'); print('\n'.join(errors) if errors else 'none')
+          print('WARNINGS:'); print('\n'.join(warnings) if warnings else 'none')
