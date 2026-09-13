@@ -15,7 +15,7 @@ jobs:
         with:
           ref: link-orphan-audit-20260914
           fetch-depth: 0
-      - name: Audit broken links redirects and orphan pages
+      - name: Fix orphan page and validate link graph
         shell: bash
         run: |
           python3 - <<'PY'
@@ -23,6 +23,16 @@ jobs:
           from html.parser import HTMLParser
           from urllib.parse import urlparse, unquote
           import re, sys
+
+          # Add a normal crawlable link to the only orphan page found in the first pass.
+          home=Path('index.html')
+          s=home.read_text(encoding='utf-8')
+          old='© 2026 Erçakır Hukuk Bürosu</p> · <a href="kvkk-aydinlatma-metni.html">KVKK</a>'
+          new='© 2026 Erçakır Hukuk Bürosu</p> · <a href="hakkimizda.html">Hakkımızda</a> · <a href="kvkk-aydinlatma-metni.html">KVKK</a>'
+          if 'href="hakkimizda.html"' not in s:
+              if old not in s: raise SystemExit('Expected footer marker not found')
+              s=s.replace(old,new,1)
+              home.write_text(s,encoding='utf-8')
 
           DOMAIN='avbusraturunc.com'
           files=sorted(Path('.').glob('*.html'))
@@ -39,65 +49,65 @@ jobs:
 
           parsed={}; indexable=set(); incoming={p.name:set() for p in files}
           errors=[]; warnings=[]
-
           for p in files:
-              s=p.read_text(encoding='utf-8', errors='replace')
-              q=P(); q.feed(s); parsed[p.name]=(q,s)
+              txt=p.read_text(encoding='utf-8', errors='replace')
+              q=P(); q.feed(txt); parsed[p.name]=(q,txt)
               robots=' '.join((m.get('content') or '') for m in q.metas if (m.get('name') or '').lower()=='robots').lower()
               if p.name!='404.html' and 'noindex' not in robots: indexable.add(p.name)
-              if re.search(r'<meta[^>]+http-equiv=["\']refresh["\']', s, re.I): warnings.append(f'{p.name}: meta refresh redirect present')
-              if re.search(r'\b(?:window\.)?location(?:\.href|\.replace|\.assign)?\s*[=(]', s, re.I): warnings.append(f'{p.name}: JavaScript redirect-like code present')
+              if re.search(r'<meta[^>]+http-equiv=["\']refresh["\']', txt, re.I): warnings.append(f'{p.name}: meta refresh redirect present')
+              if re.search(r'\b(?:window\.)?location(?:\.href|\.replace|\.assign)?\s*[=(]', txt, re.I): warnings.append(f'{p.name}: JavaScript redirect-like code present')
 
-          def target_from(src, href):
-              if href is None: return None,None,'missing'
+          def target(src,href):
+              if href is None:return None,None,'missing'
               href=href.strip()
-              if not href: return None,None,'empty'
-              if href=='#': return None,None,'hash'
-              if href.startswith(('mailto:','tel:','javascript:','data:')): return None,None,'skip'
+              if not href:return None,None,'empty'
+              if href=='#':return None,None,'hash'
+              if href.startswith(('mailto:','tel:','javascript:','data:')):return None,None,'skip'
               u=urlparse(href)
               if u.scheme in ('http','https'):
-                  if u.netloc not in (DOMAIN,'www.'+DOMAIN): return None,None,'external'
-                  path=unquote(u.path.lstrip('/')) or 'index.html'; frag=u.fragment
-              elif u.scheme: return None,None,'external'
-              else:
-                  if href.startswith('#'): path=src; frag=href[1:]
-                  else: path=unquote(u.path.lstrip('/')) or 'index.html'; frag=u.fragment
-              return path,frag,'internal'
+                  if u.netloc not in (DOMAIN,'www.'+DOMAIN):return None,None,'external'
+                  return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+              if u.scheme:return None,None,'external'
+              if href.startswith('#'):return src,href[1:],'internal'
+              return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
 
-          for src,(q,s) in parsed.items():
+          for src,(q,txt) in parsed.items():
               for href in q.links:
-                  path,frag,kind=target_from(src,href)
-                  if kind=='missing': errors.append(f'{src}: href missing on <a>')
-                  elif kind=='empty': errors.append(f'{src}: empty href')
-                  elif kind=='hash': errors.append(f'{src}: href="#"')
-                  elif kind!='internal': continue
+                  path,frag,kind=target(src,href)
+                  if kind=='missing':errors.append(f'{src}: href missing')
+                  elif kind=='empty':errors.append(f'{src}: empty href')
+                  elif kind=='hash':errors.append(f'{src}: href="#"')
+                  elif kind!='internal':continue
                   else:
                       if path not in names and not Path(path).exists():
-                          errors.append(f'{src}: broken internal link -> {href}')
-                          continue
+                          errors.append(f'{src}: broken internal link -> {href}'); continue
                       if path in names:
                           incoming[path].add(src)
-                          if frag and frag not in parsed[path][0].ids:
-                              errors.append(f'{src}: missing fragment target -> {href}')
+                          if frag and frag not in parsed[path][0].ids:errors.append(f'{src}: missing fragment -> {href}')
 
           orphans=[]
           for name in sorted(indexable):
-              if name=='index.html': continue
+              if name=='index.html':continue
               refs={x for x in incoming[name] if x!=name and x in indexable}
-              if not refs: orphans.append(name)
+              if not refs:orphans.append(name)
 
-          sitemap=Path('sitemap.xml').read_text(encoding='utf-8') if Path('sitemap.xml').exists() else ''
+          sitemap=Path('sitemap.xml').read_text(encoding='utf-8')
           for name in sorted(indexable):
               url='https://avbusraturunc.com/' if name=='index.html' else 'https://avbusraturunc.com/'+name
-              if url not in sitemap: errors.append(f'{name}: indexable page missing from sitemap')
+              if url not in sitemap:errors.append(f'{name}: missing from sitemap')
 
           print(f'HTML pages: {len(files)}')
           print(f'Indexable pages: {len(indexable)}')
-          print('ORPHANS:')
-          print('\n'.join(orphans) if orphans else 'none')
-          print('WARNINGS:')
-          print('\n'.join(sorted(set(warnings))) if warnings else 'none')
-          print('ERRORS:')
-          print('\n'.join(sorted(set(errors))) if errors else 'none')
+          print('ORPHANS:'); print('\n'.join(orphans) if orphans else 'none')
+          print('WARNINGS:'); print('\n'.join(sorted(set(warnings))) if warnings else 'none')
+          print('ERRORS:'); print('\n'.join(sorted(set(errors))) if errors else 'none')
+          if orphans: errors.append('orphan pages remain: '+', '.join(orphans))
           if errors: sys.exit(1)
           PY
+
+          git rm .github/workflows/link-orphan-audit-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'seo: fix orphan page and validate internal links'
+          git push origin HEAD:link-orphan-audit-20260914
