@@ -1,0 +1,98 @@
+name: Consolidate legacy articles hub once
+on:
+  push:
+    branches: [articles-hub-consolidation-20260914]
+    paths:
+      - ".github/workflows/articles-hub-consolidation-once.yml"
+permissions:
+  contents: write
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: articles-hub-consolidation-20260914
+      - name: Consolidate legacy articles hub
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, json, xml.etree.ElementTree as ET
+
+          p = Path('articles.html')
+          s = p.read_text(encoding='utf-8')
+
+          s, n = re.subn(
+              r'<meta name="robots" content="[^"]*">',
+              '<meta name="robots" content="noindex,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">',
+              s,
+              count=1,
+          )
+          assert n == 1, 'robots meta replacement failed'
+
+          s, n = re.subn(
+              r'<link rel="canonical" href="https://avbusraturunc\.com/articles\.html">',
+              '<link rel="canonical" href="https://avbusraturunc.com/hukuki-icerikler.html">',
+              s,
+              count=1,
+          )
+          assert n == 1, 'canonical replacement failed'
+
+          s, n = re.subn(
+              r'<meta property="og:url" content="https://avbusraturunc\.com/articles\.html">',
+              '<meta property="og:url" content="https://avbusraturunc.com/hukuki-icerikler.html">',
+              s,
+              count=1,
+          )
+          assert n == 1, 'og:url replacement failed'
+
+          legacy_ld = {
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              '@id': 'https://avbusraturunc.com/articles.html#legacy-page',
+              'url': 'https://avbusraturunc.com/articles.html',
+              'name': 'Hukuki Bilgilendirmeler',
+              'inLanguage': 'tr-TR',
+              'isPartOf': {'@id': 'https://avbusraturunc.com/#website'},
+              'relatedLink': 'https://avbusraturunc.com/hukuki-icerikler.html'
+          }
+          ld_tag = '<script type="application/ld+json">' + json.dumps(legacy_ld, ensure_ascii=False, separators=(',', ':')) + '</script>'
+          s, n = re.subn(r'<script type="application/ld\+json">.*?</script>', ld_tag, s, count=1, flags=re.S)
+          assert n == 1, 'JSON-LD replacement failed'
+
+          marker = '<h1>Hukuki Bilgilendirmeler</h1>'
+          notice = marker + '<p class="editorial-note"><strong>Güncel içerik merkezi:</strong> Bu eski sayfa mevcut bağlantıların çalışmaya devam etmesi için korunmaktadır. Güncel ve ayrıntılı yazılar için <a href="hukuki-icerikler.html">Hukuki İçerikler</a> sayfasını kullanabilirsiniz.</p>'
+          assert marker in s, 'H1 marker missing'
+          s = s.replace(marker, notice, 1)
+          p.write_text(s, encoding='utf-8')
+
+          sm = Path('sitemap.xml')
+          x = sm.read_text(encoding='utf-8')
+          x2, n = re.subn(r'\s*<url><loc>https://avbusraturunc\.com/articles\.html</loc><lastmod>[^<]+</lastmod></url>', '', x, count=1)
+          assert n == 1, 'articles sitemap entry removal failed'
+          sm.write_text(x2, encoding='utf-8')
+
+          # Validation
+          final = p.read_text(encoding='utf-8')
+          assert 'content="noindex,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"' in final
+          assert '<link rel="canonical" href="https://avbusraturunc.com/hukuki-icerikler.html">' in final
+          assert '<meta property="og:url" content="https://avbusraturunc.com/hukuki-icerikler.html">' in final
+          assert 'href="hukuki-icerikler.html">Hukuki İçerikler</a>' in final
+          for anchor in ['ceza','aile','is','icra','gayrimenkul','miras','ticaret','idare','kira','sigorta']:
+              assert f'id="{anchor}"' in final, f'legacy anchor lost: {anchor}'
+
+          root = ET.parse('sitemap.xml').getroot()
+          ns = {'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          urls = [(u.findtext('s:loc', default='', namespaces=ns) or '').strip() for u in root.findall('s:url', ns)]
+          assert 'https://avbusraturunc.com/articles.html' not in urls
+          assert 'https://avbusraturunc.com/hukuki-icerikler.html' in urls
+          assert len(urls) == 27, f'unexpected sitemap URL count: {len(urls)}'
+          print('articles hub consolidation validation passed')
+      - name: Commit consolidation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add articles.html sitemap.xml
+          git commit -m "seo: consolidate legacy articles hub" || exit 0
+          git push origin HEAD:articles-hub-consolidation-20260914
