@@ -1,0 +1,103 @@
+name: Link and orphan audit once
+
+on:
+  push:
+    branches: [link-orphan-audit-20260914]
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: link-orphan-audit-20260914
+          fetch-depth: 0
+      - name: Audit broken links redirects and orphan pages
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          import re, sys
+
+          DOMAIN='avbusraturunc.com'
+          files=sorted(Path('.').glob('*.html'))
+          names={p.name for p in files}
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids=set(); self.links=[]; self.metas=[]
+              def handle_starttag(self, tag, attrs):
+                  d=dict(attrs)
+                  if d.get('id'): self.ids.add(d['id'])
+                  if tag.lower()=='a': self.links.append(d.get('href'))
+                  if tag.lower()=='meta': self.metas.append(d)
+
+          parsed={}; indexable=set(); incoming={p.name:set() for p in files}
+          errors=[]; warnings=[]
+
+          for p in files:
+              s=p.read_text(encoding='utf-8', errors='replace')
+              q=P(); q.feed(s); parsed[p.name]=(q,s)
+              robots=' '.join((m.get('content') or '') for m in q.metas if (m.get('name') or '').lower()=='robots').lower()
+              if p.name!='404.html' and 'noindex' not in robots: indexable.add(p.name)
+              if re.search(r'<meta[^>]+http-equiv=["\']refresh["\']', s, re.I): warnings.append(f'{p.name}: meta refresh redirect present')
+              if re.search(r'\b(?:window\.)?location(?:\.href|\.replace|\.assign)?\s*[=(]', s, re.I): warnings.append(f'{p.name}: JavaScript redirect-like code present')
+
+          def target_from(src, href):
+              if href is None: return None,None,'missing'
+              href=href.strip()
+              if not href: return None,None,'empty'
+              if href=='#': return None,None,'hash'
+              if href.startswith(('mailto:','tel:','javascript:','data:')): return None,None,'skip'
+              u=urlparse(href)
+              if u.scheme in ('http','https'):
+                  if u.netloc not in (DOMAIN,'www.'+DOMAIN): return None,None,'external'
+                  path=unquote(u.path.lstrip('/')) or 'index.html'; frag=u.fragment
+              elif u.scheme: return None,None,'external'
+              else:
+                  if href.startswith('#'): path=src; frag=href[1:]
+                  else: path=unquote(u.path.lstrip('/')) or 'index.html'; frag=u.fragment
+              return path,frag,'internal'
+
+          for src,(q,s) in parsed.items():
+              for href in q.links:
+                  path,frag,kind=target_from(src,href)
+                  if kind=='missing': errors.append(f'{src}: href missing on <a>')
+                  elif kind=='empty': errors.append(f'{src}: empty href')
+                  elif kind=='hash': errors.append(f'{src}: href="#"')
+                  elif kind!='internal': continue
+                  else:
+                      if path not in names and not Path(path).exists():
+                          errors.append(f'{src}: broken internal link -> {href}')
+                          continue
+                      if path in names:
+                          incoming[path].add(src)
+                          if frag and frag not in parsed[path][0].ids:
+                              errors.append(f'{src}: missing fragment target -> {href}')
+
+          orphans=[]
+          for name in sorted(indexable):
+              if name=='index.html': continue
+              refs={x for x in incoming[name] if x!=name and x in indexable}
+              if not refs: orphans.append(name)
+
+          sitemap=Path('sitemap.xml').read_text(encoding='utf-8') if Path('sitemap.xml').exists() else ''
+          for name in sorted(indexable):
+              url='https://avbusraturunc.com/' if name=='index.html' else 'https://avbusraturunc.com/'+name
+              if url not in sitemap: errors.append(f'{name}: indexable page missing from sitemap')
+
+          print(f'HTML pages: {len(files)}')
+          print(f'Indexable pages: {len(indexable)}')
+          print('ORPHANS:')
+          print('\n'.join(orphans) if orphans else 'none')
+          print('WARNINGS:')
+          print('\n'.join(sorted(set(warnings))) if warnings else 'none')
+          print('ERRORS:')
+          print('\n'.join(sorted(set(errors))) if errors else 'none')
+          if errors: sys.exit(1)
+          PY
