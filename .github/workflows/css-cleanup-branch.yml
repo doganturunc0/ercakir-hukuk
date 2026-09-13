@@ -54,28 +54,46 @@ jobs:
               'infaz-hesaplama.inline.css','tutuklama-kararina-itiraz.inline.css'
           }
 
-          # Only remove a stylesheet if it is completely unreferenced anywhere in the text repo
-          # and is not one of the known active/structural stylesheets.
           removed = []
           for css in css_files:
               if css.name not in protected and not refs.get(css.name):
                   css.unlink()
                   removed.append(css.name)
 
-          # Collapse styles.css into site.css only when byte-for-byte safe.
-          # This intentionally refuses a risky migration when the files differ.
+          def normalized_css(text: str) -> str:
+              text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+              return re.sub(r'\s+', '', text)
+
           styles = Path('styles.css')
           site = Path('site.css')
           migrated = False
+          relation = 'missing'
           if styles.exists() and site.exists():
-              s1 = styles.read_bytes()
-              s2 = site.read_bytes()
-              if s1 == s2:
+              old = styles.read_text(encoding='utf-8')
+              new = site.read_text(encoding='utf-8')
+              n_old = normalized_css(old)
+              n_new = normalized_css(new)
+              if n_old == n_new:
+                  relation = 'equivalent'
+              elif n_new.startswith(n_old):
+                  relation = 'site.css is an exact normalized superset (old stylesheet + appended rules)'
+              else:
+                  relation = 'different'
+
+              print(f'\nstyles.css bytes: {len(old.encode("utf-8"))}')
+              print(f'site.css bytes: {len(new.encode("utf-8"))}')
+              print(f'Base stylesheet relation: {relation}')
+
+              if relation in {'equivalent', 'site.css is an exact normalized superset (old stylesheet + appended rules)'}:
                   for p in root.glob('*.html'):
                       text = p.read_text(encoding='utf-8')
-                      new = re.sub(r'href=["\']styles\.css(?:\?[^"\']*)?["\']', 'href="site.css?v=20260913-1"', text)
-                      if new != text:
-                          p.write_text(new, encoding='utf-8')
+                      updated = re.sub(
+                          r'href=["\']styles\.css(?:\?[^"\']*)?["\']',
+                          'href="site.css?v=20260913-2"',
+                          text
+                      )
+                      if updated != text:
+                          p.write_text(updated, encoding='utf-8')
                   styles.unlink()
                   migrated = True
 
@@ -84,12 +102,12 @@ jobs:
           PY
 
           if git diff --quiet; then
-            echo 'No unsafe or orphan CSS changes were needed.'
+            echo 'No safe CSS changes were needed.'
             exit 0
           fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'chore: remove verified orphan CSS'
+          git commit -m 'chore: consolidate verified duplicate CSS'
           git push origin HEAD:css-cleanup-20260913
