@@ -1,0 +1,212 @@
+name: Deep audit v2
+on:
+  push:
+    branches: [deep-audit-20260914-v2]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deep static + live audit
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse, unquote
+          from urllib.request import Request, build_opener, HTTPRedirectHandler
+          from urllib.error import HTTPError, URLError
+          import re, json, hashlib, collections, xml.etree.ElementTree as ET, datetime, ssl
+
+          BASE='https://avbusraturunc.com/'
+          HOST='avbusraturunc.com'
+          files=sorted(Path('.').glob('*.html'))
+          names={p.name for p in files}
+          errors=[]; warnings=[]; notes=[]
+
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.title=''; self.in_title=False; self.metas=[]; self.links=[]; self.a=[]; self.ids=set(); self.imgs=[]; self.scripts=[]; self.h1=0; self.main_classes=[]
+              def handle_starttag(self,tag,attrs):
+                  d=dict(attrs); tag=tag.lower()
+                  if d.get('id'): self.ids.add(d['id'])
+                  if tag=='title': self.in_title=True
+                  elif tag=='meta': self.metas.append(d)
+                  elif tag=='link': self.links.append(d)
+                  elif tag=='a': self.a.append(d)
+                  elif tag=='img': self.imgs.append(d)
+                  elif tag=='script': self.scripts.append(d)
+                  elif tag=='h1': self.h1+=1
+                  elif tag=='main': self.main_classes.append(d.get('class',''))
+              def handle_endtag(self,tag):
+                  if tag.lower()=='title': self.in_title=False
+              def handle_data(self,d):
+                  if self.in_title:self.title+=d
+
+          parsed={}; indexable=set(); incoming={n:set() for n in names}; titles=collections.defaultdict(list); descs=collections.defaultdict(list); canon=collections.defaultdict(list)
+          referenced_assets=set(); article_pages=[]
+
+          def local_target(src, href):
+              if href is None:return None,None,'missing'
+              href=href.strip()
+              if not href:return None,None,'empty'
+              if href=='#':return None,None,'hash'
+              if href.startswith(('mailto:','tel:','javascript:','data:')):return None,None,'skip'
+              u=urlparse(href)
+              if u.scheme in ('http','https'):
+                  if u.netloc not in (HOST,'www.'+HOST):return None,None,'external'
+                  return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+              if u.scheme:return None,None,'external'
+              if href.startswith('#'):return src,href[1:],'internal'
+              return unquote(u.path.lstrip('/')) or 'index.html',u.fragment,'internal'
+
+          for p in files:
+              txt=p.read_text(encoding='utf-8',errors='replace'); q=P(); q.feed(txt); parsed[p.name]=(q,txt)
+              meta={(m.get('name') or m.get('property') or '').lower():(m.get('content') or '').strip() for m in q.metas}
+              robots=meta.get('robots','').lower(); is_idx=(p.name!='404.html' and 'noindex' not in robots)
+              if is_idx:indexable.add(p.name)
+              title=' '.join(q.title.split()); desc=meta.get('description','')
+              canonical=next((l.get('href','').strip() for l in q.links if 'canonical' in (l.get('rel') or '').lower()),'')
+              if p.name!='404.html':
+                  if not title:errors.append(f'{p.name}: title missing')
+                  if not desc:errors.append(f'{p.name}: description missing')
+                  if q.h1!=1:errors.append(f'{p.name}: H1 count {q.h1}')
+                  expected=BASE if p.name=='index.html' else BASE+p.name
+                  if canonical!=expected:errors.append(f'{p.name}: canonical mismatch {canonical!r}')
+                  if not robots:errors.append(f'{p.name}: robots meta missing')
+                  titles[title].append(p.name); descs[desc].append(p.name); canon[canonical].append(p.name)
+                  if len(title)>65:warnings.append(f'{p.name}: title long {len(title)}')
+                  if len(desc)>170:warnings.append(f'{p.name}: description long {len(desc)}')
+                  if len(desc)<70:warnings.append(f'{p.name}: description short {len(desc)}')
+                  ld=re.findall(r'<script\s+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',txt,re.I|re.S)
+                  if not ld:errors.append(f'{p.name}: JSON-LD missing')
+                  for i,b in enumerate(ld,1):
+                      try:json.loads(b)
+                      except Exception as e:errors.append(f'{p.name}: JSON-LD invalid #{i}: {e}')
+              if any('article-page' in c.split() for c in q.main_classes):article_pages.append(p.name)
+              for im in q.imgs:
+                  src=(im.get('src') or '').strip()
+                  if src and not src.startswith(('http://','https://','data:','//')): referenced_assets.add(src.split('?',1)[0].lstrip('/'))
+                  if p.name!='404.html' and src and not (im.get('alt') or '').strip():warnings.append(f'{p.name}: img alt missing -> {src}')
+              for l in q.links:
+                  href=(l.get('href') or '').strip(); rel=(l.get('rel') or '').lower()
+                  if ('stylesheet' in rel or 'icon' in rel or 'preload' in rel) and href and not href.startswith(('http://','https://','data:','//')): referenced_assets.add(href.split('?',1)[0].lstrip('/'))
+              for s in q.scripts:
+                  src=(s.get('src') or '').strip()
+                  if src and not src.startswith(('http://','https://','//')): referenced_assets.add(src.split('?',1)[0].lstrip('/'))
+              for a in q.a:
+                  href=a.get('href'); path,frag,kind=local_target(p.name,href)
+                  if kind=='missing':errors.append(f'{p.name}: anchor href missing')
+                  elif kind=='empty':errors.append(f'{p.name}: empty href')
+                  elif kind=='hash':errors.append(f'{p.name}: href="#"')
+                  elif kind=='internal':
+                      if path not in names and not Path(path).exists():errors.append(f'{p.name}: broken internal link -> {href}')
+                      elif path in names:
+                          incoming[path].add(p.name)
+                          if frag and frag not in parsed.get(path,(P(),''))[0].ids:errors.append(f'{p.name}: missing fragment -> {href}')
+                  if (a.get('target') or '').lower()=='_blank':
+                      rel=(a.get('rel') or '').lower()
+                      if 'noopener' not in rel or 'noreferrer' not in rel:warnings.append(f'{p.name}: target blank rel incomplete -> {href}')
+
+          for kind,b in [('title',titles),('description',descs),('canonical',canon)]:
+              for v,fs in b.items():
+                  if v and len(fs)>1:warnings.append(f'duplicate {kind}: {fs}')
+
+          orphans=[]
+          for n in sorted(indexable):
+              if n=='index.html':continue
+              refs={x for x in incoming[n] if x!=n and x in indexable}
+              if not refs:orphans.append(n)
+          if orphans:errors.append('orphan indexable pages: '+', '.join(orphans))
+
+          # Sitemap exact coverage + lastmod
+          sm=Path('sitemap.xml')
+          sm_urls=[]
+          if not sm.exists():errors.append('sitemap.xml missing')
+          else:
+              root=ET.parse(sm).getroot(); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+              for u in root.findall('s:url',ns):
+                  loc=(u.findtext('s:loc',default='',namespaces=ns) or '').strip(); lm=(u.findtext('s:lastmod',default='',namespaces=ns) or '').strip(); sm_urls.append(loc)
+                  if not lm:warnings.append(f'sitemap missing lastmod -> {loc}')
+                  elif not re.fullmatch(r'\d{4}-\d{2}-\d{2}',lm):warnings.append(f'sitemap lastmod format -> {loc} {lm}')
+              expected={BASE if n=='index.html' else BASE+n for n in indexable}
+              actual=set(sm_urls)
+              if expected-actual:errors.append('sitemap missing: '+', '.join(sorted(expected-actual)))
+              if actual-expected:warnings.append('sitemap extra: '+', '.join(sorted(actual-expected)))
+              if len(sm_urls)!=len(set(sm_urls)):errors.append('sitemap duplicate URLs')
+
+          # robots / rss / llms
+          rt=Path('robots.txt').read_text(encoding='utf-8',errors='replace') if Path('robots.txt').exists() else ''
+          if 'Sitemap: https://avbusraturunc.com/sitemap.xml' not in rt:errors.append('robots sitemap declaration missing')
+          for fn in ['rss.xml','llms.txt','llms-full.txt']:
+              if not Path(fn).exists():warnings.append(f'{fn} missing')
+
+          # Asset existence and root-level orphan CSS/JS
+          for a in sorted(referenced_assets):
+              if a and not Path(a).exists():errors.append(f'missing referenced asset: {a}')
+          root_assets=[p.name for p in Path('.').iterdir() if p.is_file() and p.suffix in ('.css','.js')]
+          unused_root=[a for a in root_assets if a not in referenced_assets]
+          if unused_root:warnings.append('unreferenced root CSS/JS: '+', '.join(sorted(unused_root)))
+          # exact duplicate CSS/JS hashes
+          hb=collections.defaultdict(list)
+          for a in root_assets:
+              hb[hashlib.sha256(Path(a).read_bytes()).hexdigest()].append(a)
+          for fs in hb.values():
+              if len(fs)>1:warnings.append('duplicate asset content: '+', '.join(sorted(fs)))
+
+          # Article discovery, not hard coded
+          article_pages=sorted(article_pages)
+          notes.append('article-pages=' + ', '.join(article_pages))
+          for idxname in ['articles.html','hukuki-icerikler.html']:
+              if idxname in parsed:
+                  links=[]
+                  for a in parsed[idxname][0].a:
+                      h=(a.get('href') or '').split('#',1)[0].split('?',1)[0]
+                      if h in article_pages:links.append(h)
+                  notes.append(f'{idxname}-article-links={len(set(links))}/{len(article_pages)}')
+                  missing=set(article_pages)-set(links)
+                  if missing:warnings.append(f'{idxname}: article pages not linked -> '+', '.join(sorted(missing)))
+
+          # Local entity/NAP on three key pages
+          for f in ['index.html','hakkimizda.html','iletisim.html']:
+              txt=parsed[f][1]
+              for tok in ['Erçakır Hukuk Bürosu','Büşra Turunç','Salihli','Manisa','0553 321 85 93']:
+                  if tok not in txt and tok.replace('0553 321 85 93','+90 553 321 85 93') not in txt: warnings.append(f'{f}: NAP token missing {tok}')
+          idx=parsed['index.html'][1]
+          for tok in ['LocalBusiness','LegalService','areaServed','contactPoint','hasMap','sameAs']:
+              if tok not in idx:warnings.append(f'index schema token missing {tok}')
+
+          # Live crawl from sitemap + homepage variants
+          ctx=ssl.create_default_context(); opener=build_opener(HTTPRedirectHandler())
+          live_fail=[]; live_ok=0
+          def fetch(url):
+              req=Request(url,headers={'User-Agent':'Mozilla/5.0 audit'})
+              try:
+                  with opener.open(req,timeout=12,context=ctx) as r:
+                      return r.status,r.geturl(),r.headers, r.read()
+              except TypeError:
+                  try:
+                      with opener.open(req,timeout=12) as r:return r.status,r.geturl(),r.headers,r.read()
+                  except Exception as e:return None,None,None,str(e).encode()
+              except Exception as e:return None,None,None,str(e).encode()
+          for url in sm_urls:
+              st,final,h,b=fetch(url)
+              if st==200:live_ok+=1
+              else:live_fail.append(f'{url} -> {st} {final}')
+          if live_fail:errors.append('live sitemap URL failures: '+' | '.join(live_fail))
+          # deployed core files
+          for url in [BASE+'robots.txt',BASE+'sitemap.xml',BASE+'rss.xml']:
+              st,final,h,b=fetch(url)
+              if st!=200:warnings.append(f'live core fetch failed {url} -> {st}')
+          notes.append(f'live-sitemap-200={live_ok}/{len(sm_urls)}')
+
+          print('=== DEEP AUDIT V2 ===')
+          print(f'HEAD={__import__("subprocess").check_output(["git","rev-parse","HEAD"],text=True).strip()}')
+          print(f'HTML={len(files)} INDEXABLE={len(indexable)} SITEMAP={len(sm_urls)} ORPHANS={len(orphans)} ARTICLE_PAGES={len(article_pages)}')
+          print(f'REFERENCED_ASSETS={len(referenced_assets)} ROOT_CSS_JS={len(root_assets)} UNUSED_ROOT={len(unused_root)}')
+          print('\nNOTES:'); print('\n'.join(notes) if notes else 'none')
+          print('\nERRORS:'); print('\n'.join(errors) if errors else 'none')
+          print('\nWARNINGS:'); print('\n'.join(warnings) if warnings else 'none')
+          PY
