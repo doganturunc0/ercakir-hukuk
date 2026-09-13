@@ -37,14 +37,12 @@ jobs:
           titles, descriptions, canonicals = {}, {}, {}
           page_texts = {}
           indexable_pages = []
-          content_pages = [
-              'tutuklama-kararina-itiraz.html',
-              'anlasmali-bosanma-davasi.html',
-              'kidem-ihbar-tazminati.html',
-              'icra-takibine-itiraz.html',
-              'tahliye-davasi.html',
-              'tapu-iptal-tescil-davasi.html',
-          ]
+          content_pages = sorted(
+              p.name for p in html_files
+              if re.search(r'<main\b[^>]*\bclass=["\'][^"\']*\barticle-page\b', p.read_text(encoding='utf-8'), re.I)
+          )
+          if not content_pages:
+              errors.append('article-page sınıfına sahip ayrıntılı içerik bulunamadı')
 
           class HeadParser(HTMLParser):
               def __init__(self):
@@ -172,6 +170,13 @@ jobs:
           if not robots.exists(): errors.append('robots.txt eksik')
           elif domain + 'sitemap.xml' not in robots.read_text(encoding='utf-8'): errors.append('robots.txt sitemap bildirimi eksik')
 
+          hub = Path('hukuki-icerikler.html')
+          if not hub.exists(): errors.append('hukuki-icerikler.html eksik')
+          else:
+              hub_text = hub.read_text(encoding='utf-8')
+              for page in content_pages:
+                  if page not in hub_text: errors.append(f'hukuki-icerikler.html ayrıntılı içerik bağlantısı eksik: {page}')
+
           rss = Path('rss.xml')
           if not rss.exists(): errors.append('rss.xml eksik')
           else:
@@ -197,6 +202,7 @@ jobs:
 
           print(f'Audited HTML files: {len(html_files)}')
           print(f'Indexable HTML files: {len(indexable_pages)}')
+          print(f'Autodiscovered detailed article pages: {len(content_pages)} -> {content_pages}')
           print('\nWARNINGS:')
           print('\n'.join(sorted(set(warnings))) if warnings else 'none')
           print('\nERRORS:')
