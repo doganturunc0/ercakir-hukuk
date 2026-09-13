@@ -1,0 +1,128 @@
+name: Sitemap and metadata sync once
+
+on:
+  push:
+    branches: [sitemap-metadata-sync-20260914]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sitemap-metadata-sync-20260914
+          fetch-depth: 0
+      - name: Sync sitemap lastmod and validate canonical metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, sys
+          from urllib.parse import urlparse
+
+          root = Path('.')
+          sitemap = Path('sitemap.xml')
+          text = sitemap.read_text(encoding='utf-8')
+          domain = 'https://avbusraturunc.com'
+
+          blocks = re.findall(r'<url><loc>(.*?)</loc><lastmod>(.*?)</lastmod></url>', text)
+          if not blocks:
+              raise SystemExit('No sitemap URL blocks found')
+
+          locs = [loc for loc, _ in blocks]
+          if len(locs) != len(set(locs)):
+              raise SystemExit('Duplicate sitemap URLs found')
+
+          def page_for_loc(loc: str) -> Path:
+              p = urlparse(loc)
+              if p.netloc != 'avbusraturunc.com':
+                  raise SystemExit(f'Unexpected sitemap host: {loc}')
+              rel = p.path.lstrip('/')
+              return Path('index.html' if rel == '' else rel)
+
+          def meaningful_lastmod(path: Path) -> str:
+              out = subprocess.check_output(
+                  ['git','log','--format=%H|%cs','--',str(path)], text=True
+              ).strip().splitlines()
+              if not out:
+                  raise SystemExit(f'No git history for {path}')
+              fallback = out[0].split('|',1)[1]
+              for row in out:
+                  sha, date = row.split('|',1)
+                  patch = subprocess.check_output(
+                      ['git','show','--format=','--unified=0',sha,'--',str(path)], text=True, errors='replace'
+                  )
+                  substantive = []
+                  for line in patch.splitlines():
+                      if not line or line.startswith(('+++','---','@@','diff ','index ')):
+                          continue
+                      if line[0] not in '+-':
+                          continue
+                      body = line[1:].strip()
+                      # Ignore the CSS consolidation pass from step 2; it changed only stylesheet hrefs.
+                      if 'rel="stylesheet"' in body and ('styles.css' in body or 'site.css' in body):
+                          continue
+                      if body:
+                          substantive.append(body)
+                  if substantive:
+                      return date
+              return fallback
+
+          replacements = {}
+          errors = []
+          for loc, old_date in blocks:
+              page = page_for_loc(loc)
+              if not page.exists():
+                  errors.append(f'Missing sitemap target: {loc} -> {page}')
+                  continue
+
+              html = page.read_text(encoding='utf-8', errors='replace')
+              tags = re.findall(r'<link\b[^>]*>', html, flags=re.I)
+              canonical = None
+              for tag in tags:
+                  if re.search(r'\brel=["\']canonical["\']', tag, flags=re.I):
+                      m = re.search(r'\bhref=["\']([^"\']+)["\']', tag, flags=re.I)
+                      if m:
+                          canonical = m.group(1)
+                          break
+              if canonical != loc:
+                  errors.append(f'Canonical mismatch: {page}: {canonical!r} != {loc!r}')
+
+              og = re.search(r'<meta\b[^>]*property=["\']og:url["\'][^>]*content=["\']([^"\']+)["\'][^>]*>', html, flags=re.I)
+              if og and og.group(1) != loc:
+                  errors.append(f'og:url mismatch: {page}: {og.group(1)!r} != {loc!r}')
+
+              new_date = meaningful_lastmod(page)
+              replacements[(loc, old_date)] = new_date
+              print(f'{page}: {old_date} -> {new_date}')
+
+          if errors:
+              print('\nMetadata validation errors:')
+              print('\n'.join('- ' + e for e in errors))
+              raise SystemExit(1)
+
+          new_text = text
+          for (loc, old_date), new_date in replacements.items():
+              old = f'<url><loc>{loc}</loc><lastmod>{old_date}</lastmod></url>'
+              new = f'<url><loc>{loc}</loc><lastmod>{new_date}</lastmod></url>'
+              new_text = new_text.replace(old, new)
+
+          if new_text != text:
+              sitemap.write_text(new_text, encoding='utf-8')
+          else:
+              print('Sitemap already synchronized.')
+          PY
+
+          if git diff --quiet; then
+            echo 'No sitemap changes required.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sitemap.xml
+          git commit -m 'seo: sync sitemap lastmod with meaningful page changes'
+          git push origin HEAD:sitemap-metadata-sync-20260914
