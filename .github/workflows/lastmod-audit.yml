@@ -1,0 +1,28 @@
+name: Sitemap lastmod history audit
+on:
+  push:
+    branches: [deep-audit-20260914-v2]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compare sitemap lastmod with file history
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess, xml.etree.ElementTree as ET
+          base='https://avbusraturunc.com/'
+          root=ET.parse('sitemap.xml').getroot(); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          print('URL | sitemap-lastmod | git-file-date | status')
+          for u in root.findall('s:url',ns):
+              loc=u.findtext('s:loc',default='',namespaces=ns).strip(); lm=u.findtext('s:lastmod',default='',namespaces=ns).strip()
+              path='index.html' if loc==base else loc[len(base):]
+              try: gd=subprocess.check_output(['git','log','-1','--format=%cs','--',path],text=True).strip()
+              except: gd=''
+              status='MATCH' if lm==gd else ('SITEMAP_NEWER' if lm>gd else 'SITEMAP_OLDER')
+              print(f'{path} | {lm} | {gd} | {status}')
