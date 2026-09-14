@@ -109,6 +109,30 @@ jobs:
 
               h1s = re.findall(r'<h1\b', t, re.I)
               if len(h1s) != 1: errors.append(f'{p.name}: H1 sayısı {len(h1s)}')
+
+              main_count = len(re.findall(r'<main\b', t, re.I))
+              if main_count != 1: errors.append(f'{p.name}: main landmark sayısı {main_count}')
+
+              ids = re.findall(r'\bid=["\']([^"\']+)["\']', t, re.I)
+              duplicate_ids = sorted({x for x in ids if ids.count(x) > 1})
+              if duplicate_ids: errors.append(f'{p.name}: yinelenen id -> {duplicate_ids}')
+
+              head_match = re.search(r'<head\b[^>]*>(.*?)</head>', t, re.I | re.S)
+              head_html = head_match.group(1) if head_match else ''
+              if not head_match:
+                  errors.append(f'{p.name}: head bölümü bulunamadı')
+              else:
+                  critical_head = {
+                      'title': r'<title\b',
+                      'meta description': r'<meta\b[^>]*name=["\']description["\']',
+                      'meta robots': r'<meta\b[^>]*name=["\']robots["\']',
+                      'canonical': r'<link\b[^>]*rel=["\']canonical["\']',
+                      'og:title': r'<meta\b[^>]*property=["\']og:title["\']',
+                      'og:url': r'<meta\b[^>]*property=["\']og:url["\']',
+                  }
+                  for label, pattern in critical_head.items():
+                      count = len(re.findall(pattern, head_html, re.I))
+                      if count != 1: errors.append(f'{p.name}: {label} sayısı {count}')
               if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, re.I): errors.append(f'{p.name}: http:// kaynak/bağlantı var')
               if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, re.I): errors.append(f'{p.name}: javascript: URL var')
               if re.search(r'<(?:object|embed|applet)\b', t, re.I): errors.append(f'{p.name}: object/embed/applet var')
