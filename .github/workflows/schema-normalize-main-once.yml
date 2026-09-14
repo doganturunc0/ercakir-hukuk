@@ -33,15 +33,6 @@ jobs:
                   p.write_text(t,encoding='utf-8')
                   changed.append(p.name)
           print('CHANGED',changed)
-
-          wf=Path('.github/workflows/full-site-audit.yml')
-          s=wf.read_text(encoding='utf-8')
-          marker="          for a, b in combinations(content_pages, 2):\n"
-          block="          for page in content_pages:\n              text = Path(page).read_text(encoding='utf-8')\n              if domain + '#busra' not in text: errors.append(f'{page}: schema canonical kişi @id eksik')\n              if domain + '#office' not in text: errors.append(f'{page}: schema canonical büro @id eksik')\n              if domain + '#busraturunc' in text or domain + '#organization' in text: errors.append(f'{page}: eski schema entity @id kaldı')\n\n"
-          if 'schema canonical kişi @id eksik' not in s:
-              assert marker in s
-              s=s.replace(marker,block+marker,1)
-              wf.write_text(s,encoding='utf-8')
       - name: Validate
         shell: python
         run: |
@@ -64,7 +55,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add '*.html' .github/workflows/full-site-audit.yml
+          git add '*.html'
           if git diff --cached --quiet; then
             echo no-changes
           else
