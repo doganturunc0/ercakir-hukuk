@@ -29,8 +29,10 @@ jobs:
           from pathlib import Path
           import re
 
-          # Privacy-first CSP: no analytics, no third-party scripts, no iframes.
-          csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          # Privacy-first CSP. The homepage may load Google Analytics only after
+          # explicit consent via ga-consent.js; all other pages remain first-party only.
+          csp_default = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          csp_home = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
 
           changed = []
@@ -41,15 +43,17 @@ jobs:
               original = text
               audited.append(p.name)
 
-              # Remove the legacy Google tag loader. Analytics is intentionally
-              # disabled, so this third-party request is unnecessary.
+              # Remove any legacy static Google tag loader. Analytics may only be
+              # loaded dynamically by ga-consent.js after explicit consent.
               text = re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*', '\n', text, flags=re.I)
               text = re.sub(
                   r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*',
                   '\n', text, flags=re.I
               )
 
-              # Normalize every page to the current CSP.
+              # Normalize every page to the current CSP. Only the homepage needs
+              # Google Analytics endpoints because its consent script can load GA.
+              csp = csp_home if p.name == 'index.html' else csp_default
               if re.search(r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>', text, re.I):
                   text = re.sub(
                       r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>',
@@ -136,8 +140,13 @@ jobs:
                   problems.append(f'{p.name}: CSP frame-src none eksik')
               if "object-src 'none'" not in t:
                   problems.append(f'{p.name}: CSP object-src none eksik')
-              if 'googletagmanager.com' in low or 'google-analytics.com' in low:
-                  problems.append(f'{p.name}: gereksiz Google analytics/tag manager kaynağı kaldı')
+              if p.name != 'index.html' and ('googletagmanager.com' in low or 'google-analytics.com' in low):
+                  problems.append(f'{p.name}: consent dışı Google analytics/tag manager kaynağı kaldı')
+              if p.name == 'index.html':
+                  if 'ga-consent.js' not in low:
+                      problems.append('index.html: consent tabanlı analytics betiği eksik')
+                  if re.search(r'<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js', t, re.I):
+                      problems.append('index.html: statik Google tag loader bulundu; yalnızca consent sonrası dinamik yükleme kullanılmalı')
               if '<iframe' in low:
                   problems.append(f'{p.name}: üçüncü taraf iframe kaldı')
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, flags=re.I):
@@ -152,7 +161,7 @@ jobs:
               if re.search(r'<(?:object|embed|applet)\b', t, flags=re.I):
                   problems.append(f'{p.name}: object/embed/applet etiketi bulundu')
               for src in re.findall(r'<script\b[^>]*\bsrc=["\']([^"\']+)["\']', t, flags=re.I):
-                  if src.startswith(('script.js','home-polish.js','analytics.js','infaz-hesaplama-events.js','infaz-hesaplama.runtime-','./','/')):
+                  if src.startswith(('script.js','home-polish.js','analytics.js','ga-consent.js','infaz-hesaplama-events.js','infaz-hesaplama.runtime-','./','/')):
                       continue
                   problems.append(f'{p.name}: izin verilmeyen dış script: {src}')
 
@@ -162,7 +171,8 @@ jobs:
           if re.search(r'<form\b', contact, flags=re.I):
               problems.append('iletisim.html: kişisel veri toplayan form beklenmedik şekilde eklendi')
 
-          # Privacy-first analytics must remain disabled by default.
+          # Privacy-first analytics must remain disabled by default and the
+          # consent loader must keep analytics denied until the user opts in.
           analytics=Path('analytics.js')
           if not analytics.exists():
               problems.append('analytics.js: privacy gate dosyası eksik')
@@ -172,6 +182,23 @@ jobs:
                   problems.append('analytics.js: analytics varsayılan kapalı değil')
               if re.search(r'\bgtag\s*\(', a, flags=re.I):
                   problems.append('analytics.js: doğrudan gtag çağrısı bulundu')
+
+          consent=Path('ga-consent.js')
+          if not consent.exists():
+              problems.append('ga-consent.js: consent tabanlı analytics dosyası eksik')
+          else:
+              g=consent.read_text(encoding='utf-8')
+              required_markers = (
+                  "analytics_storage: 'denied'",
+                  "ad_storage: 'denied'",
+                  "ad_user_data: 'denied'",
+                  "ad_personalization: 'denied'",
+                  "localStorage.setItem(STORAGE_KEY, 'granted')",
+                  "www.googletagmanager.com/gtag/js",
+              )
+              for marker in required_markers:
+                  if marker not in g:
+                      problems.append(f'ga-consent.js: beklenen gizlilik/izin mantığı eksik -> {marker}')
 
           # Responsible disclosure files must be complete and canonical.
           sec=Path('.well-known/security.txt')
