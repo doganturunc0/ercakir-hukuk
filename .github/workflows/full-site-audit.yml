@@ -127,12 +127,17 @@ jobs:
                       'meta description': r'<meta\b[^>]*name=["\']description["\']',
                       'meta robots': r'<meta\b[^>]*name=["\']robots["\']',
                       'canonical': r'<link\b[^>]*rel=["\']canonical["\']',
-                      'og:title': r'<meta\b[^>]*property=["\']og:title["\']',
-                      'og:url': r'<meta\b[^>]*property=["\']og:url["\']',
                   }
                   for label, pattern in critical_head.items():
                       count = len(re.findall(pattern, head_html, re.I))
                       if count != 1: errors.append(f'{p.name}: {label} sayısı {count}')
+                  if not is_noindex:
+                      for label, pattern in {
+                          'og:title': r'<meta\b[^>]*property=["\']og:title["\']',
+                          'og:url': r'<meta\b[^>]*property=["\']og:url["\']',
+                      }.items():
+                          count = len(re.findall(pattern, head_html, re.I))
+                          if count != 1: errors.append(f'{p.name}: {label} sayısı {count}')
               if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, re.I): errors.append(f'{p.name}: http:// kaynak/bağlantı var')
               if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, re.I): errors.append(f'{p.name}: javascript: URL var')
               if re.search(r'<(?:object|embed|applet)\b', t, re.I): errors.append(f'{p.name}: object/embed/applet var')
