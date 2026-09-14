@@ -1,0 +1,95 @@
+name: Schema and live audit once
+on:
+  push:
+    branches: [schema-live-audit-20260914]
+    paths:
+      - ".github/workflows/schema-live-audit-once.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: schema-live-audit-20260914
+      - name: Audit entity IDs and live deployment
+        shell: python
+        run: |
+          from pathlib import Path
+          import json, re, urllib.request, urllib.error, xml.etree.ElementTree as ET
+
+          domain='https://avbusraturunc.com/'
+          canonical_office=domain+'#office'
+          canonical_person=domain+'#busra'
+          htmls=sorted(Path('.').glob('*.html'))
+          article_pages=[]
+          legacy=[]
+          article_bad=[]
+
+          for p in htmls:
+              t=p.read_text(encoding='utf-8')
+              if re.search(r'<main\b[^>]*\bclass=["\'][^"\']*\barticle-page\b', t, re.I):
+                  article_pages.append(p.name)
+              for m in re.finditer(r'<script\b[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', t, re.I|re.S):
+                  try: data=json.loads(m.group(1))
+                  except Exception: continue
+                  text=json.dumps(data, ensure_ascii=False)
+                  for bad in (domain+'#organization', domain+'#busraturunc'):
+                      if bad in text: legacy.append((p.name,bad))
+                  if p.name in article_pages:
+                      if canonical_person not in text: article_bad.append((p.name,'canonical person id missing'))
+                      if canonical_office not in text: article_bad.append((p.name,'canonical office id missing'))
+
+          print('ARTICLE_COUNT',len(article_pages))
+          print('ARTICLE_PAGES',article_pages)
+          print('LEGACY_ENTITY_IDS',legacy if legacy else 'none')
+          print('ARTICLE_ENTITY_ERRORS',article_bad if article_bad else 'none')
+
+          # repo sitemap count
+          s=Path('sitemap.xml').read_text(encoding='utf-8')
+          repo_urls=re.findall(r'<loc>(.*?)</loc>',s)
+          print('REPO_SITEMAP_URLS',len(repo_urls))
+
+          checks=[
+            domain,
+            domain+'sitemap.xml',
+            domain+'rss.xml',
+            domain+'articles.html',
+            domain+'hukuki-icerikler.html',
+            domain+'llms.txt',
+            domain+'llms-full.txt',
+          ]
+          live={}
+          for url in checks:
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 SEO audit'})
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as r:
+                      body=r.read().decode('utf-8','replace')
+                      live[url]=(r.status,r.geturl(),body)
+                      print('LIVE',url,'STATUS',r.status,'FINAL',r.geturl(),'BYTES',len(body))
+              except Exception as e:
+                  print('LIVE_ERROR',url,repr(e))
+
+          if domain+'sitemap.xml' in live:
+              body=live[domain+'sitemap.xml'][2]
+              live_urls=re.findall(r'<loc>(.*?)</loc>',body)
+              print('LIVE_SITEMAP_URLS',len(live_urls))
+              print('LIVE_HAS_ARTICLES_LEGACY',domain+'articles.html' in live_urls)
+          if domain+'articles.html' in live:
+              body=live[domain+'articles.html'][2].lower()
+              print('LIVE_ARTICLES_NOINDEX', 'noindex' in body)
+              print('LIVE_ARTICLES_CANONICAL_HUB', 'rel="canonical" href="https://avbusraturunc.com/hukuki-icerikler.html"' in body or "rel='canonical' href='https://avbusraturunc.com/hukuki-icerikler.html'" in body)
+          if domain+'rss.xml' in live:
+              body=live[domain+'rss.xml'][2]
+              print('LIVE_RSS_ITEMS',body.count('<item>'))
+              print('LIVE_RSS_LEGACY_FRAGMENTS','articles.html#' in body)
+          for name in ('llms.txt','llms-full.txt'):
+              url=domain+name
+              if url in live:
+                  body=live[url][2]
+                  hits=sum(1 for p in article_pages if domain+p in body)
+                  print('LIVE_'+name.upper().replace('.','_')+'_ARTICLE_HITS',hits)
+
+          if legacy or article_bad:
+              raise SystemExit(1)
