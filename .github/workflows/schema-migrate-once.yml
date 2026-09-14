@@ -1,0 +1,76 @@
+name: Schema migrate once
+on:
+  push:
+    branches:
+      - schema-live-audit-20260914
+    paths:
+      - .github/workflows/schema-migrate-once.yml
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: schema-live-audit-20260914
+      - name: Normalize schema IDs
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          domain = 'https://avbusraturunc.com/'
+          changed = []
+          for p in sorted(Path('.').glob('*.html')):
+              t = p.read_text(encoding='utf-8')
+              if not re.search(r'<main\b[^>]*\bclass=["\'][^"\']*\barticle-page\b', t, re.I):
+                  continue
+              old = t
+              t = t.replace(domain + '#busraturunc', domain + '#busra')
+              t = t.replace(domain + '#organization', domain + '#office')
+              t = t.replace('"author":{"@type":"Person","name":"Av. Büşra Turunç","url":"https://avbusraturunc.com/"}', '"author":{"@id":"https://avbusraturunc.com/#busra"}')
+              t = t.replace('"publisher":{"@type":"Organization","name":"Erçakır Hukuk Bürosu","url":"https://avbusraturunc.com/"}', '"publisher":{"@id":"https://avbusraturunc.com/#office"}')
+              if t != old:
+                  p.write_text(t, encoding='utf-8')
+                  changed.append(p.name)
+          print('CHANGED', changed)
+
+          wf = Path('.github/workflows/full-site-audit.yml')
+          s = wf.read_text(encoding='utf-8')
+          marker = "          for a, b in combinations(content_pages, 2):\n"
+          block = "          for page in content_pages:\n              text = Path(page).read_text(encoding='utf-8')\n              if domain + '#busra' not in text: errors.append(f'{page}: schema canonical kişi @id eksik')\n              if domain + '#office' not in text: errors.append(f'{page}: schema canonical büro @id eksik')\n              if domain + '#busraturunc' in text or domain + '#organization' in text: errors.append(f'{page}: eski schema entity @id kaldı')\n\n"
+          if 'schema canonical kişi @id eksik' not in s:
+              assert marker in s
+              s = s.replace(marker, block + marker, 1)
+              wf.write_text(s, encoding='utf-8')
+      - name: Validate
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, sys
+          domain = 'https://avbusraturunc.com/'
+          pages = []
+          errors = []
+          for p in sorted(Path('.').glob('*.html')):
+              t = p.read_text(encoding='utf-8')
+              if re.search(r'<main\b[^>]*\bclass=["\'][^"\']*\barticle-page\b', t, re.I):
+                  pages.append(p.name)
+                  if domain + '#busra' not in t: errors.append(p.name + ': person id missing')
+                  if domain + '#office' not in t: errors.append(p.name + ': office id missing')
+                  if domain + '#busraturunc' in t or domain + '#organization' in t: errors.append(p.name + ': legacy id remains')
+          print('ARTICLE_COUNT', len(pages))
+          print('ERRORS', errors if errors else 'none')
+          if errors:
+              sys.exit(1)
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html' .github/workflows/full-site-audit.yml
+          if git diff --cached --quiet; then
+            echo no-changes
+          else
+            git commit -m "seo: normalize structured-data entity identities"
+            git push origin HEAD:schema-live-audit-20260914
+          fi
