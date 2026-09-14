@@ -161,7 +161,7 @@ jobs:
               if re.search(r'<(?:object|embed|applet)\b', t, flags=re.I):
                   problems.append(f'{p.name}: object/embed/applet etiketi bulundu')
               for src in re.findall(r'<script\b[^>]*\bsrc=["\']([^"\']+)["\']', t, flags=re.I):
-                  if src.startswith(('script.js','home-polish.js','analytics.js','infaz-hesaplama-events.js','infaz-hesaplama.runtime-','./','/')):
+                  if src.startswith(('script.js','home-polish.js','analytics.js','ga-consent.js','infaz-hesaplama-events.js','infaz-hesaplama.runtime-','./','/')):
                       continue
                   problems.append(f'{p.name}: izin verilmeyen dış script: {src}')
 
