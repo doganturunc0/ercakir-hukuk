@@ -21,7 +21,6 @@ Entity relationship: Av. Büşra Turunç is the lawyer associated with Erçakır
 ## External identity references
 - AvukatBilgisi: https://avukatbilgisi.com/manisa-barosu-avukatlari/301601-busra-turunc
 - Türkiye Avukatları: https://www.turkiyeavukatlari.com/manisa-barosu-avukatlari/busra-turunc
-- Avukat Sorgula: https://avukatsorgula.com/manisa-avukat-sorgulama/301601-busra-turunc
 
 ## Practice-area pages
 - Ceza Hukuku: https://avbusraturunc.com/ceza-hukuku.html
