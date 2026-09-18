@@ -6,7 +6,7 @@ Primary entity: Av. Büşra Turunç
 Organization: Erçakır Hukuk Bürosu  
 Location: Salihli, Manisa, Türkiye  
 Language: Turkish  
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-18
 
 This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu in Salihli, Manisa. The website publishes general legal information about the office's practice areas. Published information is general in nature and does not constitute legal advice for a specific matter.
 
@@ -19,7 +19,8 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 
 ## External identity references
 - [AvukatBilgisi profile](https://avukatbilgisi.com/manisa-barosu-avukatlari/301601-busra-turunc)
-- [Hukuki Uzman directory — Salihli / Manisa](https://hukukiuzman.com/avukatlar?ilce=salihli&sehir=manisa)
+- [Türkiye Avukatları profile](https://www.turkiyeavukatlari.com/manisa-barosu-avukatlari/busra-turunc)
+- [Avukat Sorgula profile](https://avukatsorgula.com/manisa-avukat-sorgulama/301601-busra-turunc)
 
 ## Main practice areas
 - [Ceza Hukuku](https://avbusraturunc.com/ceza-hukuku.html)
