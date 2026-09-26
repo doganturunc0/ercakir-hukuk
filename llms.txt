@@ -6,7 +6,7 @@ Primary entity: Av. Büşra Turunç
 Organization: Erçakır Hukuk Bürosu  
 Location: Salihli, Manisa, Türkiye  
 Language: Turkish  
-Last reviewed: 2026-09-19
+Last reviewed: 2026-09-26
 
 This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu in Salihli, Manisa. The website publishes general legal information about the office's practice areas. Published information is general in nature and does not constitute legal advice for a specific matter.
 
@@ -34,17 +34,28 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 - [Sigorta Hukuku](https://avbusraturunc.com/sigorta-hukuku.html)
 
 ## Current detailed legal content
+- [Trafik Kazasında Kusur, Tutanak ve Sigorta Süreci](https://avbusraturunc.com/trafik-kazasinda-tutanak-kusur-sigorta.html)
+- [6284 Sayılı Kanun Kapsamında Uzaklaştırma ve Koruma Tedbirleri](https://avbusraturunc.com/6284-uzaklastirma-koruma-tedbirleri.html)
+- [Gaiplik Kararı Nedir?](https://avbusraturunc.com/gaiplik-karari.html)
+- [İtirazın İptali Davası ve İcra İnkar Tazminatı](https://avbusraturunc.com/itirazin-iptali-davasi.html)
+- [Menfi Tespit Davası](https://avbusraturunc.com/menfi-tespit-davasi.html)
+- [İş Kazasında İşverenin Sorumluluğu](https://avbusraturunc.com/is-kazasinda-isverenin-sorumlulugu.html)
+- [Tahliye Taahhütnamesi Ne Zaman Geçerlidir?](https://avbusraturunc.com/tahliye-taahhutnamesi-gecerlilik-sartlari.html)
+- [Kamulaştırmasız El Atma Davası](https://avbusraturunc.com/kamulastirmasiz-el-atma-davasi.html)
+- [Ortaklığın Giderilmesi Davası](https://avbusraturunc.com/ortakligin-giderilmesi-davasi.html)
+- [Mirasçılıktan Çıkarma (Mirastan Iskat)](https://avbusraturunc.com/mirasciliktan-cikarma-mirastan-iskat.html)
 - [Tutuklama Kararına İtiraz ve Tutukluluğun İncelenmesi](https://avbusraturunc.com/tutuklama-kararina-itiraz.html)
-- [Adli Kontrol Kararına İtiraz ve Adli Kontrolün Kaldırılması](https://avbusraturunc.com/adli-kontrol-kararina-itiraz.html)
+- [Adli Kontrol Kararına İtiraz ve Kaldırılması](https://avbusraturunc.com/adli-kontrol-kararina-itiraz.html)
 - [Anlaşmalı Boşanma Davası](https://avbusraturunc.com/anlasmali-bosanma-davasi.html)
-- [Çekişmeli Boşanma Davası: Süreç, Deliller ve Talepler](https://avbusraturunc.com/cekismeli-bosanma-davasi.html)
+- [Çekişmeli Boşanma Davası](https://avbusraturunc.com/cekismeli-bosanma-davasi.html)
 - [Velayet Davası ve Velayetin Değiştirilmesi](https://avbusraturunc.com/velayet-davasi-velayetin-degistirilmesi.html)
 - [Kıdem ve İhbar Tazminatı](https://avbusraturunc.com/kidem-ihbar-tazminati.html)
 - [Fazla Mesai Alacağı ve Fazla Çalışmanın İspatı](https://avbusraturunc.com/fazla-mesai-alacagi-fazla-calismanin-ispati.html)
 - [İcra Takibine İtiraz](https://avbusraturunc.com/icra-takibine-itiraz.html)
+- [Banka Dekontu Borcun Varlığını İspatlar mı?](https://avbusraturunc.com/banka-dekontu-borcun-varligini-ispatlar-mi.html)
+- [WhatsApp Yazışmaları Mahkemede Delil Olur mu?](https://avbusraturunc.com/whatsapp-yazismalari-delil-olur-mu.html)
 - [Tahliye Davası](https://avbusraturunc.com/tahliye-davasi.html)
 - [Tapu İptal ve Tescil Davası](https://avbusraturunc.com/tapu-iptal-tescil-davasi.html)
-
 - [Saklı Pay ve Tenkis Davası](https://avbusraturunc.com/sakli-pay-tenkis-davasi.html)
 - [Ticari Alacaklarda Dava Şartı Arabuluculuk](https://avbusraturunc.com/ticari-alacak-dava-sarti-arabuluculuk.html)
 - [İptal Davası ve Yürütmenin Durdurulması](https://avbusraturunc.com/iptal-davasi-yurutmenin-durdurulmasi.html)
