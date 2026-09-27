@@ -16,12 +16,15 @@
       address.innerHTML = '<strong>Adres:</strong> ';
       const link = document.createElement('a'); link.href = mapsUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'location-link'; link.textContent = addressText; address.appendChild(link);
     }
+    /* Eski/tekrarlanan Google Maps önizleme butonlarını DOM'dan tamamen kaldır. */
+    contactCopy.querySelectorAll('.map-preview-compact').forEach(el => el.remove());
     contactCopy.querySelectorAll('.directions-button').forEach(el => el.remove());
     const phoneButtons = Array.from(contactCopy.querySelectorAll('a')).filter(a => /^tel:/i.test(a.getAttribute('href') || ''));
     const phoneButton = phoneButtons.find(a => /telefon/i.test(a.textContent)) || phoneButtons[phoneButtons.length - 1];
     if (phoneButton) {
       let actions = phoneButton.closest('.contact-actions');
       if (!actions) { actions = document.createElement('div'); actions.className = 'contact-actions'; phoneButton.parentNode.insertBefore(actions, phoneButton); actions.appendChild(phoneButton); }
+      Array.from(actions.querySelectorAll('a')).forEach(a => { if (a !== phoneButton) a.remove(); });
       const directions = document.createElement('a'); directions.href = mapsUrl; directions.target = '_blank'; directions.rel = 'noopener noreferrer'; directions.className = 'directions-button'; directions.setAttribute('aria-label', 'Erçakır Hukuk Bürosu konumuna git'); directions.innerHTML = '<span class="directions-pin" aria-hidden="true">⌖</span><span>Konuma Git</span>'; actions.appendChild(directions);
     }
     let social = contactCopy.querySelector('.social-links');
