@@ -5,3 +5,17 @@
 /* Exact Lighthouse contrast targets: explicit foreground + background for deterministic audit. */
 .all-articles-link{color:#0b2430!important;background:#f8f5ef!important;text-shadow:none!important}
 footer{background:#0b2430!important;color:#fff!important}footer p,footer a,footer .footer-brand{color:#fff!important;text-shadow:none!important}
+/* Mobile contact controls: this stylesheet is loaded by index.html. */
+@media(max-width:820px){
+#iletisim{scroll-margin-top:118px!important}
+#iletisim .contact-copy .hero-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:12px!important;width:100%!important;align-items:stretch!important;margin-top:22px!important}
+#iletisim .contact-copy .hero-actions>a,#iletisim .contact-copy .hero-actions>a.btn{width:100%!important;min-width:0!important;min-height:54px!important;height:54px!important;margin:0!important;padding:0 12px!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
+#iletisim .contact-copy .hero-actions>a:first-child{background:#d0a326!important;color:#111!important;border-color:#d0a326!important}
+#iletisim .contact-copy .hero-actions>a:last-child{background:#fff!important;color:#18394f!important;border:1px solid #c79518!important}
+#iletisim .map-card{width:100%!important;max-width:none!important;height:250px!important;min-height:250px!important;margin:28px 0 0!important;border-radius:10px!important;overflow:hidden!important}
+#iletisim .map-card iframe,#iletisim .office-map-frame{width:100%!important;height:100%!important;min-height:250px!important;display:block!important;border:0!important}
+.contact-dock{right:16px!important;bottom:calc(24px + env(safe-area-inset-bottom))!important;gap:14px!important}
+.contact-dock a{width:56px!important;height:56px!important;min-width:56px!important;min-height:56px!important}
+.contact-dock svg{width:27px!important;height:27px!important}
+}
+@media(max-width:390px){#iletisim .contact-copy .hero-actions{gap:10px!important}#iletisim .contact-copy .hero-actions>a,#iletisim .contact-copy .hero-actions>a.btn{font-size:11px!important;padding:0 8px!important}.contact-dock{right:13px!important;gap:12px!important}.contact-dock a{width:53px!important;height:53px!important;min-width:53px!important;min-height:53px!important}}
