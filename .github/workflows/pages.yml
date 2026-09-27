@@ -51,6 +51,18 @@ jobs:
             --exclude 'secrets.json' \
             --exclude '*.secret'
 
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('_site/index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("frame-src 'none'", "frame-src https://www.google.com https://maps.google.com")
+          if 'map-compact.css' not in s:
+              s = s.replace('</head>', '<link rel="stylesheet" href="map-compact.css?v=20260927-1">\n</head>')
+          s = re.sub(r'home-polish\.js\?v=[^\"\']+', 'home-polish.js?v=20260927-1', s)
+          p.write_text(s, encoding='utf-8')
+          PY
+
           if find _site -type f \( \
               -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name '*.key' -o \
               -name '*.p12' -o -name '*.pfx' -o -name '*.jks' -o -name '*.keystore' -o \
