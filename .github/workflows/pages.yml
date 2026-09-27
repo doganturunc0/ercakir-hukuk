@@ -58,10 +58,10 @@ jobs:
           s = p.read_text(encoding='utf-8')
           s = s.replace("frame-src 'none'", "frame-src https://www.google.com https://maps.google.com")
           if 'map-compact.css' not in s:
-              s = s.replace('</head>', '<link rel="stylesheet" href="map-compact.css?v=20260927-2">\n</head>')
+              s = s.replace('</head>', '<link rel="stylesheet" href="map-compact.css?v=20260927-3">\n</head>')
           else:
-              s = re.sub(r'map-compact\.css\?v=[^\"\']+', 'map-compact.css?v=20260927-2', s)
-          s = re.sub(r'home-polish\.js\?v=[^\"\']+', 'home-polish.js?v=20260927-2', s)
+              s = re.sub(r'map-compact\.css\?v=[^\"\']+', 'map-compact.css?v=20260927-3', s)
+          s = re.sub(r'home-polish\.js\?v=[^\"\']+', 'home-polish.js?v=20260927-3', s)
           p.write_text(s, encoding='utf-8')
           PY
 
