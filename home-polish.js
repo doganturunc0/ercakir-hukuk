@@ -11,12 +11,18 @@
   const contactCopy = document.querySelector('.contact-copy');
 
   const removeDuplicateMapButtons = () => {
-    document.querySelectorAll('.contact-copy .map-preview-compact').forEach(el => el.remove());
-    const actions = document.querySelector('.contact-copy .contact-actions');
-    if (actions) {
-      const links = Array.from(actions.querySelectorAll('a'));
-      links.forEach((a, i) => { if (i > 1) a.remove(); });
-    }
+    if (!contactCopy) return;
+    contactCopy.querySelectorAll('.map-preview-compact').forEach(el => el.remove());
+    const actions = contactCopy.querySelector('.contact-actions');
+    if (!actions) return;
+    const links = Array.from(actions.querySelectorAll('a'));
+    links.forEach(a => {
+      const href = a.getAttribute('href') || '';
+      const text = (a.textContent || '').trim();
+      const keepPhone = /^tel:/i.test(href);
+      const keepDirections = a.classList.contains('directions-button') || /konuma git/i.test(text);
+      if (!keepPhone && !keepDirections) a.remove();
+    });
   };
 
   if (contactCopy) {
@@ -52,10 +58,10 @@
     footerSocial.innerHTML = `<a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Instagram hesabı" title="Instagram">${instagramIcon}</a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Facebook hesabı" title="Facebook">${facebookIcon}</a>`;
   }
 
-  /* script.js bu dosyadan sonra eski Maps butonunu tekrar ekleyebildiği için son yükleme aşamasında yeniden temizle. */
-  const finalCleanup = () => removeDuplicateMapButtons();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalCleanup, {once:true});
-  setTimeout(finalCleanup, 0);
-  setTimeout(finalCleanup, 250);
-  setTimeout(finalCleanup, 1000);
+  /* Eski/cached script sonradan üçüncü Maps butonu eklerse yalnızca contact-actions alanını temizle. */
+  removeDuplicateMapButtons();
+  if (contactCopy) {
+    const observer = new MutationObserver(() => removeDuplicateMapButtons());
+    observer.observe(contactCopy, { childList: true, subtree: true });
+  }
 })();
