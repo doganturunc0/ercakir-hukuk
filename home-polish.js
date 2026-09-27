@@ -42,6 +42,8 @@
       Array.from(actions.querySelectorAll('a')).forEach(a => { if (a !== phoneButton) a.remove(); });
       const directions = document.createElement('a'); directions.href = mapsUrl; directions.target = '_blank'; directions.rel = 'noopener noreferrer'; directions.className = 'directions-button'; directions.setAttribute('aria-label', 'Erçakır Hukuk Bürosu konumuna git'); directions.innerHTML = '<span class="directions-pin" aria-hidden="true">⌖</span><span>Konuma Git</span>'; actions.appendChild(directions);
     }
+    /* Eski hero-actions içinde kalan ayrı Google Maps butonunu kaldır. */
+    contactCopy.querySelectorAll('.hero-actions > a').forEach(a => a.remove());
     let social = contactCopy.querySelector('.social-links');
     if (!social) { social = document.createElement('div'); social.className = 'social-links'; contactCopy.appendChild(social); }
     social.innerHTML = socialMarkup;
