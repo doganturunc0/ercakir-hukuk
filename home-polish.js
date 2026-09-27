@@ -20,6 +20,23 @@
       link.href = mapsUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'location-link'; link.textContent = addressText;
       address.appendChild(link);
     }
+
+    const phoneButton = Array.from(contactCopy.querySelectorAll('a')).find(a => /^tel:/i.test(a.getAttribute('href') || ''));
+    if (phoneButton && !contactCopy.querySelector('.directions-button')) {
+      const actions = document.createElement('div');
+      actions.className = 'contact-actions';
+      phoneButton.parentNode.insertBefore(actions, phoneButton);
+      actions.appendChild(phoneButton);
+      const directions = document.createElement('a');
+      directions.href = mapsUrl;
+      directions.target = '_blank';
+      directions.rel = 'noopener noreferrer';
+      directions.className = 'directions-button';
+      directions.setAttribute('aria-label', 'Erçakır Hukuk Bürosu konumuna git');
+      directions.innerHTML = '<span class="directions-pin" aria-hidden="true">⌖</span><span>Konuma Git</span>';
+      actions.appendChild(directions);
+    }
+
     let social = contactCopy.querySelector('.social-links');
     if (!social) { social = document.createElement('div'); social.className = 'social-links'; contactCopy.appendChild(social); }
     social.innerHTML = socialMarkup;
