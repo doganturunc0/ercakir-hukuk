@@ -9,6 +9,16 @@
   const socialMarkup = `<span>SOSYAL MEDYA</span><div><a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Instagram hesabı">${instagramIcon}<span>Instagram</span><b>@ercakirhukuk</b></a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Facebook hesabı">${facebookIcon}<span>Facebook</span><b>Erçakır Hukuk Bürosu</b></a></div>`;
   const contactSection = document.querySelector('.contact-section');
   const contactCopy = document.querySelector('.contact-copy');
+
+  const removeDuplicateMapButtons = () => {
+    document.querySelectorAll('.contact-copy .map-preview-compact').forEach(el => el.remove());
+    const actions = document.querySelector('.contact-copy .contact-actions');
+    if (actions) {
+      const links = Array.from(actions.querySelectorAll('a'));
+      links.forEach((a, i) => { if (i > 1) a.remove(); });
+    }
+  };
+
   if (contactCopy) {
     const address = contactCopy.querySelector('.contact-address');
     if (address && !address.querySelector('a')) {
@@ -16,8 +26,7 @@
       address.innerHTML = '<strong>Adres:</strong> ';
       const link = document.createElement('a'); link.href = mapsUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'location-link'; link.textContent = addressText; address.appendChild(link);
     }
-    /* Eski/tekrarlanan Google Maps önizleme butonlarını DOM'dan tamamen kaldır. */
-    contactCopy.querySelectorAll('.map-preview-compact').forEach(el => el.remove());
+    removeDuplicateMapButtons();
     contactCopy.querySelectorAll('.directions-button').forEach(el => el.remove());
     const phoneButtons = Array.from(contactCopy.querySelectorAll('a')).filter(a => /^tel:/i.test(a.getAttribute('href') || ''));
     const phoneButton = phoneButtons.find(a => /telefon/i.test(a.textContent)) || phoneButtons[phoneButtons.length - 1];
@@ -42,4 +51,11 @@
     if (!footerSocial) { footerSocial = document.createElement('div'); footerSocial.className = 'footer-social'; footer.appendChild(footerSocial); }
     footerSocial.innerHTML = `<a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Instagram hesabı" title="Instagram">${instagramIcon}</a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Facebook hesabı" title="Facebook">${facebookIcon}</a>`;
   }
+
+  /* script.js bu dosyadan sonra eski Maps butonunu tekrar ekleyebildiği için son yükleme aşamasında yeniden temizle. */
+  const finalCleanup = () => removeDuplicateMapButtons();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalCleanup, {once:true});
+  setTimeout(finalCleanup, 0);
+  setTimeout(finalCleanup, 250);
+  setTimeout(finalCleanup, 1000);
 })();
