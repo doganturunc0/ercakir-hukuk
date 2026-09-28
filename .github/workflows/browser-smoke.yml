@@ -1,0 +1,65 @@
+name: Browser smoke audit
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/ercakir-http.log 2>&1 &
+          echo $! > /tmp/ercakir-http.pid
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/ercakir-http.log
+          exit 1
+      - name: Run browser smoke checks
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const targets = [
+              {name:'mobile-home', url:'http://127.0.0.1:4173/', width:390, height:844, home:true},
+              {name:'desktop-home', url:'http://127.0.0.1:4173/', width:1440, height:900, home:true},
+              {name:'mobile-infaz', url:'http://127.0.0.1:4173/infaz-hesaplama.html', width:390, height:844, home:false},
+              {name:'desktop-infaz', url:'http://127.0.0.1:4173/infaz-hesaplama.html', width:1440, height:900, home:false},
+            ];
+            for (const t of targets) {
+              const page = await browser.newPage({viewport:{width:t.width,height:t.height}});
+              const errors=[];
+              page.on('pageerror', e => errors.push('pageerror: '+e.message));
+              page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
+              const response = await page.goto(t.url,{waitUntil:'networkidle',timeout:30000});
+              assert(response && response.ok(), `${t.name}: HTTP response not OK`);
+              assert(await page.locator('h1').count() >= 1, `${t.name}: H1 missing`);
+              const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+              assert(!overflow, `${t.name}: horizontal overflow detected`);
+              if (t.home) {
+                assert(await page.locator('#mainNav').count() === 1, `${t.name}: main nav missing`);
+                assert(await page.locator('#iletisim').count() === 1, `${t.name}: contact section missing`);
+                assert(await page.locator('a[href="infaz-hesaplama.html"]').count() >= 1, `${t.name}: infaz link missing`);
+              } else {
+                assert(await page.locator('#calculateBtn').count() === 1, `${t.name}: calculate button missing`);
+                assert(await page.locator('#crimeType').count() === 1, `${t.name}: crime selector missing`);
+              }
+              assert.equal(errors.length,0, `${t.name}: browser errors:\n${errors.join('\n')}`);
+              await page.close();
+            }
+            await browser.close();
+            console.log('Browser smoke checks passed on mobile and desktop.');
+          })().catch(e=>{ console.error(e); process.exit(1); });
+          JS
