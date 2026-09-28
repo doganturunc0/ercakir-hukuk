@@ -91,14 +91,6 @@ window.ercakirAnalyticsEnabled = false;
     var linearArticle = document.querySelector('main.article-page');
     if (!splitHero && !linearArticle) return;
 
-    if (!head.querySelector('link[data-legal-article-standard]')) {
-      var standardCss = document.createElement('link');
-      standardCss.rel = 'stylesheet';
-      standardCss.href = 'legal-article-standard.css?v=20260906-1';
-      standardCss.setAttribute('data-legal-article-standard', 'true');
-      head.appendChild(standardCss);
-    }
-
     if (splitHero && splitBody) {
       var wrap = splitHero.querySelector('.wrap');
       var oldBack = splitBody.querySelector('.article-back');
