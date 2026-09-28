@@ -33,9 +33,22 @@ jobs:
           csp_default = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           csp_home = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
+          local_copy = {
+            'aile-bosanma-hukuku.html': ("Salihli boşanma avukatı veya Salihli kadın avukat aramasıyla aile hukuku hakkında bilgi arayan kişiler açısından uyuşmazlığın türü ve somut olayın özellikleri önem taşır.", "Salihli ve Manisa'daki aile hukuku uyuşmazlıklarında boşanmanın türü, tarafların talepleri, çocukların durumu ve somut olayın özellikleri birlikte değerlendirilir."),
+            'icra-iflas-hukuku.html': ("Salihli icra avukatı aramasıyla icra takibi, alacak tahsili veya borca itiraz hakkında bilgi arayan kişiler bakımından takip türü, tebligat tarihi, dayanak belge ve kanuni süreler birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki icra uyuşmazlıklarında takip türü, tebligat tarihi, dayanak belge, alacak veya itirazın niteliği ve kanuni süreler birlikte değerlendirilmelidir."),
+            'gayrimenkul-hukuku.html': ("Salihli gayrimenkul avukatı veya Salihli tapu avukatı aramasıyla taşınmaz uyuşmazlıkları hakkında bilgi arayan kişiler bakımından tapu kayıtları, mülkiyet biçimi, sözleşmeler ve uyuşmazlığın hukuki sebebi birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki taşınmaz uyuşmazlıklarında tapu kayıtları, mülkiyet biçimi, sözleşmeler, fiili kullanım ve uyuşmazlığın hukuki sebebi birlikte değerlendirilmelidir."),
+            'miras-hukuku.html': ("Salihli miras avukatı aramasıyla miras paylaşımı veya tereke hakkında bilgi arayan kişiler bakımından mirasçılık durumu, malvarlığı, borçlar ve varsa vasiyetname ile önceki devir işlemleri birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki miras uyuşmazlıklarında mirasçılık durumu, terekenin malvarlığı ve borçları, varsa vasiyetname ile önceki devir işlemleri birlikte değerlendirilmelidir."),
+            'ticaret-hukuku.html': ("Salihli ticaret avukatı aramasıyla ticari uyuşmazlıklar hakkında bilgi arayan kişiler ve işletmeler bakımından sözleşmenin niteliği, tarafların ticari sıfatı, ödeme ve teslim kayıtları ile uyuşmazlığın dayanağı birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki ticari uyuşmazlıklarda sözleşmenin niteliği, tarafların ticari sıfatı, ödeme ve teslim kayıtları ile uyuşmazlığın hukuki dayanağı birlikte değerlendirilmelidir."),
+            'idare-hukuku.html': ("Salihli idare avukatı aramasıyla idari işlem veya idari yargı süreci hakkında bilgi arayan kişiler bakımından işlem metni, tebliğ tarihi, dayanak mevzuat ve varsa ön başvuru süreci birlikte değerlendirilmelidir.", "Salihli ve Manisa'yı ilgilendiren idari uyuşmazlıklarda işlem metni, tebliğ tarihi, dayanak mevzuat ve varsa zorunlu ön başvuru süreci birlikte değerlendirilmelidir."),
+            'kira-hukuku.html': ("Salihli kira avukatı veya Salihli tahliye avukatı aramasıyla bilgi arayan kişiler bakımından kira sözleşmesinin başlangıç tarihi, ödemeler, ihtarlar, tahliye taahhüdü ve tebligatlar birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki kira uyuşmazlıklarında kira sözleşmesinin başlangıç tarihi, ödeme kayıtları, ihtarlar, varsa tahliye taahhüdü ve tebligatlar birlikte değerlendirilmelidir."),
+            'sigorta-hukuku.html': ("Salihli sigorta avukatı aramasıyla sigorta tazminatı veya poliçe uyuşmazlığı hakkında bilgi arayan kişiler bakımından poliçe, teminat kapsamı, olay belgeleri ve sigorta kuruluşunun cevabı birlikte değerlendirilmelidir.", "Salihli ve Manisa'daki sigorta uyuşmazlıklarında poliçe, teminat kapsamı, olay ve zarar belgeleri ile sigorta kuruluşunun cevabı birlikte değerlendirilmelidir."),
+          }
           changed=[]
           for p in sorted(Path('.').glob('*.html')):
               text=p.read_text(encoding='utf-8'); original=text
+              if p.name in local_copy:
+                  old,new=local_copy[p.name]
+                  text=text.replace(old,new)
               text=re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*','\n',text,flags=re.I)
               text=re.sub(r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*','\n',text,flags=re.I)
               csp=csp_home if p.name=='index.html' else csp_default
@@ -81,6 +94,7 @@ jobs:
                   if marker.lower() not in body.lower(): problems.append(f'{name}: beklenen içerik eksik -> {marker}')
           for p in html_files:
               t=p.read_text(encoding='utf-8'); low=t.lower()
+              if ' aramasıyla ' in low: problems.append(f'{p.name}: yapay arama-kalıbı bulundu')
               if 'http-equiv="content-security-policy"' not in low: problems.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in low: problems.append(f'{p.name}: referrer policy eksik')
               if "object-src 'none'" not in t: problems.append(f'{p.name}: object-src none eksik')
@@ -109,7 +123,7 @@ jobs:
           if not Path('SECURITY.md').exists(): problems.append('SECURITY.md: eksik')
           if problems:
               print('\n'.join(sorted(set(problems)))); sys.exit(1)
-          print('Extended security, KVKK, privacy and Maps verification passed.')
+          print('Extended security, KVKK, privacy, local-copy and Maps verification passed.')
           PY
 
       - name: Commit hardened pages
@@ -119,5 +133,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '*.html'
-          git commit -m "Harden privacy and security metadata across site"
+          git commit -m "Normalize local context across practice pages"
           git push
