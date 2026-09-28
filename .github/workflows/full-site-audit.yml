@@ -25,26 +25,13 @@ jobs:
           from html.parser import HTMLParser
           import sys, xml.etree.ElementTree as ET
           from urllib.parse import urlparse
-
-          ROOT=Path('.')
-          HUB='hukuki-icerikler.html'
-          CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
-          LEGACY_MIGRATIONS={
-            'articles.html':'hukuki-icerikler.html',
-            'is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html',
-            'tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html',
-          }
+          ROOT=Path('.'); HUB='hukuki-icerikler.html'; CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
+          LEGACY_MIGRATIONS={'articles.html':'hukuki-icerikler.html','is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html'}
+          TOOLS={'infaz-hesaplama.html','avukatlik-sozlesmesi.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html'}
           EXCLUDE={'404.html','google0ca4396d5dbe8e67.html',*LEGACY_MIGRATIONS.keys()}
-          NON_ARTICLE={
-            'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',
-            'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
-            'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',
-            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,*LEGACY_MIGRATIONS.keys()
-          }
-
+          NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html','ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html','miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',*TOOLS,HUB,*LEGACY_MIGRATIONS.keys()}
           class P(HTMLParser):
-            def __init__(self):
-              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.refresh=''
+            def __init__(self): super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.refresh=''
             def handle_starttag(self,tag,attrs):
               a=dict(attrs); cls=a.get('class','').split()
               if tag=='a' and a.get('href'):
@@ -58,7 +45,6 @@ jobs:
               if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href')
               if tag=='span' and 'tag' in cls and self.cards:
                 href,_=self.cards[-1]; self.cards[-1]=(href,True)
-
           files=list(ROOT.glob('*.html')); names={p.name for p in files}; errors=[]; parsed={}
           for p in files:
             q=P(); q.feed(p.read_text(encoding='utf-8',errors='ignore')); parsed[p.name]=q
@@ -75,17 +61,11 @@ jobs:
               if not target: target='index.html'
               if target.endswith('/'): target+='index.html'
               if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
-
           hub=parsed.get(HUB)
           if not hub: errors.append('content hub missing')
-          elif hub.canonical != CANONICAL_HUB or 'noindex' in hub.robots:
-            errors.append(f'{HUB}: must be the indexable canonical content hub')
-
-          # Every retained legacy duplicate must be noindex, canonicalize and immediately redirect
-          # to its one indexable successor. No first-class page may link back to a legacy URL.
+          elif hub.canonical != CANONICAL_HUB or 'noindex' in hub.robots: errors.append(f'{HUB}: must be the indexable canonical content hub')
           for legacy,target in LEGACY_MIGRATIONS.items():
-            q=parsed.get(legacy)
-            expected=f'https://avbusraturunc.com/{target}'
+            q=parsed.get(legacy); expected=f'https://avbusraturunc.com/{target}'
             if not q: errors.append(f'legacy migration page missing: {legacy}'); continue
             if 'noindex' not in q.robots: errors.append(f'{legacy}: legacy URL must be noindex')
             if q.canonical != expected: errors.append(f'{legacy}: canonical must be {expected}')
@@ -93,42 +73,36 @@ jobs:
             for name,pq in parsed.items():
               if name in LEGACY_MIGRATIONS: continue
               for href in pq.links:
-                link=href.split('#')[0].split('?')[0].lstrip('/')
-                if link==legacy: errors.append(f'{name}: internal link still points to legacy {legacy}')
-
+                if href.split('#')[0].split('?')[0].lstrip('/')==legacy: errors.append(f'{name}: internal link still points to legacy {legacy}')
           try:
             xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=[]
             for x in xml.findall('.//s:loc',ns):
-              path=urlparse(x.text.strip()).path
-              urls.append('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
+              path=urlparse(x.text.strip()).path; urls.append('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
             if len(urls)!=len(set(urls)): errors.append('sitemap: duplicate URL entries found')
             urlset=set(urls)
             for name,q in parsed.items():
               if name in EXCLUDE or 'noindex' in q.robots: continue
-              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urlset:
-                errors.append(f'{name}: indexable canonical page missing from sitemap')
+              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urlset: errors.append(f'{name}: indexable canonical page missing from sitemap')
             for legacy,target in LEGACY_MIGRATIONS.items():
               if legacy in urlset: errors.append(f'sitemap: legacy URL must not be listed: {legacy}')
               if target not in urlset: errors.append(f'sitemap: canonical successor missing: {target}')
+            for tool in TOOLS:
+              if tool not in urlset: errors.append(f'sitemap: calculator/tool missing: {tool}')
           except Exception as e: errors.append(f'sitemap parse failed: {e}')
-
           if hub:
             card_targets=[]
             for href,has_tag in hub.cards:
-              t=href.split('#')[0].split('?')[0].lstrip('/')
-              card_targets.append(t)
+              t=href.split('#')[0].split('?')[0].lstrip('/'); card_targets.append(t)
               if t not in names: errors.append(f'hub: card points to missing page {t}')
               if not has_tag: errors.append(f'hub: card for {t} has no visible category tag')
             dup={x for x in card_targets if card_targets.count(x)>1}
             for x in sorted(dup): errors.append(f'hub: duplicate card {x}')
-            article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}
-            cards=set(card_targets)
+            article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}; cards=set(card_targets)
             for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
             for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
             if len(card_targets)!=26: errors.append(f'hub: expected 26 cards, got {len(card_targets)}')
-            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards; {len(LEGACY_MIGRATIONS)} legacy migrations')
-
+            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards; {len(TOOLS)} tools; {len(LEGACY_MIGRATIONS)} legacy migrations')
           if errors:
             print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
-          print('Full site inventory, sitemap, canonical, legacy migration and content hub audit passed.')
+          print('Full site inventory, sitemap, canonical, tools, legacy migration and content hub audit passed.')
           PY
