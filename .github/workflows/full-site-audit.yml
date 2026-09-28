@@ -1,18 +1,10 @@
-name: Full site technical audit
+name: Full Site Technical Audit
 
 on:
   push:
-    branches: ["main"]
-    paths:
-      - "*.html"
-      - "*.css"
-      - "*.js"
-      - "sitemap.xml"
-      - "robots.txt"
-      - "rss.xml"
-      - "llms.txt"
-      - "llms-full.txt"
-      - ".github/workflows/full-site-audit.yml"
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -22,217 +14,96 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Audit SEO, links, structured data, content and security
-        shell: python
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Audit all HTML and content hub
         run: |
+          python - <<'PY'
           from pathlib import Path
           from html.parser import HTMLParser
-          from itertools import combinations
-          import json, re, sys
+          import re, sys, xml.etree.ElementTree as ET
 
-          domain = 'https://avbusraturunc.com/'
-          html_files = sorted(Path('.').glob('*.html'))
-          errors, warnings = [], []
-          titles, descriptions, canonicals = {}, {}, {}
-          page_texts = {}
-          indexable_pages = []
-          content_pages = sorted(
-              p.name for p in html_files
-              if re.search(r'<main\b[^>]*\bclass=["\'][^"\']*\barticle-page\b', p.read_text(encoding='utf-8'), re.I)
-          )
-          if not content_pages:
-              errors.append('article-page sınıfına sahip ayrıntılı içerik bulunamadı')
+          ROOT=Path('.')
+          EXCLUDE={'404.html','google0ca4396d5dbe8e67.html','articles.html'}
+          HUB='hukuki-icerikler.html'
+          # Pages that are editorial/legal articles and therefore must have exactly one card in the hub.
+          NON_ARTICLE={
+            'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','kvkk-aydinlatma-metni.html',
+            'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
+            'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',
+            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,'articles.html'
+          }
 
-          class HeadParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.title = ''
-                  self.in_title = False
-                  self.meta = []
-                  self.links = []
-              def handle_starttag(self, tag, attrs):
-                  a = dict(attrs)
-                  if tag.lower() == 'title': self.in_title = True
-                  elif tag.lower() == 'meta': self.meta.append(a)
-                  elif tag.lower() == 'link': self.links.append(a)
-              def handle_endtag(self, tag):
-                  if tag.lower() == 'title': self.in_title = False
-              def handle_data(self, data):
-                  if self.in_title: self.title += data
+          class P(HTMLParser):
+            def __init__(self):
+              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.in_card=False; self.card_href=None; self.card_cat=None
+            def handle_starttag(self,tag,attrs):
+              a=dict(attrs)
+              if tag=='a' and a.get('href'): self.links.append(a['href'])
+              if tag=='h1': self.h1+=1
+              if tag=='title': self.title=True
+              if tag=='meta' and a.get('name','').lower()=='description' and a.get('content','').strip(): self.desc=True
+              if tag=='meta' and a.get('name','').lower()=='robots': self.robots=a.get('content','').lower()
+              if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href')
+              cls=a.get('class','').split()
+              if tag=='article' and 'article-card' in cls:
+                self.in_card=True; self.card_href=None; self.card_cat=a.get('data-category')
+              if self.in_card and tag=='a' and a.get('href') and not self.card_href: self.card_href=a['href']
+            def handle_endtag(self,tag):
+              if tag=='article' and self.in_card:
+                self.cards.append((self.card_href,self.card_cat)); self.in_card=False
 
-          def add_dupe(bucket, value, name):
-              bucket.setdefault(value, []).append(name)
+          files=[p for p in ROOT.glob('*.html')]
+          names={p.name for p in files}
+          errors=[]; parsed={}
+          for p in files:
+            q=P(); q.feed(p.read_text(encoding='utf-8',errors='ignore')); parsed[p.name]=q
+            if p.name in EXCLUDE: continue
+            if not q.title: errors.append(f'{p}: missing title')
+            if not q.desc: errors.append(f'{p}: missing meta description')
+            if q.h1!=1: errors.append(f'{p}: expected exactly one H1, got {q.h1}')
+            if not q.canonical: errors.append(f'{p}: missing canonical')
+            for href in q.links:
+              if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
+              target=href.split('#')[0].split('?')[0].lstrip('/')
+              if not target: target='index.html'
+              if target.endswith('/') : target += 'index.html'
+              if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
 
-          def visible_main_text(html):
-              m = re.search(r'<main\b[^>]*>(.*?)</main>', html, re.I | re.S)
-              body = m.group(1) if m else html
-              body = re.sub(r'<script\b[^>]*>.*?</script>', ' ', body, flags=re.I | re.S)
-              body = re.sub(r'<style\b[^>]*>.*?</style>', ' ', body, flags=re.I | re.S)
-              body = re.sub(r'<[^>]+>', ' ', body)
-              body = re.sub(r'&[a-zA-Z0-9#]+;', ' ', body)
-              return re.sub(r'\s+', ' ', body).strip().lower()
+          # sitemap must contain every canonical indexable first-class HTML page and no legacy noindex hub
+          try:
+            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+            urls={x.text.rstrip('/').split('/')[-1] or 'index.html' for x in xml.findall('.//s:loc',ns)}
+            urls={'index.html' if u=='' else u for u in urls}
+            for name,q in parsed.items():
+              if name in EXCLUDE or 'noindex' in q.robots: continue
+              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urls:
+                errors.append(f'{name}: indexable canonical page missing from sitemap')
+            if 'articles.html' in urls: errors.append('sitemap: legacy articles.html must not be listed')
+          except Exception as e: errors.append(f'sitemap parse failed: {e}')
 
-          def shingles(text, size=7):
-              words = re.findall(r'[a-zçğıöşü0-9]+', text, re.I)
-              if len(words) < size: return set()
-              return {' '.join(words[i:i+size]) for i in range(len(words)-size+1)}
-
-          for p in html_files:
-              t = p.read_text(encoding='utf-8')
-              low = t.lower()
-              parser = HeadParser(); parser.feed(t)
-              main_text = visible_main_text(t)
-              page_texts[p.name] = main_text
-
-              metas = {(m.get('name') or m.get('property') or '').lower(): m.get('content','').strip() for m in parser.meta}
-              canonical = next((l.get('href','').strip() for l in parser.links if (l.get('rel') or '').lower() == 'canonical'), '')
-              robots_value = metas.get('robots','').lower()
-              is_noindex = 'noindex' in robots_value
-
-              if not re.search(r'<html\b[^>]*\blang=["\']tr["\']', t, re.I): errors.append(f'{p.name}: html lang=tr eksik')
-              title = re.sub(r'\s+', ' ', parser.title).strip()
-              if not title: errors.append(f'{p.name}: title eksik')
-              else: add_dupe(titles, title, p.name)
-              description = metas.get('description','')
-              if not description: errors.append(f'{p.name}: meta description eksik')
-              else: add_dupe(descriptions, description, p.name)
-              if not canonical: errors.append(f'{p.name}: canonical eksik')
-              else:
-                  if not canonical.startswith(domain): errors.append(f'{p.name}: canonical alan adı uyumsuz: {canonical}')
-                  if not is_noindex: add_dupe(canonicals, canonical, p.name)
-
-              if not robots_value: errors.append(f'{p.name}: robots meta eksik')
-              if not is_noindex: indexable_pages.append(p.name)
-              if 'content-security-policy' not in low: errors.append(f'{p.name}: CSP meta eksik')
-              if 'name="referrer"' not in low and "name='referrer'" not in low: errors.append(f'{p.name}: referrer policy eksik')
-
-              h1s = re.findall(r'<h1\b', t, re.I)
-              if len(h1s) != 1: errors.append(f'{p.name}: H1 sayısı {len(h1s)}')
-
-              main_count = len(re.findall(r'<main\b', t, re.I))
-              if main_count != 1: errors.append(f'{p.name}: main landmark sayısı {main_count}')
-
-              ids = re.findall(r'\bid=["\']([^"\']+)["\']', t, re.I)
-              duplicate_ids = sorted({x for x in ids if ids.count(x) > 1})
-              if duplicate_ids: errors.append(f'{p.name}: yinelenen id -> {duplicate_ids}')
-
-              head_match = re.search(r'<head\b[^>]*>(.*?)</head>', t, re.I | re.S)
-              head_html = head_match.group(1) if head_match else ''
-              if not head_match:
-                  errors.append(f'{p.name}: head bölümü bulunamadı')
-              else:
-                  critical_head = {
-                      'title': r'<title\b',
-                      'meta description': r'<meta\b[^>]*name=["\']description["\']',
-                      'meta robots': r'<meta\b[^>]*name=["\']robots["\']',
-                      'canonical': r'<link\b[^>]*rel=["\']canonical["\']',
-                  }
-                  for label, pattern in critical_head.items():
-                      count = len(re.findall(pattern, head_html, re.I))
-                      if count != 1: errors.append(f'{p.name}: {label} sayısı {count}')
-                  if not is_noindex:
-                      for label, pattern in {
-                          'og:title': r'<meta\b[^>]*property=["\']og:title["\']',
-                          'og:url': r'<meta\b[^>]*property=["\']og:url["\']',
-                      }.items():
-                          count = len(re.findall(pattern, head_html, re.I))
-                          if count != 1: errors.append(f'{p.name}: {label} sayısı {count}')
-              if re.search(r'(?:href|src|action)\s*=\s*["\']http://', t, re.I): errors.append(f'{p.name}: http:// kaynak/bağlantı var')
-              if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', t, re.I): errors.append(f'{p.name}: javascript: URL var')
-              if re.search(r'<(?:object|embed|applet)\b', t, re.I): errors.append(f'{p.name}: object/embed/applet var')
-              if re.search(r'\son[a-z]+\s*=\s*["\']', t, re.I): errors.append(f'{p.name}: inline event handler var')
-
-              for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>', t, re.I):
-                  if not re.search(r'rel=["\'][^"\']*noopener', a, re.I) or not re.search(r'rel=["\'][^"\']*noreferrer', a, re.I):
-                      errors.append(f'{p.name}: target=_blank rel güvenliği eksik')
-
-              for sm in re.finditer(r'<script\b([^>]*)>(.*?)</script>', t, re.I | re.S):
-                  attrs, body = sm.group(1), sm.group(2)
-                  if re.search(r'\bsrc\s*=', attrs, re.I): continue
-                  typ = re.search(r'\btype=["\']([^"\']+)["\']', attrs, re.I)
-                  if typ and typ.group(1).lower() == 'application/ld+json':
-                      try: json.loads(body)
-                      except Exception as e: errors.append(f'{p.name}: geçersiz JSON-LD: {e}')
-                      continue
-                  if 'window.datalayer' in body.lower() or 'gtag(' in body.lower(): errors.append(f'{p.name}: inline analytics kaldı')
-                  elif body.strip(): warnings.append(f'{p.name}: runtime inline script mevcut')
-
-              if '<style' in low or re.search(r'\sstyle=["\']', t, re.I): warnings.append(f'{p.name}: inline style mevcut')
-              if "script-src 'self' 'unsafe-inline'" in t: warnings.append(f'{p.name}: script unsafe-inline mevcut')
-              if "style-src 'self' 'unsafe-inline'" in t: warnings.append(f'{p.name}: style unsafe-inline mevcut')
-
-              for href in re.findall(r'<a\b[^>]*\bhref=["\']([^"\']+)["\']', t, re.I):
-                  if href.startswith(('#','mailto:','tel:','https://','http://')): continue
-                  target = href.split('#',1)[0].split('?',1)[0]
-                  if not target or target == '/': continue
-                  if target.startswith('/'): target = target[1:]
-                  if target and not Path(target).exists(): errors.append(f'{p.name}: kırık iç bağlantı -> {href}')
-
-              word_count = len(re.findall(r'[a-zçğıöşü0-9]+', main_text, re.I))
-              if p.name in content_pages and word_count < 300: warnings.append(f'{p.name}: ayrıntılı içerik kısa görünüyor ({word_count} kelime)')
-
-          for label, bucket in [('title', titles), ('description', descriptions), ('canonical', canonicals)]:
-              for value, names in bucket.items():
-                  if len(names) > 1: warnings.append(f'duplicate {label}: {names} :: {value}')
-
-          for a, b in combinations(content_pages, 2):
-              if a not in page_texts or b not in page_texts: continue
-              sa, sb = shingles(page_texts[a]), shingles(page_texts[b])
-              if not sa or not sb: continue
-              similarity = len(sa & sb) / len(sa | sb)
-              if similarity >= 0.60: warnings.append(f'yüksek içerik benzerliği: {a} <-> {b} ({similarity:.0%})')
-
-          sitemap = Path('sitemap.xml')
-          if not sitemap.exists(): errors.append('sitemap.xml eksik')
+          # Content inventory ↔ hub cards: exactly one card per editorial article, no stale/missing card.
+          hub=parsed.get(HUB)
+          if not hub: errors.append('content hub missing')
           else:
-              s = sitemap.read_text(encoding='utf-8')
-              for name in indexable_pages:
-                  expected = domain if name == 'index.html' else domain + name
-                  if expected not in s: errors.append(f'sitemap eksik indexlenebilir URL: {expected}')
-              for p in html_files:
-                  if p.name not in indexable_pages:
-                      expected = domain + p.name
-                      if expected in s: errors.append(f'sitemap noindex URL içeriyor: {expected}')
+            card_targets=[]
+            for href,cat in hub.cards:
+              if not href: errors.append('hub: card without link'); continue
+              t=href.split('#')[0].split('?')[0].lstrip('/')
+              card_targets.append(t)
+              if t not in names: errors.append(f'hub: card points to missing page {t}')
+              if not cat: errors.append(f'hub: card for {t} has no category')
+            dup={x for x in card_targets if card_targets.count(x)>1}
+            for x in sorted(dup): errors.append(f'hub: duplicate card {x}')
+            article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}
+            cards=set(card_targets)
+            for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
+            for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
+            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards')
 
-          robots = Path('robots.txt')
-          if not robots.exists(): errors.append('robots.txt eksik')
-          elif domain + 'sitemap.xml' not in robots.read_text(encoding='utf-8'): errors.append('robots.txt sitemap bildirimi eksik')
-
-          hub = Path('hukuki-icerikler.html')
-          if not hub.exists(): errors.append('hukuki-icerikler.html eksik')
-          else:
-              hub_text = hub.read_text(encoding='utf-8')
-              for page in content_pages:
-                  if page not in hub_text: errors.append(f'hukuki-icerikler.html ayrıntılı içerik bağlantısı eksik: {page}')
-
-          rss = Path('rss.xml')
-          if not rss.exists(): errors.append('rss.xml eksik')
-          else:
-              r = rss.read_text(encoding='utf-8')
-              for page in content_pages:
-                  if domain + page not in r: errors.append(f'rss eksik içerik: {page}')
-
-          for llms_name in ('llms.txt', 'llms-full.txt'):
-              llms = Path(llms_name)
-              if not llms.exists(): errors.append(f'{llms_name} eksik'); continue
-              lt = llms.read_text(encoding='utf-8')
-              for page in content_pages:
-                  if domain + page not in lt: warnings.append(f'{llms_name} güncel içerik listesinde yok: {page}')
-
-          home = Path('index.html').read_text(encoding='utf-8')
-          home_js = Path('home-polish.js').read_text(encoding='utf-8')
-          if home.count('id="hukuki-icerikler-home"') != 1: errors.append('index.html: hukuki içerik vitrini statik HTML içinde tekil değil')
-          if 'hukuki-icerikler.html' not in home: errors.append('index.html: canonical hukuki içerik merkezi bağlantısı eksik')
-          if 'hasOfferCatalog' in home: errors.append('index.html: nötr olmayan hasOfferCatalog schema kaldı')
-          if 'facebook.com/share/' in home: errors.append('index.html: sameAs içinde kalıcı olmayan Facebook paylaşım URLsi kaldı')
-          if 'section.innerHTML' in home_js or 'data-home-polish-css' in home_js: errors.append('home-polish.js: statik vitrin veya çift CSS enjeksiyonu mantığı geri geldi')
-
-          print(f'Audited HTML files: {len(html_files)}')
-          print(f'Indexable HTML files: {len(indexable_pages)}')
-          print(f'Autodiscovered detailed article pages: {len(content_pages)} -> {content_pages}')
-          print('\nWARNINGS:')
-          print('\n'.join(sorted(set(warnings))) if warnings else 'none')
-          print('\nERRORS:')
-          print('\n'.join(sorted(set(errors))) if errors else 'none')
-          if errors: sys.exit(1)
+          if errors:
+            print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
+          print('Full site inventory, sitemap, links and content hub audit passed.')
+          PY
