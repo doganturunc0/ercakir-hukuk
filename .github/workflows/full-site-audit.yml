@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Audit all HTML and content hub
+      - name: Audit all HTML, content hub and legacy URLs
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -27,15 +27,19 @@ jobs:
           from urllib.parse import urlparse
 
           ROOT=Path('.')
-          EXCLUDE={'404.html','google0ca4396d5dbe8e67.html','articles.html'}
           HUB='hukuki-icerikler.html'
-          LEGACY_HUB='articles.html'
           CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
+          LEGACY_MIGRATIONS={
+            'articles.html':'hukuki-icerikler.html',
+            'is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html',
+            'tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html',
+          }
+          EXCLUDE={'404.html','google0ca4396d5dbe8e67.html',*LEGACY_MIGRATIONS.keys()}
           NON_ARTICLE={
             'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',
             'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
             'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',
-            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,LEGACY_HUB
+            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,*LEGACY_MIGRATIONS.keys()
           }
 
           class P(HTMLParser):
@@ -45,8 +49,7 @@ jobs:
               a=dict(attrs); cls=a.get('class','').split()
               if tag=='a' and a.get('href'):
                 self.links.append(a['href'])
-                if 'content-card' in cls:
-                  self.cards.append((a['href'],False))
+                if 'content-card' in cls: self.cards.append((a['href'],False))
               if tag=='h1': self.h1+=1
               if tag=='title': self.title=True
               if tag=='meta' and a.get('name','').lower()=='description' and a.get('content','').strip(): self.desc=True
@@ -64,6 +67,8 @@ jobs:
             if not q.desc: errors.append(f'{p}: missing meta description')
             if q.h1!=1: errors.append(f'{p}: expected exactly one H1, got {q.h1}')
             if not q.canonical: errors.append(f'{p}: missing canonical')
+            expected='https://avbusraturunc.com/' if p.name=='index.html' else f'https://avbusraturunc.com/{p.name}'
+            if q.canonical and q.canonical != expected: errors.append(f'{p}: self-canonical mismatch -> {q.canonical}')
             for href in q.links:
               if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
               target=href.split('#')[0].split('?')[0].lstrip('/')
@@ -71,35 +76,40 @@ jobs:
               if target.endswith('/'): target+='index.html'
               if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
 
-          # Exactly one indexable legal-content hub. The legacy /articles.html URL is retained only
-          # as a static GitHub Pages migration shim (noindex + canonical + immediate redirect).
-          hub=parsed.get(HUB); legacy=parsed.get(LEGACY_HUB)
+          hub=parsed.get(HUB)
           if not hub: errors.append('content hub missing')
-          else:
-            if hub.canonical != CANONICAL_HUB: errors.append(f'{HUB}: canonical must be {CANONICAL_HUB}')
-            if 'noindex' in hub.robots: errors.append(f'{HUB}: canonical hub must be indexable')
-          if not legacy: errors.append('legacy articles migration page missing')
-          else:
-            if 'noindex' not in legacy.robots: errors.append(f'{LEGACY_HUB}: legacy hub must be noindex')
-            if legacy.canonical != CANONICAL_HUB: errors.append(f'{LEGACY_HUB}: canonical must point to {CANONICAL_HUB}')
-            if '/hukuki-icerikler.html' not in legacy.refresh: errors.append(f'{LEGACY_HUB}: must redirect to canonical hub')
-          for name,q in parsed.items():
-            if name in {LEGACY_HUB,HUB}: continue
-            for href in q.links:
-              target=href.split('#')[0].split('?')[0].lstrip('/')
-              if target==LEGACY_HUB: errors.append(f'{name}: internal link still points to legacy {LEGACY_HUB}')
+          elif hub.canonical != CANONICAL_HUB or 'noindex' in hub.robots:
+            errors.append(f'{HUB}: must be the indexable canonical content hub')
+
+          # Every retained legacy duplicate must be noindex, canonicalize and immediately redirect
+          # to its one indexable successor. No first-class page may link back to a legacy URL.
+          for legacy,target in LEGACY_MIGRATIONS.items():
+            q=parsed.get(legacy)
+            expected=f'https://avbusraturunc.com/{target}'
+            if not q: errors.append(f'legacy migration page missing: {legacy}'); continue
+            if 'noindex' not in q.robots: errors.append(f'{legacy}: legacy URL must be noindex')
+            if q.canonical != expected: errors.append(f'{legacy}: canonical must be {expected}')
+            if f'/{target}' not in q.refresh: errors.append(f'{legacy}: must redirect to /{target}')
+            for name,pq in parsed.items():
+              if name in LEGACY_MIGRATIONS: continue
+              for href in pq.links:
+                link=href.split('#')[0].split('?')[0].lstrip('/')
+                if link==legacy: errors.append(f'{name}: internal link still points to legacy {legacy}')
 
           try:
-            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=set()
+            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=[]
             for x in xml.findall('.//s:loc',ns):
               path=urlparse(x.text.strip()).path
-              urls.add('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
+              urls.append('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
+            if len(urls)!=len(set(urls)): errors.append('sitemap: duplicate URL entries found')
+            urlset=set(urls)
             for name,q in parsed.items():
               if name in EXCLUDE or 'noindex' in q.robots: continue
-              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urls:
+              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urlset:
                 errors.append(f'{name}: indexable canonical page missing from sitemap')
-            if LEGACY_HUB in urls: errors.append(f'sitemap: legacy {LEGACY_HUB} must not be listed')
-            if HUB not in urls: errors.append(f'sitemap: canonical hub {HUB} must be listed')
+            for legacy,target in LEGACY_MIGRATIONS.items():
+              if legacy in urlset: errors.append(f'sitemap: legacy URL must not be listed: {legacy}')
+              if target not in urlset: errors.append(f'sitemap: canonical successor missing: {target}')
           except Exception as e: errors.append(f'sitemap parse failed: {e}')
 
           if hub:
@@ -116,9 +126,9 @@ jobs:
             for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
             for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
             if len(card_targets)!=26: errors.append(f'hub: expected 26 cards, got {len(card_targets)}')
-            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards')
+            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards; {len(LEGACY_MIGRATIONS)} legacy migrations')
 
           if errors:
             print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
-          print('Full site inventory, sitemap, links and single canonical content hub audit passed.')
+          print('Full site inventory, sitemap, canonical, legacy migration and content hub audit passed.')
           PY
