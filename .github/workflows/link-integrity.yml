@@ -84,3 +84,5 @@ jobs:
               print('\n'.join(sorted(set(errors))))
               sys.exit(1)
           print('No empty, broken or missing-fragment internal links found.')
+
+# This workflow intentionally validates all root HTML internal links and fragments.
