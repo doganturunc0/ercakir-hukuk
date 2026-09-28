@@ -29,16 +29,18 @@ jobs:
           ROOT=Path('.')
           EXCLUDE={'404.html','google0ca4396d5dbe8e67.html','articles.html'}
           HUB='hukuki-icerikler.html'
+          LEGACY_HUB='articles.html'
+          CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
           NON_ARTICLE={
             'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',
             'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
             'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',
-            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,'articles.html'
+            'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,LEGACY_HUB
           }
 
           class P(HTMLParser):
             def __init__(self):
-              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]
+              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.refresh=''
             def handle_starttag(self,tag,attrs):
               a=dict(attrs); cls=a.get('class','').split()
               if tag=='a' and a.get('href'):
@@ -49,6 +51,7 @@ jobs:
               if tag=='title': self.title=True
               if tag=='meta' and a.get('name','').lower()=='description' and a.get('content','').strip(): self.desc=True
               if tag=='meta' and a.get('name','').lower()=='robots': self.robots=a.get('content','').lower()
+              if tag=='meta' and a.get('http-equiv','').lower()=='refresh': self.refresh=a.get('content','')
               if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href')
               if tag=='span' and 'tag' in cls and self.cards:
                 href,_=self.cards[-1]; self.cards[-1]=(href,True)
@@ -68,6 +71,24 @@ jobs:
               if target.endswith('/'): target+='index.html'
               if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
 
+          # Exactly one indexable legal-content hub. The legacy /articles.html URL is retained only
+          # as a static GitHub Pages migration shim (noindex + canonical + immediate redirect).
+          hub=parsed.get(HUB); legacy=parsed.get(LEGACY_HUB)
+          if not hub: errors.append('content hub missing')
+          else:
+            if hub.canonical != CANONICAL_HUB: errors.append(f'{HUB}: canonical must be {CANONICAL_HUB}')
+            if 'noindex' in hub.robots: errors.append(f'{HUB}: canonical hub must be indexable')
+          if not legacy: errors.append('legacy articles migration page missing')
+          else:
+            if 'noindex' not in legacy.robots: errors.append(f'{LEGACY_HUB}: legacy hub must be noindex')
+            if legacy.canonical != CANONICAL_HUB: errors.append(f'{LEGACY_HUB}: canonical must point to {CANONICAL_HUB}')
+            if '/hukuki-icerikler.html' not in legacy.refresh: errors.append(f'{LEGACY_HUB}: must redirect to canonical hub')
+          for name,q in parsed.items():
+            if name in {LEGACY_HUB,HUB}: continue
+            for href in q.links:
+              target=href.split('#')[0].split('?')[0].lstrip('/')
+              if target==LEGACY_HUB: errors.append(f'{name}: internal link still points to legacy {LEGACY_HUB}')
+
           try:
             xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=set()
             for x in xml.findall('.//s:loc',ns):
@@ -77,12 +98,11 @@ jobs:
               if name in EXCLUDE or 'noindex' in q.robots: continue
               if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urls:
                 errors.append(f'{name}: indexable canonical page missing from sitemap')
-            if 'articles.html' in urls: errors.append('sitemap: legacy articles.html must not be listed')
+            if LEGACY_HUB in urls: errors.append(f'sitemap: legacy {LEGACY_HUB} must not be listed')
+            if HUB not in urls: errors.append(f'sitemap: canonical hub {HUB} must be listed')
           except Exception as e: errors.append(f'sitemap parse failed: {e}')
 
-          hub=parsed.get(HUB)
-          if not hub: errors.append('content hub missing')
-          else:
+          if hub:
             card_targets=[]
             for href,has_tag in hub.cards:
               t=href.split('#')[0].split('?')[0].lstrip('/')
@@ -100,5 +120,5 @@ jobs:
 
           if errors:
             print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
-          print('Full site inventory, sitemap, links and content hub audit passed.')
+          print('Full site inventory, sitemap, links and single canonical content hub audit passed.')
           PY
