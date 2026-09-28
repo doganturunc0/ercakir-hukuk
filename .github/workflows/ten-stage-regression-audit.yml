@@ -1,0 +1,161 @@
+name: Ten-stage SEO regression audit
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Re-audit SEO stages 1-10
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import re, json, sys, xml.etree.ElementTree as ET
+          from urllib.parse import urlparse
+
+          ROOT=Path('.')
+          HUB='hukuki-icerikler.html'
+          ACTIVITIES=['ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html','miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html']
+          LEGACY={'articles.html':'hukuki-icerikler.html','is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html'}
+          NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','404.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',HUB,*ACTIVITIES,*LEGACY.keys(),'infaz-hesaplama.html','avukatlik-sozlesmesi.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html'}
+
+          class P(HTMLParser):
+            def __init__(self):
+              super().__init__(); self.links=[]; self.h1=[]; self.title=''; self.in_title=False; self.canonical=''; self.robots=''; self.cards=[]; self.current_card=None; self.tags={}; self.jsonlds=[]; self.in_json=False; self.buf=''
+            def handle_starttag(self,tag,attrs):
+              a=dict(attrs); cls=a.get('class','').split()
+              if tag=='a' and a.get('href'):
+                self.links.append(a['href'])
+                if 'content-card' in cls: self.current_card=a['href']; self.cards.append(a['href'])
+              if tag=='h1': self.h1.append('')
+              if tag=='title': self.in_title=True
+              if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href','')
+              if tag=='meta' and a.get('name','').lower()=='robots': self.robots=a.get('content','').lower()
+              if tag=='script' and a.get('type')=='application/ld+json': self.in_json=True; self.buf=''
+              if tag=='span' and 'tag' in cls and self.current_card: self.tags[self.current_card]=''
+            def handle_endtag(self,tag):
+              if tag=='title': self.in_title=False
+              if tag=='script' and self.in_json:
+                self.jsonlds.append(self.buf); self.in_json=False
+              if tag=='a': self.current_card=None
+            def handle_data(self,data):
+              if self.in_title: self.title+=data
+              if self.in_json: self.buf+=data
+              if self.h1 and not self.h1[-1]: self.h1[-1]+=data.strip()
+              if self.current_card in self.tags: self.tags[self.current_card]+=data.strip()
+
+          files={p.name:p for p in ROOT.glob('*.html')}
+          parsed={}
+          for n,p in files.items():
+            q=P(); q.feed(p.read_text('utf-8',errors='ignore')); parsed[n]=q
+          errors=[]; warnings=[]
+          def err(stage,msg): errors.append(f'STAGE {stage}: {msg}')
+          def warn(stage,msg): warnings.append(f'STAGE {stage}: {msg}')
+
+          # 1-2 inventory/cards
+          hub=parsed[HUB]; cards=[x.split('#')[0].split('?')[0].lstrip('/') for x in hub.cards]
+          if len(cards)!=26: err(1,f'expected 26 hub cards, got {len(cards)}')
+          if len(set(cards))!=26: err(2,'duplicate hub cards found')
+          for c in cards:
+            if c not in files: err(2,f'card target missing: {c}')
+            if not hub.tags.get(c,'').strip(): err(2,f'category tag missing: {c}')
+          wa='whatsapp-yazismalari-delil-olur-mu.html'
+          if wa in cards and hub.tags.get(wa,'').strip()!='İSPAT HUKUKU · ELEKTRONİK DELİLLER': err(2,f'WhatsApp category is {hub.tags.get(wa)!r}')
+          article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and 'noindex' not in q.robots}
+          if article_pages != set(cards): err(1,f'article inventory mismatch: hub-only={sorted(set(cards)-article_pages)}, orphan={sorted(article_pages-set(cards))}')
+
+          # 3 topic-cluster reciprocity
+          for a in ACTIVITIES:
+            links={x.split('#')[0].split('?')[0].lstrip('/') for x in parsed[a].links}
+            if not (links & set(cards)): err(3,f'{a} links to no editorial article')
+          for c in cards:
+            links={x.split('#')[0].split('?')[0].lstrip('/') for x in parsed[c].links}
+            if not (links & set(ACTIVITIES)): err(3,f'{c} has no backlink to a main activity page')
+
+          # 4 legacy/duplicates
+          for old,new in LEGACY.items():
+            q=parsed.get(old)
+            if not q: err(4,f'legacy migration page absent: {old}'); continue
+            if 'noindex' not in q.robots: err(4,f'{old} is not noindex')
+            if q.canonical != f'https://avbusraturunc.com/{new}': err(4,f'{old} canonical not successor')
+            for n,pq in parsed.items():
+              if n in LEGACY: continue
+              for href in pq.links:
+                if href.split('#')[0].split('?')[0].lstrip('/')==old: err(4,f'{n} still links to legacy {old}')
+
+          # 5 sitemap/canonical/internal links
+          sitemap=set()
+          xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          for loc in xml.findall('.//s:loc',ns):
+            path=urlparse(loc.text.strip()).path; sitemap.add('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
+          for n,q in parsed.items():
+            if n=='404.html' or n in LEGACY: continue
+            if 'noindex' not in q.robots:
+              expected='https://avbusraturunc.com/' if n=='index.html' else f'https://avbusraturunc.com/{n}'
+              if q.canonical != expected: err(5,f'{n} canonical mismatch: {q.canonical}')
+              if n not in sitemap: err(5,f'{n} missing from sitemap')
+            for href in q.links:
+              if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
+              t=href.split('#')[0].split('?')[0].lstrip('/') or 'index.html'
+              if t.endswith('.html') and t not in files: err(5,f'{n} broken internal link {href}')
+
+          # 6 E-E-A-T / about
+          about=files['hakkimizda.html'].read_text('utf-8')
+          for token in ['Dokuz Eylül Üniversitesi Hukuk Fakültesi','Manisa Barosu','baro sicil numarası 2150','@type":"Person','@type":["Organization","LegalService","LocalBusiness"','sameAs','alumniOf','hakkimizda.html']:
+            if token not in about: err(6,f'Hakkımızda missing E-E-A-T marker: {token}')
+          if re.search(r'\b(en iyi|uzman|lider|garanti)\b',about,re.I): warn(6,'Hakkımızda contains a potentially promotional claim; manual review needed')
+
+          # 7 local/NAP consistency
+          nap=['+90 553 321 85 93','avbusraturunc45@gmail.com','Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1','Salihli','Manisa']
+          for n in ['hakkimizda.html','iletisim.html',*ACTIVITIES]:
+            txt=files[n].read_text('utf-8')
+            for token in nap:
+              if token not in txt: err(7,f'{n} missing NAP/local marker: {token}')
+          contact=files['iletisim.html'].read_text('utf-8')
+          if 'hasMap' not in contact or 'google.com/maps' not in contact: err(7,'contact page lacks map/local entity reference')
+          if 'sameAs' not in contact: err(7,'contact page lacks sameAs')
+
+          # 8 ten activity pages: natural local copy + schema + internal links
+          stuffing=[r'aramasıyla',r'arayanlar için',r'anahtar kelime']
+          for n in ACTIVITIES:
+            txt=files[n].read_text('utf-8')
+            if 'Salihli' not in txt or 'Manisa' not in txt: err(8,f'{n} lacks natural local context')
+            if '"@type":"Service"' not in txt: err(8,f'{n} lacks Service schema')
+            if any(re.search(p,txt,re.I) for p in stuffing): err(8,f'{n} still contains keyword-stuffing phrasing')
+            links={x.split('#')[0].split('?')[0].lstrip('/') for x in parsed[n].links}
+            if not (links & set(cards)): err(8,f'{n} has no article cluster links')
+
+          # 9 article/GEO standard across all 26
+          required_text=['quick-answer','Hukuki dayanak','Süreç','Süreler','Önemli noktalar','faq-block','İlgili içerikler','Yazar ve içerik sorumlusu','Son güncelleme','sources-block','KAYNAKLAR']
+          for n in cards:
+            txt=files[n].read_text('utf-8')
+            missing=[x for x in required_text if x not in txt]
+            if missing: err(9,f'{n} missing template markers: {missing}')
+            if '"@type":"Article"' not in txt or 'dateModified' not in txt: err(9,f'{n} missing Article/dateModified schema')
+            if '<h1' not in txt: err(9,f'{n} missing H1')
+
+          # 10 technical/mobile automation must exist and cover all 26
+          smoke=Path('.github/workflows/browser-smoke.yml').read_text('utf-8')
+          full=Path('.github/workflows/full-site-audit.yml').read_text('utf-8')
+          link=Path('.github/workflows/link-integrity.yml').read_text('utf-8')
+          for marker in ['width:390','width:1440','hrefs.length,26','horizontal overflow','failed resources']:
+            if marker not in smoke: err(10,f'browser smoke missing coverage marker: {marker}')
+          if 'expected 26 cards' not in full: err(10,'full-site audit no longer enforces 26-card inventory')
+          if 'broken' not in link.lower(): warn(10,'link-integrity workflow wording changed; manually verify link checks')
+
+          print(f'RE-AUDIT: {len(files)} HTML files; {len(article_pages)} editorial articles; {len(cards)} hub cards')
+          for w in warnings: print('WARNING:',w)
+          if errors:
+            for e in errors: print('ERROR:',e)
+            print(f'RESULT: FAIL ({len(errors)} errors, {len(warnings)} warnings)')
+            sys.exit(1)
+          print(f'RESULT: PASS (stages 1-10; {len(warnings)} warnings)')
+          PY
