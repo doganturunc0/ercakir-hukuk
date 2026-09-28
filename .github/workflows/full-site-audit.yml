@@ -23,14 +23,14 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from html.parser import HTMLParser
-          import re, sys, xml.etree.ElementTree as ET
+          import sys, xml.etree.ElementTree as ET
+          from urllib.parse import urlparse
 
           ROOT=Path('.')
           EXCLUDE={'404.html','google0ca4396d5dbe8e67.html','articles.html'}
           HUB='hukuki-icerikler.html'
-          # Pages that are editorial/legal articles and therefore must have exactly one card in the hub.
           NON_ARTICLE={
-            'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','kvkk-aydinlatma-metni.html',
+            'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',
             'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
             'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',
             'infaz-hesaplama.html','avukatlik-sozlesmesi.html',HUB,'articles.html'
@@ -38,26 +38,22 @@ jobs:
 
           class P(HTMLParser):
             def __init__(self):
-              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.in_card=False; self.card_href=None; self.card_cat=None
+              super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]
             def handle_starttag(self,tag,attrs):
-              a=dict(attrs)
-              if tag=='a' and a.get('href'): self.links.append(a['href'])
+              a=dict(attrs); cls=a.get('class','').split()
+              if tag=='a' and a.get('href'):
+                self.links.append(a['href'])
+                if 'content-card' in cls:
+                  self.cards.append((a['href'],False))
               if tag=='h1': self.h1+=1
               if tag=='title': self.title=True
               if tag=='meta' and a.get('name','').lower()=='description' and a.get('content','').strip(): self.desc=True
               if tag=='meta' and a.get('name','').lower()=='robots': self.robots=a.get('content','').lower()
               if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href')
-              cls=a.get('class','').split()
-              if tag=='article' and 'article-card' in cls:
-                self.in_card=True; self.card_href=None; self.card_cat=a.get('data-category')
-              if self.in_card and tag=='a' and a.get('href') and not self.card_href: self.card_href=a['href']
-            def handle_endtag(self,tag):
-              if tag=='article' and self.in_card:
-                self.cards.append((self.card_href,self.card_cat)); self.in_card=False
+              if tag=='span' and 'tag' in cls and self.cards:
+                href,_=self.cards[-1]; self.cards[-1]=(href,True)
 
-          files=[p for p in ROOT.glob('*.html')]
-          names={p.name for p in files}
-          errors=[]; parsed={}
+          files=list(ROOT.glob('*.html')); names={p.name for p in files}; errors=[]; parsed={}
           for p in files:
             q=P(); q.feed(p.read_text(encoding='utf-8',errors='ignore')); parsed[p.name]=q
             if p.name in EXCLUDE: continue
@@ -69,14 +65,14 @@ jobs:
               if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
               target=href.split('#')[0].split('?')[0].lstrip('/')
               if not target: target='index.html'
-              if target.endswith('/') : target += 'index.html'
+              if target.endswith('/'): target+='index.html'
               if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
 
-          # sitemap must contain every canonical indexable first-class HTML page and no legacy noindex hub
           try:
-            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
-            urls={x.text.rstrip('/').split('/')[-1] or 'index.html' for x in xml.findall('.//s:loc',ns)}
-            urls={'index.html' if u=='' else u for u in urls}
+            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=set()
+            for x in xml.findall('.//s:loc',ns):
+              path=urlparse(x.text.strip()).path
+              urls.add('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
             for name,q in parsed.items():
               if name in EXCLUDE or 'noindex' in q.robots: continue
               if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urls:
@@ -84,23 +80,22 @@ jobs:
             if 'articles.html' in urls: errors.append('sitemap: legacy articles.html must not be listed')
           except Exception as e: errors.append(f'sitemap parse failed: {e}')
 
-          # Content inventory ↔ hub cards: exactly one card per editorial article, no stale/missing card.
           hub=parsed.get(HUB)
           if not hub: errors.append('content hub missing')
           else:
             card_targets=[]
-            for href,cat in hub.cards:
-              if not href: errors.append('hub: card without link'); continue
+            for href,has_tag in hub.cards:
               t=href.split('#')[0].split('?')[0].lstrip('/')
               card_targets.append(t)
               if t not in names: errors.append(f'hub: card points to missing page {t}')
-              if not cat: errors.append(f'hub: card for {t} has no category')
+              if not has_tag: errors.append(f'hub: card for {t} has no visible category tag')
             dup={x for x in card_targets if card_targets.count(x)>1}
             for x in sorted(dup): errors.append(f'hub: duplicate card {x}')
             article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}
             cards=set(card_targets)
             for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
             for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
+            if len(card_targets)!=26: errors.append(f'hub: expected 26 cards, got {len(card_targets)}')
             print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards')
 
           if errors:
