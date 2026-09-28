@@ -28,7 +28,6 @@ jobs:
               raise SystemExit('No legal-content cover brand patterns found')
           s = s.replace(old_header, new_header).replace(old_brand, new_brand)
           p.write_text(s, encoding='utf-8')
-
           c = Path('home-polish.css')
           css = c.read_text(encoding='utf-8')
           marker = '/* Decorative legal-card brand text: visual only, excluded from document semantics. */'
@@ -59,3 +58,4 @@ jobs:
           git diff --cached --check
           git commit -m 'fix: remove decorative brand text from homepage semantics'
           git push
+# trigger: 2026-09-28
