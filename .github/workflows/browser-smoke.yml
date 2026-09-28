@@ -33,6 +33,17 @@ jobs:
           const fs = require('node:fs');
           (async () => {
             const browser = await chromium.launch({headless:true});
+            async function inspect(page, label) {
+              const errors=[];
+              page.on('pageerror', e => errors.push('pageerror: '+e.message));
+              page.on('response', r => { if (r.status() >= 400) errors.push(`http ${r.status()}: ${r.url()}`); });
+              const response = await page.goto(label.url,{waitUntil:'networkidle',timeout:30000});
+              assert(response && response.ok(), `${label.name}: HTTP response not OK`);
+              assert(await page.locator('h1').count() >= 1, `${label.name}: H1 missing`);
+              const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+              assert(!overflow, `${label.name}: horizontal overflow detected`);
+              return errors;
+            }
             const targets = [
               {name:'mobile-home', url:'http://127.0.0.1:4173/', width:390, height:844, home:true},
               {name:'desktop-home', url:'http://127.0.0.1:4173/', width:1440, height:900, home:true},
@@ -43,14 +54,7 @@ jobs:
             ];
             for (const t of targets) {
               const page = await browser.newPage({viewport:{width:t.width,height:t.height}});
-              const errors=[];
-              page.on('pageerror', e => errors.push('pageerror: '+e.message));
-              page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
-              const response = await page.goto(t.url,{waitUntil:'networkidle',timeout:30000});
-              assert(response && response.ok(), `${t.name}: HTTP response not OK`);
-              assert(await page.locator('h1').count() >= 1, `${t.name}: H1 missing`);
-              const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
-              assert(!overflow, `${t.name}: horizontal overflow detected`);
+              const errors=await inspect(page,t);
               if (t.home) {
                 assert(await page.locator('#mainNav').count() === 1, `${t.name}: main nav missing`);
                 assert(await page.locator('#iletisim').count() === 1, `${t.name}: contact section missing`);
@@ -61,35 +65,27 @@ jobs:
                 assert(await page.locator('#crimeType').count() === 1, `${t.name}: crime selector missing`);
               }
               if (t.hub) {
-                const cards = page.locator('.content-card');
-                assert.equal(await cards.count(), 26, `${t.name}: expected 26 content cards`);
+                assert.equal(await page.locator('.content-card').count(), 26, `${t.name}: expected 26 content cards`);
                 assert.equal(await page.locator('.content-card[href="whatsapp-yazismalari-delil-olur-mu.html"] .tag').innerText(), 'İSPAT HUKUKU · ELEKTRONİK DELİLLER', `${t.name}: WhatsApp category mismatch`);
               }
-              assert.equal(errors.length,0, `${t.name}: browser errors:\n${errors.join('\n')}`);
+              assert.equal(errors.length,0, `${t.name}: failed resources:\n${errors.join('\n')}`);
               await page.close();
             }
-
             const hubHtml = fs.readFileSync('hukuki-icerikler.html','utf8');
             const hrefs = [...hubHtml.matchAll(/class="content-card" href="([^"]+\.html)"/g)].map(m => m[1]);
-            assert.equal(hrefs.length, 26, `content hub: expected 26 article links, got ${hrefs.length}`);
-            assert.equal(new Set(hrefs).size, 26, 'content hub: duplicate article links detected');
-
+            assert.equal(hrefs.length,26,`content hub: expected 26 article links, got ${hrefs.length}`);
+            assert.equal(new Set(hrefs).size,26,'content hub: duplicate article links detected');
             for (const href of hrefs) {
               for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',width:1440,height:900}]) {
                 const page = await browser.newPage({viewport:{width:viewport.width,height:viewport.height}});
-                const errors=[];
-                page.on('pageerror', e => errors.push('pageerror: '+e.message));
-                page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
-                const response = await page.goto('http://127.0.0.1:4173/'+href,{waitUntil:'networkidle',timeout:30000});
-                assert(response && response.ok(), `${viewport.name}-${href}: HTTP response not OK`);
-                assert.equal(await page.locator('h1').count(),1, `${viewport.name}-${href}: expected exactly one H1`);
-                const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
-                assert(!overflow, `${viewport.name}-${href}: horizontal overflow detected`);
-                assert.equal(errors.length,0, `${viewport.name}-${href}: browser errors:\n${errors.join('\n')}`);
+                const label={name:`${viewport.name}-${href}`,url:'http://127.0.0.1:4173/'+href};
+                const errors=await inspect(page,label);
+                assert.equal(await page.locator('h1').count(),1,`${label.name}: expected exactly one H1`);
+                assert.equal(errors.length,0,`${label.name}: failed resources:\n${errors.join('\n')}`);
                 await page.close();
               }
             }
             await browser.close();
             console.log(`Browser smoke checks passed on mobile and desktop, including ${hrefs.length} legal content pages.`);
-          })().catch(e=>{ console.error(e); process.exit(1); });
+          })().catch(e=>{console.error(e);process.exit(1);});
           JS
