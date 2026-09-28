@@ -83,14 +83,12 @@ jobs:
             if name not in NON_ARTICLE and name not in {'404.html','google0ca4396d5dbe8e67.html'}:
               for need in ('Article','BreadcrumbList'):
                 if need not in ts: errors.append(f'{name}: missing {need} schema')
-            # FAQ schema must reflect visible questions/answers rather than hidden schema-only copy.
             for n in ns:
               if 'FAQPage' in types(n):
                 for q in n.get('mainEntity',[]):
                   question=q.get('name','').strip(); answer=q.get('acceptedAnswer',{}).get('text','').strip()
                   if question and question not in visible: errors.append(f'{name}: FAQ question not visible: {question}')
                   if answer and answer not in visible: errors.append(f'{name}: FAQ answer not identical to visible text: {question}')
-            # Internal entity references must use the canonical IDs when present.
             for n in ns:
               if 'Person' in types(n) and n.get('name') in ('Büşra Turunç','Av. Büşra Turunç') and n.get('@id') not in (None,'https://avbusraturunc.com/#busra'):
                 errors.append(f'{name}: non-canonical Büşra entity id')
