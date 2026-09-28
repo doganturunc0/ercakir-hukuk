@@ -1,0 +1,103 @@
+name: Structured Data Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate JSON-LD coverage and references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import json, sys
+
+          LEGACY={'articles.html','is-kazasi-isveren-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html'}
+          SERVICE={
+            'ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html',
+            'miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html'
+          }
+          NON_ARTICLE={
+            'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',
+            'infaz-hesaplama.html','avukatlik-sozlesmesi.html','hukuki-icerikler.html',*SERVICE,*LEGACY
+          }
+
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.in_ld=False; self.buf=[]; self.blocks=[]; self.visible=[]
+            def handle_starttag(self,tag,attrs):
+              a=dict(attrs)
+              if tag=='script' and a.get('type','').lower()=='application/ld+json': self.in_ld=True; self.buf=[]
+            def handle_data(self,data):
+              if self.in_ld: self.buf.append(data)
+              else: self.visible.append(data)
+            def handle_endtag(self,tag):
+              if tag=='script' and self.in_ld:
+                self.blocks.append(''.join(self.buf)); self.in_ld=False
+
+          def nodes(obj):
+            if isinstance(obj,dict):
+              yield obj
+              g=obj.get('@graph')
+              if isinstance(g,list):
+                for x in g:
+                  if isinstance(x,dict): yield x
+          def types(n):
+            t=n.get('@type',[])
+            return set(t if isinstance(t,list) else [t])
+
+          errors=[]; parsed={}
+          for path in Path('.').glob('*.html'):
+            p=P(); p.feed(path.read_text(encoding='utf-8',errors='ignore')); allnodes=[]
+            for i,b in enumerate(p.blocks,1):
+              try: allnodes += list(nodes(json.loads(b)))
+              except Exception as e: errors.append(f'{path}: invalid JSON-LD block {i}: {e}')
+            parsed[path.name]=(allnodes,' '.join(' '.join(p.visible).split()))
+
+          for name,(ns,visible) in parsed.items():
+            if name in LEGACY or name in {'404.html','google0ca4396d5dbe8e67.html'}: continue
+            ts=set().union(*(types(n) for n in ns)) if ns else set()
+            if not ns: errors.append(f'{name}: missing JSON-LD')
+            if name=='index.html':
+              for need in ('WebSite','LegalService','Person'):
+                if need not in ts: errors.append(f'{name}: missing {need} schema')
+            if name=='hakkimizda.html' and 'Person' not in ts: errors.append(f'{name}: missing Person schema')
+            if name in SERVICE:
+              for need in ('Service','LegalService','Person','BreadcrumbList'):
+                if need not in ts: errors.append(f'{name}: missing {need} schema')
+            if name=='infaz-hesaplama.html':
+              for need in ('WebApplication','LegalService','Person','BreadcrumbList'):
+                if need not in ts: errors.append(f'{name}: missing {need} schema')
+            if name not in NON_ARTICLE and name not in {'404.html','google0ca4396d5dbe8e67.html'}:
+              for need in ('Article','BreadcrumbList'):
+                if need not in ts: errors.append(f'{name}: missing {need} schema')
+            # FAQ schema must reflect visible questions/answers rather than hidden schema-only copy.
+            for n in ns:
+              if 'FAQPage' in types(n):
+                for q in n.get('mainEntity',[]):
+                  question=q.get('name','').strip(); answer=q.get('acceptedAnswer',{}).get('text','').strip()
+                  if question and question not in visible: errors.append(f'{name}: FAQ question not visible: {question}')
+                  if answer and answer not in visible: errors.append(f'{name}: FAQ answer not identical to visible text: {question}')
+            # Internal entity references must use the canonical IDs when present.
+            for n in ns:
+              if 'Person' in types(n) and n.get('name') in ('Büşra Turunç','Av. Büşra Turunç') and n.get('@id') not in (None,'https://avbusraturunc.com/#busra'):
+                errors.append(f'{name}: non-canonical Büşra entity id')
+              if ('LegalService' in types(n) or 'Organization' in types(n)) and n.get('name')=='Erçakır Hukuk Bürosu' and n.get('@id') not in (None,'https://avbusraturunc.com/#office'):
+                errors.append(f'{name}: non-canonical office entity id')
+
+          if errors:
+            print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
+          print('Structured data coverage, JSON validity, entity IDs and FAQ visibility audit passed.')
+          PY
