@@ -63,7 +63,7 @@ jobs:
               if (t.hub) {
                 const cards = page.locator('.content-card');
                 assert.equal(await cards.count(), 26, `${t.name}: expected 26 content cards`);
-                assert.equal(await page.locator('.content-card[href="whatsapp-yazismalari-delil-olur-mu.html"] .tag').innerText(), 'DELİL HUKUKU', `${t.name}: WhatsApp category mismatch`);
+                assert.equal(await page.locator('.content-card[href="whatsapp-yazismalari-delil-olur-mu.html"] .tag').innerText(), 'İSPAT HUKUKU · ELEKTRONİK DELİLLER', `${t.name}: WhatsApp category mismatch`);
               }
               assert.equal(errors.length,0, `${t.name}: browser errors:\n${errors.join('\n')}`);
               await page.close();
