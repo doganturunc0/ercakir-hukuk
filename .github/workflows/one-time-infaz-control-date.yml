@@ -31,3 +31,4 @@ jobs:
           git add infaz-hesaplama.html
           git commit -m "Infaz: show verified legislation control date"
           git push
+# trigger
