@@ -2,12 +2,9 @@ name: Full Site Technical Audit
 
 on:
   push:
-    branches: ["main"]
-    paths:
-      - "*.html"
-      - "sitemap.xml"
-      - "scripts/full_site_audit.py"
-      - ".github/workflows/full-site-audit.yml"
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,8 +14,95 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Run full site technical audit
-        run: python scripts/full_site_audit.py
-
-# Audits all root HTML files plus the legal-content hub, sitemap, tools and legacy migrations.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Audit all HTML, content hub and legacy URLs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import sys, xml.etree.ElementTree as ET
+          from urllib.parse import urlparse
+          ROOT=Path('.'); HUB='hukuki-icerikler.html'; CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
+          LEGACY_MIGRATIONS={'articles.html':'hukuki-icerikler.html','is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html'}
+          TOOLS={'infaz-hesaplama.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html'}
+          EXCLUDE={'404.html','google0ca4396d5dbe8e67.html',*LEGACY_MIGRATIONS.keys()}
+          NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html','ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html','miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',*TOOLS,HUB,*LEGACY_MIGRATIONS.keys()}
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.links=[]; self.h1=0; self.title=False; self.desc=False; self.canonical=None; self.robots=''; self.cards=[]; self.refresh=''
+            def handle_starttag(self,tag,attrs):
+              a=dict(attrs); cls=a.get('class','').split()
+              if tag=='a' and a.get('href'):
+                self.links.append(a['href'])
+                if 'content-card' in cls: self.cards.append((a['href'],False))
+              if tag=='h1': self.h1+=1
+              if tag=='title': self.title=True
+              if tag=='meta' and a.get('name','').lower()=='description' and a.get('content','').strip(): self.desc=True
+              if tag=='meta' and a.get('name','').lower()=='robots': self.robots=a.get('content','').lower()
+              if tag=='meta' and a.get('http-equiv','').lower()=='refresh': self.refresh=a.get('content','')
+              if tag=='link' and a.get('rel','').lower()=='canonical': self.canonical=a.get('href')
+              if tag=='span' and 'tag' in cls and self.cards:
+                href,_=self.cards[-1]; self.cards[-1]=(href,True)
+          files=list(ROOT.glob('*.html')); names={p.name for p in files}; errors=[]; parsed={}
+          for p in files:
+            q=P(); q.feed(p.read_text(encoding='utf-8',errors='ignore')); parsed[p.name]=q
+            if p.name in EXCLUDE: continue
+            if not q.title: errors.append(f'{p}: missing title')
+            if not q.desc: errors.append(f'{p}: missing meta description')
+            if q.h1!=1: errors.append(f'{p}: expected exactly one H1, got {q.h1}')
+            if not q.canonical: errors.append(f'{p}: missing canonical')
+            expected='https://avbusraturunc.com/' if p.name=='index.html' else f'https://avbusraturunc.com/{p.name}'
+            if q.canonical and q.canonical != expected: errors.append(f'{p}: self-canonical mismatch -> {q.canonical}')
+            for href in q.links:
+              if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
+              target=href.split('#')[0].split('?')[0].lstrip('/')
+              if not target: target='index.html'
+              if target.endswith('/'): target+='index.html'
+              if target.endswith('.html') and target not in names: errors.append(f'{p}: broken internal link -> {href}')
+          hub=parsed.get(HUB)
+          if not hub: errors.append('content hub missing')
+          elif hub.canonical != CANONICAL_HUB or 'noindex' in hub.robots: errors.append(f'{HUB}: must be the indexable canonical content hub')
+          for legacy,target in LEGACY_MIGRATIONS.items():
+            q=parsed.get(legacy); expected=f'https://avbusraturunc.com/{target}'
+            if not q: errors.append(f'legacy migration page missing: {legacy}'); continue
+            if 'noindex' not in q.robots: errors.append(f'{legacy}: legacy URL must be noindex')
+            if q.canonical != expected: errors.append(f'{legacy}: canonical must be {expected}')
+            if f'/{target}' not in q.refresh: errors.append(f'{legacy}: must redirect to /{target}')
+            for name,pq in parsed.items():
+              if name in LEGACY_MIGRATIONS: continue
+              for href in pq.links:
+                if href.split('#')[0].split('?')[0].lstrip('/')==legacy: errors.append(f'{name}: internal link still points to legacy {legacy}')
+          try:
+            xml=ET.parse('sitemap.xml'); ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}; urls=[]
+            for x in xml.findall('.//s:loc',ns):
+              path=urlparse(x.text.strip()).path; urls.append('index.html' if path in ('','/') else path.rsplit('/',1)[-1])
+            if len(urls)!=len(set(urls)): errors.append('sitemap: duplicate URL entries found')
+            urlset=set(urls)
+            for name,q in parsed.items():
+              if name in EXCLUDE or 'noindex' in q.robots: continue
+              if q.canonical and q.canonical.startswith('https://avbusraturunc.com/') and name not in urlset: errors.append(f'{name}: indexable canonical page missing from sitemap')
+            for legacy,target in LEGACY_MIGRATIONS.items():
+              if legacy in urlset: errors.append(f'sitemap: legacy URL must not be listed: {legacy}')
+              if target not in urlset: errors.append(f'sitemap: canonical successor missing: {target}')
+            for tool in TOOLS:
+              if tool not in urlset: errors.append(f'sitemap: calculator/tool missing: {tool}')
+          except Exception as e: errors.append(f'sitemap parse failed: {e}')
+          if hub:
+            card_targets=[]
+            for href,has_tag in hub.cards:
+              t=href.split('#')[0].split('?')[0].lstrip('/'); card_targets.append(t)
+              if t not in names: errors.append(f'hub: card points to missing page {t}')
+              if not has_tag: errors.append(f'hub: card for {t} has no visible category tag')
+            dup={x for x in card_targets if card_targets.count(x)>1}
+            for x in sorted(dup): errors.append(f'hub: duplicate card {x}')
+            article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}; cards=set(card_targets)
+            for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
+            for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
+            if len(card_targets)!=26: errors.append(f'hub: expected 26 cards, got {len(card_targets)}')
+            print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards; {len(TOOLS)} tools; {len(LEGACY_MIGRATIONS)} legacy migrations')
+          if errors:
+            print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
+          print('Full site inventory, sitemap, canonical, tools, legacy migration and content hub audit passed.')
+          PY
