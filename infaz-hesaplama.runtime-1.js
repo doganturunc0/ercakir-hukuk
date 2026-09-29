@@ -35,6 +35,9 @@ function performCalculation(crime,total,crimeDate){
   const child=document.getElementById('childOffender').checked;
   const birth=parseDate(document.getElementById('birthDate').value),start=parseDate(document.getElementById('startDate').value);
   const ageAtStart=ageOn(birth,start);
+  if(document.getElementById('recidivist').checked){
+    showUnsupported('İlk tekerrür / 5275 m.108','İlk tekerrürde m.108/2 uyarınca koşullu salıverme süresine eklenecek miktar, tekerrüre esas alınan cezanın en ağırından fazla olamaz. Mevcut form tekerrüre esas önceki cezanın miktarını toplamadığından yalnızca 2/3 oranı uygulayarak kesin tarih üretmek güvenilir değildir.');return;
+  }
   /* 7593 changed 5275 m.107/5: the relevant fact is time actually spent in an institution before age 15, not merely a UI "child" flag. */
   if(!child7593Exception(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
     showUnsupported('7593 sayılı Kanun / 5275 m.107/5','İnfaza başlama tarihinde hükümlü 15 yaşını doldurmamış görünüyor. 5275 m.107/5 uyarınca 15 yaş dolduruluncaya kadar infaz kurumunda fiilen geçirilen bir gün iki gün olarak dikkate alınabilir. Form; fiilî kurumda kalış, kesinti ve nakil dönemlerini güvenilir biçimde modellemediğinden otomatik koşullu salıverilme tarihi üretilmemiştir.');return;
@@ -44,8 +47,7 @@ function performCalculation(crime,total,crimeDate){
   }
   let ratio=baseRatio(crime,child),reasons=[];
   reasons.push('Temel koşullu salıverilme oranı '+ratioLabel(ratio)+' olarak değerlendirildi.');
-  if(document.getElementById('recidivist').checked){ratio=Math.max(ratio,2/3);reasons.push('5275 m.108 kapsamında mükerrirlik dikkate alındı.')}
-  if(document.getElementById('secondRecidivist').checked){ratio=Math.max(ratio,3/4);reasons.push('4.6.2025 değişikliği sonrası ikinci defa tekerrürde süreli hapis için 3/4 oranı dikkate alındı.')}
+  if(document.getElementById('secondRecidivist').checked){ratio=Math.max(ratio,3/4);reasons.push('4.6.2025 değişikliği sonrası ikinci defa tekerrürde süreli hapis için 3/4 oranı dikkate alındı; m.108/2 sınırı ikinci tekerrürde uygulanmaz.')}
   const ksGross=Math.ceil(total*ratio),ksAfterCredit=Math.max(0,ksGross-credit),fullAfterCredit=Math.max(0,total-credit);
   if(needsLegacyDsReview(crimeDate)){
     const crimeText=document.getElementById('crimeType').options[document.getElementById('crimeType').selectedIndex].text;
@@ -56,6 +58,7 @@ function performCalculation(crime,total,crimeDate){
   const dsWindow=365;
   let prison=Math.max(0,ksAfterCredit-dsWindow);
   if(tenPercentRuleApplies(crimeDate)){
+    if(credit>0){showUnsupported('105/A %10 kurum süresi / mahsup ayrımı','4.6.2025 sonrası 105/A hesabında kurumda geçirilmesi gereken sürenin en az onda biri şartı vardır. Girilen mahsup süresinin hangi kısmının ceza infaz kurumunda fiilen geçirilmiş süre olduğu mevcut formdan anlaşılamadığından kesin denetimli serbestlik eşiği üretilmemiştir.');return;}
     const minInstitution=Math.max(5,Math.ceil(ksGross/10));
     prison=Math.max(prison,minInstitution);
     reasons.push('4.6.2025 sonrası suçlarda 105/A için en az 5 gün ve koşullu salıverilmeye kadar kurumda geçirilmesi gereken sürenin en az 1/10’u kontrolü uygulandı.');
