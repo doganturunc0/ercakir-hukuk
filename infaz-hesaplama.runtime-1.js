@@ -18,6 +18,8 @@ function child7593Exception(crime){return['kill','sexualBasic','sexualAggravated
 function needsLegacyDsReview(crimeDate){return crimeDate&&crimeDate<=new Date('2023-07-31T23:59:59')}
 function tenPercentRuleApplies(crimeDate){return crimeDate&&crimeDate>=new Date('2025-06-04T00:00:00')}
 function pre6545TwoThirds(crime,crimeDate){return crimeDate&&crimeDate<new Date('2014-06-28T00:00:00')&&['sexualBasic','sexualAggravated','drug188'].includes(crime)}
+function temporary6DsException(crime){return['kill','injury87','torture','sexualBasic','sexualAggravated','privacy','drug188','stateSecrets','terror'].includes(crime)}
+function temporary6DsWindow(crime,crimeDate){return crimeDate&&crimeDate<=new Date('2020-03-30T23:59:59')&&!temporary6DsException(crime)?1095:365}
 function removeUnsupportedSpecialFields(){['womanChild','age70','illness'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const wrapper=el.closest('label');if(wrapper)wrapper.remove();else el.remove()})}
 removeUnsupportedSpecialFields();
 function showUnsupported(title,text){const result=document.getElementById('result');result.innerHTML=`<div class="summary"><div class="eyebrow inline-style-2">OTOMATİK HESAP SINIRI</div><div class="rate">${title}</div></div><div class="reason"><b>Bu senaryoda kesin tarih üretilmedi.</b><br>${text}<br><br>Sonuç için müddetname, fiilî kurum süreleri ve uygulanacak geçiş hükümleri ayrıca incelenmelidir.</div>`;result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'nearest'})}
@@ -53,6 +55,8 @@ function performCalculation(crime,total,crimeDate){
   if(needsLegacyDsReview(crimeDate)){
     const crimeText=document.getElementById('crimeType').options[document.getElementById('crimeType').selectedIndex].text;
     const result=document.getElementById('result');
+    const legacyWindow=temporary6DsWindow(crime,crimeDate);
+    if(legacyWindow===1095)reasons.push('30.03.2020 ve öncesindeki, Geçici 6/1 istisnaları dışında kalan suçlarda 105/A bakımından üç yıllık özel pencere bulunduğu tespit edildi; ancak Geçici 10 ve sonraki geçiş hükümleri nedeniyle kesin DS tarihi otomatik üretilmedi.');
     result.innerHTML=`<div class="summary"><div class="eyebrow inline-style-2">İNFAZ SONUÇ PARAMETRELERİ</div><div class="rate">${ratioLabel(ratio)} koşullu salıverilme oranı</div><p>${crimeText}</p></div><h3 class="result-title">Doğrulanabilen aritmetik</h3><div class="stats"><div class="stat"><span>TOPLAM CEZA</span><b>${dur(total)}</b></div><div class="stat"><span>MAHSUP</span><b>${dur(credit)}</b></div><div class="stat"><span>KOŞULLU SÜRE</span><b>${dur(ksGross)}</b></div><div class="stat"><span>MAHSUP SONRASI</span><b>${dur(ksAfterCredit)}</b></div></div><div class="reason"><b>Denetimli serbestlik tarihi otomatik üretilmedi.</b><br>31.07.2023 ve öncesindeki suçlarda 5275 sayılı Kanunun geçici 6 ve geçici 10 hükümleri ile 25.12.2025 değişiklikleri; kurum türü, kurumda geçirilen süre ve istisna suçlar bakımından ayrıca değerlendirme gerektirir. Mevcut form bu verilerin tamamını toplamamaktadır.<br>${reasons.join('<br>')}</div>`;
     result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'nearest'});return;
   }
