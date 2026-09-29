@@ -29,25 +29,20 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-
           csp_default = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           csp_home = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
           changed=[]
-
           for p in sorted(Path('.').glob('*.html')):
               text=p.read_text(encoding='utf-8'); original=text
               text=re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*','\n',text,flags=re.I)
               text=re.sub(r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*','\n',text,flags=re.I)
-              text=text.replace('"postalCode":"45120"','"postalCode":"45300"')
+              text=text.replace('"postalCode":"45120"','"postalCode":"45300"').replace('45120 Salihli / Manisa','45300 Salihli / Manisa')
               csp=csp_home if p.name=='index.html' else csp_default
               csp_re=r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>'
-              if re.search(csp_re,text,re.I):
-                  text=re.sub(csp_re,csp,text,count=1,flags=re.I)
+              if re.search(csp_re,text,re.I): text=re.sub(csp_re,csp,text,count=1,flags=re.I)
               else:
-                  viewport=re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>',text,re.I)
-                  charset=re.search(r'<meta\b[^>]*charset=[^>]*>',text,re.I)
-                  anchor=viewport or charset
+                  viewport=re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>',text,re.I); charset=re.search(r'<meta\b[^>]*charset=[^>]*>',text,re.I); anchor=viewport or charset
                   if anchor: text=text[:anchor.end()]+'\n'+csp+text[anchor.end():]
                   else: text=text.replace('<head>','<head>\n'+csp,1)
               if not re.search(r'<meta\b[^>]*name=["\']referrer["\'][^>]*>',text,re.I):
@@ -67,8 +62,7 @@ jobs:
                       return tag[:relm.start()]+replacement+tag[relm.end():]
                   return tag[:-1]+' rel="noopener noreferrer">'
               text=re.sub(r'<a\b[^>]*>',harden_anchor,text,flags=re.I)
-              if text!=original:
-                  p.write_text(text,encoding='utf-8'); changed.append(p.name)
+              if text!=original: p.write_text(text,encoding='utf-8'); changed.append(p.name)
           print('Changed:', ', '.join(changed) if changed else 'none')
           PY
 
@@ -79,8 +73,7 @@ jobs:
           from pathlib import Path
           from urllib.parse import urlparse
           import re, sys
-          problems=[]
-          html_files=sorted(Path('.').glob('*.html'))
+          problems=[]; html_files=sorted(Path('.').glob('*.html'))
           required={'kvkk-aydinlatma-metni.html':('KVKK','6698'),'gizlilik-cerez-politikasi.html':('Gizlilik','Çerez'),'iletisim.html':('İletişim','tel:+905533218593'),'404.html':('noindex','Sayfa bulunamadı')}
           for name,markers in required.items():
               p=Path(name)
@@ -94,13 +87,12 @@ jobs:
               if 'http-equiv="content-security-policy"' not in low: problems.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in low: problems.append(f'{p.name}: referrer policy eksik')
               if "object-src 'none'" not in t: problems.append(f'{p.name}: object-src none eksik')
-              if '"postalCode":"45120"' in t: problems.append(f'{p.name}: eski büro posta kodu 45120')
+              if '45120' in t: problems.append(f'{p.name}: eski büro posta kodu 45120')
               if p.name=='index.html':
                   if 'frame-src https://www.google.com https://maps.google.com' not in t: problems.append('index.html: Maps CSP izni eksik')
                   if 'ga-consent.js' not in low: problems.append('index.html: consent analytics betiği eksik')
                   if re.search(r'<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js',t,re.I): problems.append('index.html: statik Google tag loader bulundu')
-                  frames=re.findall(r'<iframe\b[^>]*\bsrc=["\']([^"\']+)["\']',t,re.I)
-                  for src in frames:
+                  for src in re.findall(r'<iframe\b[^>]*\bsrc=["\']([^"\']+)["\']',t,re.I):
                       u=urlparse(src)
                       if u.scheme!='https' or u.netloc not in ('www.google.com','maps.google.com'): problems.append(f'index.html: izin verilmeyen iframe -> {src}')
               else:
@@ -116,8 +108,7 @@ jobs:
           if re.search(r'<form\b',contact,re.I): problems.append('iletisim.html: beklenmeyen form')
           if not Path('.well-known/security.txt').exists(): problems.append('.well-known/security.txt: eksik')
           if not Path('SECURITY.md').exists(): problems.append('SECURITY.md: eksik')
-          if problems:
-              print('\n'.join(sorted(set(problems)))); sys.exit(1)
+          if problems: print('\n'.join(sorted(set(problems)))); sys.exit(1)
           print('Extended security, KVKK, privacy, NAP and Maps verification passed.')
           PY
 
