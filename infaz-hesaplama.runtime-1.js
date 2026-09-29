@@ -6,6 +6,7 @@ function fmtDate(dt){return new Intl.DateTimeFormat('tr-TR',{day:'2-digit',month
 function addDays(date,days){const x=new Date(date);x.setDate(x.getDate()+Math.max(0,Math.round(days)));return x}
 function parseDate(v){return v?new Date(v+'T12:00:00'):null}
 function selectedCrime(){return document.getElementById('crimeType').value}
+function ageOn(birth,date){if(!birth||!date)return null;let a=date.getFullYear()-birth.getFullYear();const md=date.getMonth()-birth.getMonth();if(md<0||(md===0&&date.getDate()<birth.getDate()))a--;return a}
 function baseRatio(crime,child){
   if(child&&['sexualBasic','sexualAggravated','drug188','organization','terror'].includes(crime))return 2/3;
   if(['sexualAggravated','drug188','terror'].includes(crime))return 3/4;
@@ -23,13 +24,23 @@ function calculateExecution(){
   const crime=selectedCrime();if(!crime){alert('Lütfen işlenen suç türünü seçiniz.');return}
   const total=toDays(dval('sentenceYear'),dval('sentenceMonth'),dval('sentenceDay'));if(total<=0){alert('Lütfen ceza miktarını giriniz.');return}
   const cd=parseDate(document.getElementById('crimeDate').value);if(!cd){alert('Suç tarihini giriniz. Geçiş hükümleri nedeniyle suç tarihi zorunludur.');return}
+  const birth=parseDate(document.getElementById('birthDate').value),childBox=document.getElementById('childOffender').checked;
+  const crimeAge=ageOn(birth,cd);
+  if(birth&&birth>cd){alert('Doğum tarihi suç tarihinden sonra olamaz.');return}
+  if(crimeAge!==null&&((crimeAge<18)!==childBox)){alert(crimeAge<18?'Suç tarihinde 18 yaş altı görünüyor. “Çocuk hükümlü” seçeneğini işaretleyiniz.':'Suç tarihinde 18 yaş ve üzeri görünüyor. “Çocuk hükümlü” seçeneğini kaldırınız.');return}
   const splash=document.getElementById('calcSplash');splash.classList.add('show');setTimeout(()=>{splash.classList.remove('show');performCalculation(crime,total,cd)},500)
 }
 function performCalculation(crime,total,crimeDate){
   const credit=toDays(dval('creditYear'),dval('creditMonth'),dval('creditDay'));
   const child=document.getElementById('childOffender').checked;
-  if(child&&!child7593Exception(crime)){
-    showUnsupported('7593 sayılı Kanun / çocuk hükümlü','5275 sayılı Kanun m.107/5 uyarınca 15 yaş dolduruluncaya kadar infaz kurumunda fiilen geçirilen günler farklı değerlenebilir. Mevcut form gerçek kurumda kalınan dönemleri ve kesintileri güvenilir biçimde belirlemediğinden otomatik koşullu salıverilme tarihi hesaplanmamıştır.');return;
+  const birth=parseDate(document.getElementById('birthDate').value),start=parseDate(document.getElementById('startDate').value);
+  const ageAtStart=ageOn(birth,start);
+  /* 7593 changed 5275 m.107/5: the relevant fact is time actually spent in an institution before age 15, not merely a UI "child" flag. */
+  if(!child7593Exception(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
+    showUnsupported('7593 sayılı Kanun / 5275 m.107/5','İnfaza başlama tarihinde hükümlü 15 yaşını doldurmamış görünüyor. 5275 m.107/5 uyarınca 15 yaş dolduruluncaya kadar infaz kurumunda fiilen geçirilen bir gün iki gün olarak dikkate alınabilir. Form; fiilî kurumda kalış, kesinti ve nakil dönemlerini güvenilir biçimde modellemediğinden otomatik koşullu salıverilme tarihi üretilmemiştir.');return;
+  }
+  if(child&&!child7593Exception(crime)&&(!birth||!start)){
+    showUnsupported('7593 sayılı Kanun / yaş verisi gerekli','Çocuk hükümlü senaryosunda 5275 m.107/5 kontrolü için doğum tarihi ile infaza başlama/cezaevine giriş tarihi birlikte gereklidir. Bu veriler olmadan 15 yaş öncesi kurum süresi güvenilir biçimde değerlendirilemez.');return;
   }
   let ratio=baseRatio(crime,child),reasons=[];
   reasons.push('Temel koşullu salıverilme oranı '+ratioLabel(ratio)+' olarak değerlendirildi.');
@@ -51,14 +62,13 @@ function performCalculation(crime,total,crimeDate){
   }
   const dsActual=Math.max(0,ksAfterCredit-prison);
   let dateCards='',timeline='';
-  const start=parseDate(document.getElementById('startDate').value);
   if(start){
     const dsDate=addDays(start,prison),ksDate=addDays(start,ksAfterCredit),fullDate=addDays(start,fullAfterCredit);
     dateCards=`<div class="stat highlight"><span>DENETİMLİ SERBESTLİK İÇİN ARİTMETİK EŞİK</span><b>${fmtDate(dsDate)}</b></div><div class="stat highlight"><span>KOŞULLU SALIVERİLME ARİTMETİK TARİHİ</span><b>${fmtDate(ksDate)}</b></div>`;
     timeline=`<h3 class="result-title">Aritmetik zaman çizelgesi</h3><div class="timeline"><div class="timeline-row"><span>İNFAZA BAŞLAMA</span><strong>${fmtDate(start)}</strong></div><div class="timeline-row"><span>DS ARİTMETİK EŞİĞİ</span><strong>${fmtDate(dsDate)}</strong></div><div class="timeline-row"><span>KS ARİTMETİK TARİHİ</span><strong>${fmtDate(ksDate)}</strong></div><div class="timeline-row"><span>BİHAKKIN ARİTMETİK TARİH</span><strong>${fmtDate(fullDate)}</strong></div></div>`;
   }
   const crimeText=document.getElementById('crimeType').options[document.getElementById('crimeType').selectedIndex].text;
-  const html=`<div class="summary"><div class="eyebrow inline-style-2">İNFAZ SONUÇ PARAMETRELERİ</div><div class="rate">${ratioLabel(ratio)} koşullu salıverilme oranı</div><p>${crimeText}</p></div><h3 class="result-title">Süre parametreleri</h3><div class="stats"><div class="stat"><span>TOPLAM CEZA</span><b>${dur(total)}</b></div><div class="stat"><span>MAHSUP</span><b>${dur(credit)}</b></div><div class="stat"><span>KOŞULLU SÜRE</span><b>${dur(ksGross)}</b></div><div class="stat"><span>MAHSUP SONRASI</span><b>${dur(ksAfterCredit)}</b></div><div class="stat"><span>TAHMİNİ KURUM SÜRESİ</span><b>${dur(prison)}</b></div><div class="stat"><span>TAHMİNİ DS SÜRESİ</span><b>${dur(dsActual)}</b></div>${dateCards}</div>${timeline}<div class="reason"><b>Hesaplama açıklaması</b><br>${reasons.join('<br>')}<br>Açık kuruma ayrılma, iyi hâl, kurum statüsü ve dosyaya özgü geçiş hükümleri otomatik kesinleştirilmez. Sonuç resmi müddetname değildir.</div>`;
+  const html=`<div class="summary"><div class="eyebrow inline-style-2">İNFAZ SONUÇ PARAMETRELERİ</div><div class="rate">${ratioLabel(ratio)} koşullu salıverilme oranı</div><p>${crimeText}</p></div><h3 class="result-title">Süre parametreleri</h3><div class="stats"><div class="stat"><span>TOPLAM CEZA</span><b>${dur(total)}</b></div><div class="stat"><span>MAHSUP</span><b>${dur(credit)}</b></div><div class="stat"><span>KOŞULLU SÜRE</span><b>${dur(ksGross)}</b></div><div class="stat"><span>MAHSUP SONRASI</span><b>${dur(ksAfterCredit)}</b></div><div class="stat"><span>TAHMİNİ KURUM SÜRESİ</span><b>${dur(prison)}</b></div><div class="stat"><span>TAHMİNİ DS SÜRESİ</span><b>${dur(dsActual)}</b></div>${dateCards}</div>${timeline}<div class="reason"><b>Hesaplama açıklaması</b><br>${reasons.join('<br>')}<br>105/A uygulaması ayrıca açık kurum/çocuk eğitimevi statüsü, iyi hâl ve infaz hâkimi değerlendirmesine bağlıdır. Açık kuruma ayrılma ve dosyaya özgü geçiş hükümleri otomatik kesinleştirilmez. Sonuç resmi müddetname değildir.</div>`;
   const result=document.getElementById('result');result.innerHTML=html;result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function resetForm(){document.querySelectorAll('input').forEach(i=>{if(i.type==='checkbox')i.checked=false;else i.value=''});document.getElementById('crimeType').value='';const r=document.getElementById('result');r.classList.remove('show');r.innerHTML=''}
