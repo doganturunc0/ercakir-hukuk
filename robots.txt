@@ -27,4 +27,5 @@ Allow: /
 User-agent: ClaudeBot
 Allow: /
 
+# Technical regression verification marker: 2026-09-29
 Sitemap: https://avbusraturunc.com/sitemap.xml
