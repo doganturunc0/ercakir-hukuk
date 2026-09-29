@@ -14,7 +14,8 @@ function baseRatio(crime,child){
   return 1/2;
 }
 function ratioLabel(r){if(r>=.749)return'3/4';if(r>=.665)return'2/3';return'1/2'}
-function child7593Exception(crime){return['kill','sexualBasic','sexualAggravated','drug188','organization'].includes(crime)}
+function child7593ClearException(crime){return['kill','drug188','organization'].includes(crime)}
+function child7593SexualNeedsExactArticle(crime){return['sexualBasic','sexualAggravated'].includes(crime)}
 function needsLegacyDsReview(crimeDate){return crimeDate&&crimeDate<=new Date('2023-07-31T23:59:59')}
 function tenPercentRuleApplies(crimeDate){return crimeDate&&crimeDate>=new Date('2025-06-04T00:00:00')}
 function pre6545TwoThirds(crime,crimeDate){return crimeDate&&crimeDate<new Date('2014-06-28T00:00:00')&&['sexualBasic','sexualAggravated','drug188'].includes(crime)}
@@ -41,10 +42,16 @@ function performCalculation(crime,total,crimeDate){
   if(document.getElementById('recidivist').checked){
     showUnsupported('İlk tekerrür / 5275 m.108','İlk tekerrürde m.108/2 uyarınca koşullu salıverme süresine eklenecek miktar, tekerrüre esas alınan cezanın en ağırından fazla olamaz. Mevcut form tekerrüre esas önceki cezanın miktarını toplamadığından yalnızca 2/3 oranı uygulayarak kesin tarih üretmek güvenilir değildir.');return;
   }
-  if(!child7593Exception(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
+  if(child&&crimeDate<=new Date('2020-03-30T23:59:59')){
+    showUnsupported('Geçici 6/4 çocuk hükümlü yaş hesabı','30.03.2020 ve öncesinde işlenen suçlarda Geçici 6/4; 15 yaş dolduruluncaya kadar kurumda geçirilen bir günü üç gün, 18 yaş dolduruluncaya kadar kurumda geçirilen bir günü iki gün sayan özel hesap öngörür. Mevcut form bu yaş aralıklarında fiilen kurumda geçirilen süreleri güvenilir biçimde modellemediğinden otomatik koşullu salıverilme tarihi üretilmemiştir.');return;
+  }
+  if(child&&child7593SexualNeedsExactArticle(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
+    showUnsupported('7593 / cinsel suçta tam TCK maddesi gerekli','5275 m.107/5’in 2026 tarihli halinde yaş hesabı istisnası TCK 102 ve 103 için öngörülmüştür. Mevcut formdaki cinsel suç kategorileri TCK 102, 103, 104 ve 105 ayrımını kesin biçimde toplamadığından 15 yaş öncesi kurum süresi bakımından otomatik sonuç güvenilir değildir.');return;
+  }
+  if(!child7593ClearException(crime)&&!child7593SexualNeedsExactArticle(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
     showUnsupported('7593 sayılı Kanun / 5275 m.107/5','İnfaza başlama tarihinde hükümlü 15 yaşını doldurmamış görünüyor. 5275 m.107/5 uyarınca 15 yaş dolduruluncaya kadar infaz kurumunda fiilen geçirilen bir gün iki gün olarak dikkate alınabilir. Form; fiilî kurumda kalış, kesinti ve nakil dönemlerini güvenilir biçimde modellemediğinden otomatik koşullu salıverilme tarihi üretilmemiştir.');return;
   }
-  if(child&&!child7593Exception(crime)&&(!birth||!start)){
+  if(child&&!child7593ClearException(crime)&&(!birth||!start)){
     showUnsupported('7593 sayılı Kanun / yaş verisi gerekli','Çocuk hükümlü senaryosunda 5275 m.107/5 kontrolü için doğum tarihi ile infaza başlama/cezaevine giriş tarihi birlikte gereklidir. Bu veriler olmadan 15 yaş öncesi kurum süresi güvenilir biçimde değerlendirilemez.');return;
   }
   let ratio=baseRatio(crime,child),reasons=[];
