@@ -1,0 +1,46 @@
+name: One-time infaz regression
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-infaz-regression.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax
+        run: node --check infaz-hesaplama.runtime-1.js
+      - name: Legal rule helper regression
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const els=new Proxy({}, {get:(t,k)=>t[k]||(t[k]={value:'',checked:false,addEventListener(){},closest(){return null}})});
+          const document={getElementById:id=>els[id],querySelectorAll:()=>[]};
+          const ctx={document,Intl,Date,Math,Number,setTimeout:()=>{},alert:()=>{}};
+          vm.createContext(ctx);vm.runInContext(fs.readFileSync('infaz-hesaplama.runtime-1.js','utf8'),ctx);
+          const eq=(name,a,b)=>{if(a!==b)throw new Error(`${name}: ${a} != ${b}`)};
+          eq('general adult',ctx.baseRatio('general',false),1/2);
+          eq('kill adult',ctx.baseRatio('kill',false),2/3);
+          eq('privacy adult',ctx.baseRatio('privacy',false),2/3);
+          eq('drug190 adult',ctx.baseRatio('drug190',false),1/2);
+          eq('drug188 adult',ctx.baseRatio('drug188',false),3/4);
+          eq('drug188 child',ctx.baseRatio('drug188',true),2/3);
+          eq('organization adult',ctx.baseRatio('organization',false),2/3);
+          eq('terror adult',ctx.baseRatio('terror',false),3/4);
+          eq('terror child',ctx.baseRatio('terror',true),2/3);
+          eq('temporary6 T-1',ctx.temporary6DsWindow('general',new Date('2020-03-29T12:00:00')),1095);
+          eq('temporary6 T',ctx.temporary6DsWindow('general',new Date('2020-03-30T12:00:00')),1095);
+          eq('temporary6 T+1',ctx.temporary6DsWindow('general',new Date('2020-03-31T12:00:00')),365);
+          eq('temporary6 exception',ctx.temporary6DsWindow('drug188',new Date('2020-03-30T12:00:00')),365);
+          eq('105A T-1',ctx.tenPercentRuleApplies(new Date('2025-06-03T12:00:00')),false);
+          eq('105A T',ctx.tenPercentRuleApplies(new Date('2025-06-04T12:00:00')),true);
+          eq('legacy T',ctx.needsLegacyDsReview(new Date('2023-07-31T12:00:00')),true);
+          eq('legacy T+1',ctx.needsLegacyDsReview(new Date('2023-08-01T12:00:00')),false);
+          eq('7593 kill exception',ctx.child7593ClearException('kill'),true);
+          eq('7593 organization exception',ctx.child7593ClearException('organization'),true);
+          eq('7593 sexual exact article',ctx.child7593SexualNeedsExactArticle('sexualBasic'),true);
+          console.log('infaz helper regression PASS');
+          NODE
