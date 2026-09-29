@@ -1,0 +1,67 @@
+name: One-time date and meta verification report
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-date-meta-report.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate report
+        shell: python
+        run: |
+          import re, pathlib, html, json
+          from collections import defaultdict
+          root=pathlib.Path('.')
+          files=sorted(root.glob('*.html'))
+          out=[]
+          out.append(f'HTML_COUNT\t{len(files)}')
+          descs=defaultdict(list)
+          idx=[]
+          for p in files:
+            s=p.read_text(encoding='utf-8')
+            robots=re.search(r'<meta[^>]+name=["\']robots["\'][^>]+content=["\']([^"\']*)',s,re.I)
+            noindex=bool(robots and 'noindex' in robots.group(1).lower())
+            m=re.search(r'<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)',s,re.I)
+            d=html.unescape(m.group(1)).strip() if m else ''
+            if not noindex:
+              idx.append(p.name)
+              out.append(f'DESC\t{p.name}\t{len(d)}\t{d}')
+              if d: descs[d].append(p.name)
+          out.append(f'INDEXABLE_COUNT\t{len(idx)}')
+          for d,ps in descs.items():
+            if len(ps)>1: out.append('DUPDESC\t'+','.join(ps)+'\t'+d)
+          hub=(root/'hukuki-icerikler.html').read_text(encoding='utf-8')
+          arts=list(dict.fromkeys(re.findall(r'"url":"https://avbusraturunc.com/([^"/]+\.html)"',hub)))
+          out.append(f'ARTICLE_COUNT\t{len(arts)}')
+          for fn in arts:
+            s=(root/fn).read_text(encoding='utf-8')
+            pub=re.search(r'"datePublished"\s*:\s*"([^"]+)"',s)
+            mod=re.search(r'"dateModified"\s*:\s*"([^"]+)"',s)
+            vp=re.search(r'Yayın tarihi:\s*([0-9.]+)',s,re.I)
+            vm=re.search(r'Son güncelleme:\s*([0-9.]+)',s,re.I)
+            hp=re.search(r'property="article:published_time" content="([^"]+)"',s)
+            hm=re.search(r'property="article:modified_time" content="([^"]+)"',s)
+            out.append(f'ARTICLE\t{fn}\tpub={pub.group(1) if pub else "-"}\tmod={mod.group(1) if mod else "-"}\tvisible_pub={vp.group(1) if vp else "-"}\tvisible_mod={vm.group(1) if vm else "-"}\thead_pub={hp.group(1) if hp else "-"}\thead_mod={hm.group(1) if hm else "-"}')
+          terms=['güncel mevzuat','güncel düzenleme','mevcut mevzuat','son düzenleme','son değişiklik','yürürlükteki mevzuat','güncel kanun','güncel hali','günümüzde','halen','mevcut düzenleme','son düzenlemeler']
+          for p in files:
+            s=p.read_text(encoding='utf-8').lower()
+            hits=[t for t in terms if t in s]
+            if hits: out.append(f'TEMPORAL\t{p.name}\t'+','.join(hits))
+          calcs=['infaz-hesaplama.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html']
+          for fn in calcs:
+            s=(root/fn).read_text(encoding='utf-8')
+            cm=re.search(r'Parametre kontrol tarihi:\s*([0-9.]+)',s,re.I)
+            out.append(f'CALC\t{fn}\tcontrol={cm.group(1) if cm else "-"}')
+          (root/'.github/date-meta-report.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+      - name: Commit report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/date-meta-report.txt
+          git commit -m "chore: generate date and meta verification report"
+          git push
