@@ -17,6 +17,7 @@ function ratioLabel(r){if(r>=.749)return'3/4';if(r>=.665)return'2/3';return'1/2'
 function child7593Exception(crime){return['kill','sexualBasic','sexualAggravated','drug188','organization'].includes(crime)}
 function needsLegacyDsReview(crimeDate){return crimeDate&&crimeDate<=new Date('2023-07-31T23:59:59')}
 function tenPercentRuleApplies(crimeDate){return crimeDate&&crimeDate>=new Date('2025-06-04T00:00:00')}
+function pre6545TwoThirds(crime,crimeDate){return crimeDate&&crimeDate<new Date('2014-06-28T00:00:00')&&['sexualBasic','sexualAggravated','drug188'].includes(crime)}
 function removeUnsupportedSpecialFields(){['womanChild','age70','illness'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const wrapper=el.closest('label');if(wrapper)wrapper.remove();else el.remove()})}
 removeUnsupportedSpecialFields();
 function showUnsupported(title,text){const result=document.getElementById('result');result.innerHTML=`<div class="summary"><div class="eyebrow inline-style-2">OTOMATİK HESAP SINIRI</div><div class="rate">${title}</div></div><div class="reason"><b>Bu senaryoda kesin tarih üretilmedi.</b><br>${text}<br><br>Sonuç için müddetname, fiilî kurum süreleri ve uygulanacak geçiş hükümleri ayrıca incelenmelidir.</div>`;result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'nearest'})}
@@ -38,7 +39,6 @@ function performCalculation(crime,total,crimeDate){
   if(document.getElementById('recidivist').checked){
     showUnsupported('İlk tekerrür / 5275 m.108','İlk tekerrürde m.108/2 uyarınca koşullu salıverme süresine eklenecek miktar, tekerrüre esas alınan cezanın en ağırından fazla olamaz. Mevcut form tekerrüre esas önceki cezanın miktarını toplamadığından yalnızca 2/3 oranı uygulayarak kesin tarih üretmek güvenilir değildir.');return;
   }
-  /* 7593 changed 5275 m.107/5: the relevant fact is time actually spent in an institution before age 15, not merely a UI "child" flag. */
   if(!child7593Exception(crime)&&birth&&start&&ageAtStart!==null&&ageAtStart<15){
     showUnsupported('7593 sayılı Kanun / 5275 m.107/5','İnfaza başlama tarihinde hükümlü 15 yaşını doldurmamış görünüyor. 5275 m.107/5 uyarınca 15 yaş dolduruluncaya kadar infaz kurumunda fiilen geçirilen bir gün iki gün olarak dikkate alınabilir. Form; fiilî kurumda kalış, kesinti ve nakil dönemlerini güvenilir biçimde modellemediğinden otomatik koşullu salıverilme tarihi üretilmemiştir.');return;
   }
@@ -46,7 +46,8 @@ function performCalculation(crime,total,crimeDate){
     showUnsupported('7593 sayılı Kanun / yaş verisi gerekli','Çocuk hükümlü senaryosunda 5275 m.107/5 kontrolü için doğum tarihi ile infaza başlama/cezaevine giriş tarihi birlikte gereklidir. Bu veriler olmadan 15 yaş öncesi kurum süresi güvenilir biçimde değerlendirilemez.');return;
   }
   let ratio=baseRatio(crime,child),reasons=[];
-  reasons.push('Temel koşullu salıverilme oranı '+ratioLabel(ratio)+' olarak değerlendirildi.');
+  if(pre6545TwoThirds(crime,crimeDate)){ratio=2/3;reasons.push('28.06.2014 öncesi suç için 5275 sayılı Kanunun geçici 6/4 hükmündeki 2/3 koşullu salıverilme oranı uygulandı.');}
+  else reasons.push('Temel koşullu salıverilme oranı '+ratioLabel(ratio)+' olarak değerlendirildi.');
   if(document.getElementById('secondRecidivist').checked){ratio=Math.max(ratio,3/4);reasons.push('4.6.2025 değişikliği sonrası ikinci defa tekerrürde süreli hapis için 3/4 oranı dikkate alındı; m.108/2 sınırı ikinci tekerrürde uygulanmaz.')}
   const ksGross=Math.ceil(total*ratio),ksAfterCredit=Math.max(0,ksGross-credit),fullAfterCredit=Math.max(0,total-credit);
   if(needsLegacyDsReview(crimeDate)){
