@@ -1,0 +1,62 @@
+name: Date and Meta Audit
+on:
+  push:
+    paths:
+      - '.github/workflows/date-meta-audit.yml'
+      - '*.html'
+      - '*.js'
+      - 'rss.xml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit HTML dates, descriptions, temporal phrases and calculators
+        shell: python
+        run: |
+          import re, json, pathlib, html
+          from collections import defaultdict
+          root=pathlib.Path('.')
+          files=sorted(root.glob('*.html'))
+          print('HTML_COUNT',len(files))
+          descs=defaultdict(list)
+          print('\n=== INDEXABLE META DESCRIPTIONS ===')
+          for p in files:
+            s=p.read_text(encoding='utf-8')
+            robots=re.search(r'<meta[^>]+name=["\']robots["\'][^>]+content=["\']([^"\']*)',s,re.I)
+            noindex=bool(robots and 'noindex' in robots.group(1).lower())
+            m=re.search(r'<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)',s,re.I)
+            d=html.unescape(m.group(1)).strip() if m else ''
+            if not noindex:
+              print(f'{p.name}\tlen={len(d)}\t'+('MISSING' if not m else ('EMPTY' if not d else d)))
+              if d: descs[d].append(p.name)
+          print('\n=== DUPLICATE DESCRIPTIONS ===')
+          for d,ps in descs.items():
+            if len(ps)>1: print(len(ps),ps,d)
+          print('\n=== ARTICLE DATE AUDIT ===')
+          hub=(root/'hukuki-icerikler.html').read_text(encoding='utf-8')
+          arts=re.findall(r'"url":"https://avbusraturunc.com/([^"/]+\.html)"',hub)
+          arts=list(dict.fromkeys(arts))[:26]
+          print('ARTICLE_COUNT',len(arts))
+          for fn in arts:
+            s=(root/fn).read_text(encoding='utf-8')
+            pub=re.search(r'"datePublished"\s*:\s*"([^"]+)"',s)
+            mod=re.search(r'"dateModified"\s*:\s*"([^"]+)"',s)
+            vispub=re.search(r'(?:Yayın tarihi|Yayınlanma)\s*:?\s*</?[^>]*>?\s*([0-9.\-/]+)',s,re.I)
+            vismod=re.search(r'Son güncelleme:\s*([^<]+)',s,re.I)
+            typ='Article' if '"@type":"Article"' in s else ('BlogPosting' if '"@type":"BlogPosting"' in s else '-')
+            print(f'{fn}\ttype={typ}\tpub={pub.group(1) if pub else "-"}\tmod={mod.group(1) if mod else "-"}\tvisible_pub={vispub.group(1) if vispub else "-"}\tvisible_mod={vismod.group(1).strip() if vismod else "-"}')
+          print('\n=== TEMPORAL PHRASES ===')
+          terms=['güncel mevzuat','güncel düzenleme','mevcut mevzuat','son düzenleme','son değişiklik','yürürlükteki mevzuat','güncel kanun','güncel hali','günümüzde','halen','mevcut düzenleme','son düzenlemeler']
+          for p in files:
+            s=p.read_text(encoding='utf-8')
+            low=s.lower()
+            hits=[t for t in terms if t in low]
+            if hits: print(p.name,'|',', '.join(hits))
+          print('\n=== CALCULATOR SIGNALS ===')
+          for fn in ['infaz-hesaplama.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html']:
+            s=(root/fn).read_text(encoding='utf-8')
+            print(fn,'| desc=',re.search(r'<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)',s,re.I).group(1) if re.search(r'<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)',s,re.I) else '-', '| current=', 'güncel' in s.lower(), '| lawrefs=', sorted(set(re.findall(r'\b(?:TCK|TBK|İİK|CMK|İYUK|HMK|TTK|İş Kanunu|5275|4857|6098|3095)\b',s,re.I))))
