@@ -1,0 +1,114 @@
+HTML_COUNT	52
+DESC	6284-uzaklastirma-koruma-tedbirleri.html	139	6284 sayılı Kanun kapsamında uzaklaştırma, yaklaşmama, iletişim yasağı, tedbir süresi, itiraz ve tedbir ihlali hakkında genel hukuki bilgi.
+DESC	adli-kontrol-kararina-itiraz.html	145	Adli kontrol kararı, yükümlülüklerin değiştirilmesi veya kaldırılması, itiraz yolu, süreler ve CMK 109-112 kapsamında genel hukuki bilgilendirme.
+DESC	aile-bosanma-hukuku.html	17	Salihli ve Manisa
+DESC	anlasmali-bosanma-davasi.html	152	Anlaşmalı boşanma davasının TMK m.166/3 kapsamındaki şartları, protokol, velayet, nafaka, tazminat, duruşma ve karar süreci hakkında genel hukuki bilgi.
+DESC	banka-dekontu-borcun-varligini-ispatlar-mi.html	40	Banka dekontu, açıklamasız havale ve EFT
+DESC	cekismeli-bosanma-davasi.html	127	Çekişmeli boşanma davasında süreç, deliller, velayet, nafaka, tazminat, geçici önlemler ve süreler hakkında genel hukuki bilgi.
+DESC	ceza-hukuku.html	17	Salihli ve Manisa
+DESC	fazla-mesai-alacagi-fazla-calismanin-ispati.html	131	Fazla mesai alacağı, haftalık 45 saat, ücret hesabı, ara dinlenmesi, bordro, işyeri kayıtları ve ispat hakkında genel hukuki bilgi.
+DESC	fazla-mesai-hesaplama.html	119	Aylık brüt ücret ve fazla çalışma saatine göre Salihli odaklı yüzde 50 zamlı genel brüt fazla çalışma ücreti ön hesabı.
+DESC	gaiplik-karari.html	144	Gaiplik kararı; ölüm tehlikesi veya uzun süredir haber alınamama, süreler, ilan, görevli mahkeme, miras ve evliliğe etkisi hakkında genel bilgi.
+DESC	gayrimenkul-hukuku.html	17	Salihli ve Manisa
+DESC	gizlilik-cerez-politikasi.html	116	avbusraturunc.com internet sitesinin gizlilik, çerez, harici bağlantı ve analitik kullanımına ilişkin bilgilendirme.
+DESC	hakkimizda.html	105	Av. Büşra Turunç ve Erçakır Hukuk Bürosu hakkında kurumsal ve mesleki bilgi. Hukuk bürosu Salihli, Manisa
+DESC	hukuki-icerikler.html	109	Erçakır Hukuk Bürosu tarafından hazırlanan genel nitelikte hukuki içerikler ve güncel bilgilendirme yazıları.
+DESC	icra-iflas-hukuku.html	17	Salihli ve Manisa
+DESC	icra-takibine-itiraz.html	133	İlamsız icra takibinde ödeme emrine itiraz, süre, borca, imzaya ve yetkiye itiraz ile itirazın sonuçları hakkında genel hukuki bilgi.
+DESC	idare-hukuku.html	17	Salihli ve Manisa
+DESC	ihbar-tazminati-hesaplama.html	131	Çalışma süresi ve aylık brüt giydirilmiş ücrete göre Salihli odaklı kanuni bildirim süresi ve genel brüt ihbar tazminatı ön hesabı.
+DESC	iletisim.html	104	Erçakır Hukuk Bürosu ve Av. Büşra Turunç iletişim bilgileri, adres, telefon ve e-posta. Salihli, Manisa.
+DESC	index.html	40	Av. Büşra Turunç ve Erçakır Hukuk Bürosu
+DESC	infaz-hesaplama.html	159	Salihli / Manisa merkezli Erçakır Hukuk Bürosu tarafından sunulan; ceza süresi, suç tarihi, mahsup ve tekerrür bilgilerine göre genel infaz ön hesaplama aracı.
+DESC	iptal-davasi-yurutmenin-durdurulmasi.html	119	İdari işlemin iptali, İYUK m.7 dava açma süreleri ve m.27 yürütmenin durdurulması şartları hakkında genel hukuki bilgi.
+DESC	is-hukuku.html	17	Salihli ve Manisa
+DESC	is-kazasinda-isverenin-sorumlulugu.html	127	İş kazasında işverenin sorumluluğu, SGK bildirimi, kusur, tazminat, sigortasız çalışma ve deliller hakkında genel hukuki bilgi.
+DESC	itirazin-iptali-davasi.html	136	İtirazın iptali davası, bir yıllık süre, icra inkar tazminatı, ispat, arabuluculuk ve icra takibinin devamı hakkında genel hukuki bilgi.
+DESC	kamulastirmasiz-el-atma-davasi.html	141	Kamulaştırmasız el atma; fiili ve hukuki el atma, bedel, ecrimisil, görev, sorumlu idare ve taşınmaz değerlemesi hakkında genel hukuki bilgi.
+DESC	kidem-ihbar-tazminati.html	132	Kıdem ve ihbar tazminatının şartları, fesih türleri, ücret, bildirim süreleri, belgeler ve arabuluculuk hakkında genel hukuki bilgi.
+DESC	kidem-tazminati-hesaplama.html	124	Çalışma süresi, brüt giydirilmiş ücret ve kıdem tazminatı tavanına göre Salihli odaklı genel brüt kıdem tazminatı ön hesabı.
+DESC	kira-hukuku.html	17	Salihli ve Manisa
+DESC	kvkk-aydinlatma-metni.html	147	Erçakır Hukuk Bürosu internet sitesi ziyaretçilerine yönelik 6698 sayılı Kanun kapsamındaki kişisel verilerin işlenmesine ilişkin aydınlatma metni.
+DESC	menfi-tespit-davasi.html	140	Menfi tespit davası, icra takibinden önce veya sonra dava, takibe etkisi, ihtiyati tedbir, teminat, istirdat ve arabuluculuk hakkında bilgi.
+DESC	miras-hukuku.html	17	Salihli ve Manisa
+DESC	mirasciliktan-cikarma-mirastan-iskat.html	127	Mirasçılıktan çıkarma şartları, TMK 510-513, çıkarma sebebinin ispatı, saklı pay ve altsoya etkisi hakkında genel hukuki bilgi.
+DESC	ortakligin-giderilmesi-davasi.html	134	Ortaklığın giderilmesi davası; aynen taksim, satış yoluyla paylaşım, dava şartı arabuluculuk, tarım arazileri ve süreç hakkında bilgi.
+DESC	sakli-pay-tenkis-davasi.html	134	Saklı pay ve tenkis davası; saklı paylı mirasçılar, oranlar, tenkise tabi tasarruflar, hesaplama ve TMK m.571 süreleri hakkında bilgi.
+DESC	sigorta-hukuku.html	17	Salihli ve Manisa
+DESC	sigorta-tahkim-komisyonuna-basvuru.html	146	Sigorta Tahkim Komisyonuna başvuru şartları, sigorta kuruluşuna ön başvuru, cevap süresi, belgeler ve inceleme süreci hakkında genel hukuki bilgi.
+DESC	tahliye-davasi.html	155	Konut ve çatılı işyeri kiralarında tahliye davası; ihtiyaç, yeni malik, tahliye taahhüdü, iki haklı ihtar, belgeler ve süreler hakkında genel hukuki bilgi.
+DESC	tahliye-taahhutnamesi-gecerlilik-sartlari.html	147	Tahliye taahhütnamesinin geçerlilik şartları, teslimden sonra verilmesi, tahliye tarihi, bir aylık süre ve noter şartı hakkında genel hukuki bilgi.
+DESC	tapu-iptal-tescil-davasi.html	136	Tapu iptal ve tescil davası; yolsuz tescil, hukuki sebep, iyi niyetli üçüncü kişi, görev, yetki ve deliller hakkında genel hukuki bilgi.
+DESC	ticaret-hukuku.html	17	Salihli ve Manisa
+DESC	ticari-alacak-dava-sarti-arabuluculuk.html	141	Ticari alacak, tazminat, itirazın iptali, menfi tespit ve istirdat davalarında TTK m.5/A kapsamındaki dava şartı arabuluculuk hakkında bilgi.
+DESC	trafik-kazasinda-tutanak-kusur-sigorta.html	128	Trafik kazasında kaza tespit tutanağı, kusur, tutanak yoksa ispat, sigorta başvurusu ve değer kaybı hakkında genel hukuki bilgi.
+DESC	tutuklama-kararina-itiraz.html	131	Tutuklama kararına itiraz, tahliye talebi, tutukluluğun incelenmesi, ölçülülük ve adli kontrol hakkında genel hukuki bilgilendirme.
+DESC	velayet-davasi-velayetin-degistirilmesi.html	146	Velayet davası ve velayetin değiştirilmesi; çocuğun üstün yararı, kişisel ilişki, değişen koşullar, deliller ve süreç hakkında genel hukuki bilgi.
+DESC	whatsapp-yazismalari-delil-olur-mu.html	163	WhatsApp mesajları ve ekran görüntüleri mahkemede delil olur mu? Elektronik yazışmaların aidiyet, bütünlük, bağlam ve hukuka uygunluk bakımından değerlendirilmesi.
+DESC	yasal-faiz-hesaplama.html	91	Ana para, yıllık faiz oranı ve tarih aralığı üzerinden Salihli odaklı basit faiz ön hesabı.
+DESC	yillik-izin-ucreti-hesaplama.html	116	Aylık brüt ücret ve kullanılmayan yıllık izin günü üzerinden Salihli odaklı genel brüt yıllık izin ücreti ön hesabı.
+INDEXABLE_COUNT	48
+DUPDESC	aile-bosanma-hukuku.html,ceza-hukuku.html,gayrimenkul-hukuku.html,icra-iflas-hukuku.html,idare-hukuku.html,is-hukuku.html,kira-hukuku.html,miras-hukuku.html,sigorta-hukuku.html,ticaret-hukuku.html	Salihli ve Manisa
+ARTICLE_COUNT	26
+ARTICLE	trafik-kazasinda-tutanak-kusur-sigorta.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	6284-uzaklastirma-koruma-tedbirleri.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	gaiplik-karari.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	itirazin-iptali-davasi.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	menfi-tespit-davasi.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	is-kazasinda-isverenin-sorumlulugu.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	tahliye-taahhutnamesi-gecerlilik-sartlari.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	kamulastirmasiz-el-atma-davasi.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	ortakligin-giderilmesi-davasi.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	mirasciliktan-cikarma-mirastan-iskat.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	tutuklama-kararina-itiraz.html	pub=2026-08-28	mod=2026-09-28	visible_pub=28.08.2026	visible_mod=28.09.2026	head_pub=2026-08-28	head_mod=2026-09-28
+ARTICLE	adli-kontrol-kararina-itiraz.html	pub=2026-09-06	mod=2026-09-28	visible_pub=06.09.2026	visible_mod=28.09.2026	head_pub=2026-09-06	head_mod=2026-09-28
+ARTICLE	anlasmali-bosanma-davasi.html	pub=2026-09-01	mod=2026-09-28	visible_pub=01.09.2026	visible_mod=28.09.2026	head_pub=2026-09-01	head_mod=2026-09-28
+ARTICLE	cekismeli-bosanma-davasi.html	pub=2026-09-06	mod=2026-09-28	visible_pub=06.09.2026	visible_mod=28.09.2026	head_pub=2026-09-06	head_mod=2026-09-28
+ARTICLE	velayet-davasi-velayetin-degistirilmesi.html	pub=2026-09-06	mod=2026-09-28	visible_pub=06.09.2026	visible_mod=28.09.2026	head_pub=2026-09-06	head_mod=2026-09-28
+ARTICLE	kidem-ihbar-tazminati.html	pub=2026-09-01	mod=2026-09-28	visible_pub=01.09.2026	visible_mod=28.09.2026	head_pub=2026-09-01	head_mod=2026-09-28
+ARTICLE	fazla-mesai-alacagi-fazla-calismanin-ispati.html	pub=2026-09-13	mod=2026-09-28	visible_pub=13.09.2026	visible_mod=28.09.2026	head_pub=2026-09-13	head_mod=2026-09-28
+ARTICLE	icra-takibine-itiraz.html	pub=2026-09-01	mod=2026-09-28	visible_pub=01.09.2026	visible_mod=28.09.2026	head_pub=2026-09-01	head_mod=2026-09-28
+ARTICLE	banka-dekontu-borcun-varligini-ispatlar-mi.html	pub=2026-09-26	mod=2026-09-29	visible_pub=26.09.2026	visible_mod=29.09.2026	head_pub=2026-09-26	head_mod=2026-09-29
+ARTICLE	whatsapp-yazismalari-delil-olur-mu.html	pub=2026-09-26	mod=2026-09-28	visible_pub=26.09.2026	visible_mod=28.09.2026	head_pub=2026-09-26	head_mod=2026-09-28
+ARTICLE	tahliye-davasi.html	pub=2026-09-01	mod=2026-09-28	visible_pub=01.09.2026	visible_mod=28.09.2026	head_pub=2026-09-01	head_mod=2026-09-28
+ARTICLE	tapu-iptal-tescil-davasi.html	pub=2026-09-01	mod=2026-09-28	visible_pub=01.09.2026	visible_mod=28.09.2026	head_pub=2026-09-01	head_mod=2026-09-28
+ARTICLE	sakli-pay-tenkis-davasi.html	pub=2026-09-19	mod=2026-09-28	visible_pub=19.09.2026	visible_mod=28.09.2026	head_pub=2026-09-19	head_mod=2026-09-28
+ARTICLE	ticari-alacak-dava-sarti-arabuluculuk.html	pub=2026-09-19	mod=2026-09-28	visible_pub=19.09.2026	visible_mod=28.09.2026	head_pub=2026-09-19	head_mod=2026-09-28
+ARTICLE	iptal-davasi-yurutmenin-durdurulmasi.html	pub=2026-09-19	mod=2026-09-28	visible_pub=19.09.2026	visible_mod=28.09.2026	head_pub=2026-09-19	head_mod=2026-09-28
+ARTICLE	sigorta-tahkim-komisyonuna-basvuru.html	pub=2026-09-19	mod=2026-09-28	visible_pub=19.09.2026	visible_mod=28.09.2026	head_pub=2026-09-19	head_mod=2026-09-28
+TEMPORAL	6284-uzaklastirma-koruma-tedbirleri.html	güncel mevzuat
+TEMPORAL	adli-kontrol-kararina-itiraz.html	güncel kanun
+TEMPORAL	anlasmali-bosanma-davasi.html	güncel kanun
+TEMPORAL	banka-dekontu-borcun-varligini-ispatlar-mi.html	güncel kanun
+TEMPORAL	cekismeli-bosanma-davasi.html	güncel kanun
+TEMPORAL	ceza-hukuku.html	güncel mevzuat
+TEMPORAL	fazla-mesai-alacagi-fazla-calismanin-ispati.html	güncel kanun
+TEMPORAL	gaiplik-karari.html	güncel mevzuat
+TEMPORAL	gizlilik-cerez-politikasi.html	yürürlükteki mevzuat
+TEMPORAL	hakkimizda.html	güncel mevzuat,yürürlükteki mevzuat
+TEMPORAL	icra-takibine-itiraz.html	güncel kanun
+TEMPORAL	index.html	güncel mevzuat
+TEMPORAL	infaz-hesaplama.html	güncel mevzuat
+TEMPORAL	iptal-davasi-yurutmenin-durdurulmasi.html	güncel mevzuat
+TEMPORAL	is-hukuku.html	güncel mevzuat
+TEMPORAL	itirazin-iptali-davasi.html	güncel mevzuat
+TEMPORAL	kamulastirmasiz-el-atma-davasi.html	güncel mevzuat,halen
+TEMPORAL	kidem-ihbar-tazminati.html	güncel kanun
+TEMPORAL	kvkk-aydinlatma-metni.html	yürürlükteki mevzuat
+TEMPORAL	menfi-tespit-davasi.html	güncel mevzuat
+TEMPORAL	mirasciliktan-cikarma-mirastan-iskat.html	güncel kanun
+TEMPORAL	sakli-pay-tenkis-davasi.html	güncel kanun
+TEMPORAL	sigorta-tahkim-komisyonuna-basvuru.html	güncel mevzuat
+TEMPORAL	tahliye-davasi.html	güncel kanun
+TEMPORAL	tahliye-taahhutnamesi-gecerlilik-sartlari.html	güncel kanun
+TEMPORAL	tapu-iptal-tescil-davasi.html	güncel mevzuat
+TEMPORAL	ticari-alacak-dava-sarti-arabuluculuk.html	güncel mevzuat
+TEMPORAL	tutuklama-kararina-itiraz.html	yürürlükteki mevzuat,güncel kanun
+TEMPORAL	velayet-davasi-velayetin-degistirilmesi.html	güncel kanun,mevcut düzenleme
+TEMPORAL	whatsapp-yazismalari-delil-olur-mu.html	güncel kanun
+CALC	infaz-hesaplama.html	control=-
+CALC	kidem-tazminati-hesaplama.html	control=28.09.2026
+CALC	ihbar-tazminati-hesaplama.html	control=28.09.2026
+CALC	fazla-mesai-hesaplama.html	control=28.09.2026
+CALC	yillik-izin-ucreti-hesaplama.html	control=28.09.2026
+CALC	yasal-faiz-hesaplama.html	control=28.09.2026
