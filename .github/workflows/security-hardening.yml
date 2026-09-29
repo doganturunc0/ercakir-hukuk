@@ -39,6 +39,7 @@ jobs:
               text=p.read_text(encoding='utf-8'); original=text
               text=re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*','\n',text,flags=re.I)
               text=re.sub(r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*','\n',text,flags=re.I)
+              text=text.replace('"postalCode":"45120"','"postalCode":"45300"')
               csp=csp_home if p.name=='index.html' else csp_default
               csp_re=r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>'
               if re.search(csp_re,text,re.I):
@@ -47,16 +48,12 @@ jobs:
                   viewport=re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>',text,re.I)
                   charset=re.search(r'<meta\b[^>]*charset=[^>]*>',text,re.I)
                   anchor=viewport or charset
-                  if anchor:
-                      text=text[:anchor.end()]+'\n'+csp+text[anchor.end():]
-                  else:
-                      text=text.replace('<head>','<head>\n'+csp,1)
+                  if anchor: text=text[:anchor.end()]+'\n'+csp+text[anchor.end():]
+                  else: text=text.replace('<head>','<head>\n'+csp,1)
               if not re.search(r'<meta\b[^>]*name=["\']referrer["\'][^>]*>',text,re.I):
                   viewport=re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>',text,re.I)
-                  if viewport:
-                      text=text[:viewport.end()]+'\n'+referrer+text[viewport.end():]
-                  else:
-                      text=text.replace('<head>','<head>\n'+referrer,1)
+                  if viewport: text=text[:viewport.end()]+'\n'+referrer+text[viewport.end():]
+                  else: text=text.replace('<head>','<head>\n'+referrer,1)
               text=text.replace('http://avbusraturunc.com','https://avbusraturunc.com').replace('http://www.avbusraturunc.com','https://www.avbusraturunc.com')
               def harden_anchor(m):
                   tag=m.group(0)
@@ -97,6 +94,7 @@ jobs:
               if 'http-equiv="content-security-policy"' not in low: problems.append(f'{p.name}: CSP meta eksik')
               if 'name="referrer"' not in low: problems.append(f'{p.name}: referrer policy eksik')
               if "object-src 'none'" not in t: problems.append(f'{p.name}: object-src none eksik')
+              if '"postalCode":"45120"' in t: problems.append(f'{p.name}: eski büro posta kodu 45120')
               if p.name=='index.html':
                   if 'frame-src https://www.google.com https://maps.google.com' not in t: problems.append('index.html: Maps CSP izni eksik')
                   if 'ga-consent.js' not in low: problems.append('index.html: consent analytics betiği eksik')
@@ -104,8 +102,7 @@ jobs:
                   frames=re.findall(r'<iframe\b[^>]*\bsrc=["\']([^"\']+)["\']',t,re.I)
                   for src in frames:
                       u=urlparse(src)
-                      if u.scheme!='https' or u.netloc not in ('www.google.com','maps.google.com'):
-                          problems.append(f'index.html: izin verilmeyen iframe -> {src}')
+                      if u.scheme!='https' or u.netloc not in ('www.google.com','maps.google.com'): problems.append(f'index.html: izin verilmeyen iframe -> {src}')
               else:
                   if "frame-src 'none'" not in t: problems.append(f'{p.name}: frame-src none eksik')
                   if '<iframe' in low: problems.append(f'{p.name}: beklenmeyen iframe')
@@ -121,7 +118,7 @@ jobs:
           if not Path('SECURITY.md').exists(): problems.append('SECURITY.md: eksik')
           if problems:
               print('\n'.join(sorted(set(problems)))); sys.exit(1)
-          print('Extended security, KVKK, privacy and Maps verification passed.')
+          print('Extended security, KVKK, privacy, NAP and Maps verification passed.')
           PY
 
       - name: Commit hardened pages
@@ -131,5 +128,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '*.html'
-          git commit -m "Apply missing HTML security metadata"
+          git commit -m "Normalize office postal code and security metadata"
           git push
