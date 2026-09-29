@@ -17,7 +17,7 @@ jobs:
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');
-          const els=new Proxy({}, {get:(t,k)=>t[k]||(t[k]={value:'',checked:false,addEventListener(){},closest(){return null}})});
+          const els=new Proxy({}, {get:(t,k)=>t[k]||(t[k]={value:'',checked:false,addEventListener(){},closest(){return null},remove(){}})});
           const document={getElementById:id=>els[id],querySelectorAll:()=>[]};
           const ctx={document,Intl,Date,Math,Number,setTimeout:()=>{},alert:()=>{}};
           vm.createContext(ctx);vm.runInContext(fs.readFileSync('infaz-hesaplama.runtime-1.js','utf8'),ctx);
