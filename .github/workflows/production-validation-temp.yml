@@ -1,0 +1,96 @@
+name: Production validation temp
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audit tooling
+        run: |
+          npm install --no-save playwright@1.55.0 @axe-core/playwright@4.10.2 lighthouse@12.8.2
+          npx playwright install --with-deps chromium
+      - name: Production browser accessibility and calculator audit
+        run: |
+          node <<'JS'
+          const { chromium, request } = require('playwright');
+          const { AxeBuilder } = require('@axe-core/playwright');
+          const fs = require('fs');
+          const base='https://avbusraturunc.com';
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const api=await request.newContext();
+            const sm=await api.get(base+'/sitemap.xml');
+            if(!sm.ok()) throw new Error('sitemap HTTP '+sm.status());
+            const xml=await sm.text();
+            const urls=[...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m=>m[1].trim()).filter(u=>u.startsWith(base));
+            if(!urls.length) throw new Error('No sitemap URLs');
+            const results=[];
+            for(const vp of [{device:'mobile',width:390,height:844},{device:'desktop',width:1440,height:900}]){
+              const context=await browser.newContext({viewport:{width:vp.width,height:vp.height}});
+              for(const url of urls){
+                const page=await context.newPage(); const errors=[],warnings=[],failed=[],bad=[];
+                page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+                page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());else if(m.type()==='warning')warnings.push(m.text())});
+                page.on('requestfailed',r=>failed.push({url:r.url(),error:r.failure()?.errorText||''}));
+                page.on('response',r=>{if(r.status()>=400)bad.push({status:r.status(),url:r.url()})});
+                let status=null,finalUrl='',title='',h1=0,canonical='',overflow=false,axe=[];
+                try{
+                  const res=await page.goto(url,{waitUntil:'networkidle',timeout:45000}); status=res?.status()||null; finalUrl=page.url(); title=await page.title(); h1=await page.locator('h1').count(); canonical=await page.locator('link[rel=canonical]').getAttribute('href').catch(()=>null)||''; overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+2); axe=(await new AxeBuilder({page}).analyze()).violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.length,targets:v.nodes.slice(0,5).map(n=>n.target)}));
+                }catch(e){errors.push('audit: '+e.message)}
+                results.push({device:vp.device,url,status,finalUrl,title,h1,canonical,overflow,errors,warnings,failed,bad,axe}); await page.close();
+              }
+              await context.close();
+            }
+            const calc=[];
+            const scenarios=[
+              {name:'normal',crime:'general'},
+              {name:'tck188',crime:'drug188'},
+              {name:'recidivist',crime:'general',check:'recidivist'},
+              {name:'secondRecidivist',crime:'general',check:'secondRecidivist'},
+              {name:'child',crime:'general',check:'childOffender'}
+            ];
+            for(const vp of [{device:'mobile',width:390,height:844},{device:'desktop',width:1440,height:900}]){
+              const context=await browser.newContext({viewport:{width:vp.width,height:vp.height}});
+              for(const s of scenarios){
+                const page=await context.newPage(); const errors=[]; page.on('pageerror',e=>errors.push(e.message)); page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+                const r=await page.goto(base+'/infaz-hesaplama.html',{waitUntil:'networkidle',timeout:45000});
+                await page.selectOption('#crimeType',s.crime); await page.fill('#crimeDate','2025-01-01'); await page.fill('#birthDate',s.name==='child'?'2009-01-01':'1990-01-01'); await page.fill('#startDate','2026-01-01'); await page.fill('#sentenceYear','6'); if(s.check) await page.check('#'+s.check); await page.click('#calculateBtn'); await page.waitForTimeout(250); const result=(await page.locator('#result').innerText()).trim(); const produced=result.length>0; await page.click('#resetBtn'); const resetCrime=await page.locator('#crimeType').inputValue(); calc.push({device:vp.device,scenario:s.name,status:r?.status(),produced,result:result.slice(0,500),resetPassed:resetCrime==='',errors}); await page.close();
+              }
+              await context.close();
+            }
+            await api.dispose(); await browser.close();
+            const out={generatedAt:new Date().toISOString(),urlCount:urls.length,urls,results,calculator:calc}; fs.writeFileSync('production-browser-audit.json',JSON.stringify(out,null,2));
+            const allAxe=results.flatMap(r=>r.axe.map(a=>({device:r.device,url:r.url,...a})));
+            console.log(JSON.stringify({urlCount:urls.length,loads:results.length,httpNon200:results.filter(x=>x.status!==200).length,errorPages:results.filter(x=>x.errors.length).length,failedRequestPages:results.filter(x=>x.failed.length).length,badResponsePages:results.filter(x=>x.bad.length).length,overflowPages:results.filter(x=>x.overflow).length,h1Problems:results.filter(x=>x.h1!==1).length,canonicalMissing:results.filter(x=>!x.canonical).length,axeViolations:allAxe.length,calculatorFailures:calc.filter(x=>!x.produced||!x.resetPassed||x.errors.length).length},null,2));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Lighthouse production samples
+        continue-on-error: true
+        run: |
+          mkdir -p lighthouse
+          for u in / /ceza-hukuku.html /aile-bosanma-hukuku.html /is-hukuku.html /icra-iflas-hukuku.html /hukuki-icerikler.html /infaz-hesaplama.html; do
+            n=$(echo "$u" | sed 's#^/$#home#; s#[/.]#-#g')
+            npx lighthouse "https://avbusraturunc.com$u" --chrome-flags='--headless --no-sandbox' --only-categories=performance,accessibility,seo --output=json --output-path="lighthouse/${n}.json" --quiet || true
+          done
+          node <<'JS'
+          const fs=require('fs'),path=require('path'); const out=[];
+          for(const f of fs.readdirSync('lighthouse').filter(x=>x.endsWith('.json'))){const j=JSON.parse(fs.readFileSync(path.join('lighthouse',f)));out.push({file:f,url:j.finalUrl,categories:Object.fromEntries(Object.entries(j.categories).map(([k,v])=>[k,Math.round(v.score*100)])),metrics:{FCP:j.audits['first-contentful-paint']?.numericValue,LCP:j.audits['largest-contentful-paint']?.numericValue,CLS:j.audits['cumulative-layout-shift']?.numericValue,TBT:j.audits['total-blocking-time']?.numericValue,SI:j.audits['speed-index']?.numericValue},lcpElement:j.audits['largest-contentful-paint-element']?.details?.items?.[0]?.node?.snippet||null})} fs.writeFileSync('lighthouse-summary.json',JSON.stringify(out,null,2)); console.log(JSON.stringify(out,null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-validation
+          path: |
+            production-browser-audit.json
+            lighthouse-summary.json
+            lighthouse/*.json
+          retention-days: 3
