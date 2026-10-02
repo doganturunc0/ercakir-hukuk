@@ -66,6 +66,9 @@
   else disableAnalytics();
 
   document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.social-links > span').forEach((node) => { node.style.color = '#4f5d67'; });
+    document.querySelectorAll('.legal-content-title-link').forEach((node) => { node.style.color = '#173448'; });
+
     const banner = document.getElementById('analyticsConsent');
     const accept = document.getElementById('analyticsAccept');
     const reject = document.getElementById('analyticsReject');
