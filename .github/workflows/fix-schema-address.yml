@@ -1,0 +1,128 @@
+name: Fix structured data address
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-schema-address.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Normalize canonical LegalService entity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+
+          OFFICE_ID='https://avbusraturunc.com/#ercakir-hukuk'
+          PERSON_ID='https://avbusraturunc.com/#busra-turunc'
+          office={
+            '@type':['LegalService','Organization'],
+            '@id':OFFICE_ID,
+            'name':'Erçakır Hukuk Bürosu',
+            'url':'https://avbusraturunc.com/',
+            'telephone':'+90 553 321 85 93',
+            'email':'avbusraturunc45@gmail.com',
+            'employee':{'@id':PERSON_ID},
+            'address':{
+              '@type':'PostalAddress',
+              'streetAddress':'Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1, Kat: 3, No: 316',
+              'addressLocality':'Salihli',
+              'addressRegion':'Manisa',
+              'postalCode':'45300',
+              'addressCountry':'TR'
+            },
+            'areaServed':[
+              {'@type':'City','name':'Salihli'},
+              {'@type':'AdministrativeArea','name':'Manisa'}
+            ]
+          }
+          pat=re.compile(r'(<script\s+type=["\']application/ld\+json["\'][^>]*>)(.*?)(</script>)',re.I|re.S)
+          changed=[]
+          parsed=0
+          office_graphs=0
+          for p in sorted(Path('.').glob('*.html')):
+            s=p.read_text(encoding='utf-8')
+            touched=[False]
+            def repl(m):
+              nonlocal_dummy=None
+              raw=m.group(2)
+              try: data=json.loads(raw)
+              except Exception: return m.group(0)
+              # only graphs that actually reference the canonical office entity
+              blob=json.dumps(data,ensure_ascii=False)
+              if OFFICE_ID not in blob: return m.group(0)
+              graph=data.get('@graph') if isinstance(data,dict) else None
+              if not isinstance(graph,list): return m.group(0)
+              found=None
+              for node in graph:
+                if isinstance(node,dict) and node.get('@id')==OFFICE_ID:
+                  found=node; break
+              if found is None:
+                graph.append(dict(office))
+                touched[0]=True
+              else:
+                # A bare @id reference is not an entity definition. Enrich it only when it is a graph node.
+                typ=found.get('@type')
+                is_business = typ=='LegalService' or typ=='LocalBusiness' or (isinstance(typ,list) and any(x in ('LegalService','LocalBusiness') for x in typ))
+                if is_business or len(found)==1:
+                  before=json.dumps(found,sort_keys=True,ensure_ascii=False)
+                  for k,v in office.items():
+                    if k not in found or k=='address': found[k]=v
+                  after=json.dumps(found,sort_keys=True,ensure_ascii=False)
+                  if before!=after: touched[0]=True
+              if touched[0]:
+                return m.group(1)+json.dumps(data,ensure_ascii=False,separators=(',',':'))+m.group(3)
+              return m.group(0)
+            ns=pat.sub(repl,s)
+            if ns!=s:
+              p.write_text(ns,encoding='utf-8')
+              changed.append(str(p))
+
+          # Validation: every JSON-LD parses; every graph that references office has a defined office node with PostalAddress.
+          errors=[]
+          for p in sorted(Path('.').glob('*.html')):
+            s=p.read_text(encoding='utf-8')
+            for i,m in enumerate(pat.finditer(s),1):
+              try: data=json.loads(m.group(2)); parsed+=1
+              except Exception as e:
+                errors.append(f'{p}: JSON-LD {i} parse: {e}'); continue
+              blob=json.dumps(data,ensure_ascii=False)
+              if OFFICE_ID not in blob: continue
+              graph=data.get('@graph') if isinstance(data,dict) else None
+              if not isinstance(graph,list): continue
+              nodes=[n for n in graph if isinstance(n,dict) and n.get('@id')==OFFICE_ID and n.get('@type')]
+              if not nodes:
+                errors.append(f'{p}: office referenced but canonical entity not defined in graph'); continue
+              office_graphs+=1
+              for n in nodes:
+                typ=n.get('@type'); types=typ if isinstance(typ,list) else [typ]
+                if 'LegalService' in types or 'LocalBusiness' in types:
+                  a=n.get('address')
+                  if not isinstance(a,dict) or a.get('@type')!='PostalAddress' or not a.get('streetAddress') or not a.get('addressLocality') or not a.get('addressRegion') or not a.get('addressCountry'):
+                    errors.append(f'{p}: canonical LegalService missing complete PostalAddress')
+          print('changed_files=',len(changed))
+          print('parsed_jsonld=',parsed)
+          print('office_graphs=',office_graphs)
+          print('errors=',errors)
+          if errors: raise SystemExit(1)
+          PY
+      - name: Commit fixes
+        run: |
+          if git diff --quiet; then
+            echo 'No changes required'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html'
+          git commit -m 'Ensure LegalService PostalAddress in page schema graphs'
+          git push origin main
