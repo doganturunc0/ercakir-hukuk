@@ -1,0 +1,63 @@
+name: Sitechecker Hardcore Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sitechecker-hardcore-fix.py'
+
+permissions:
+  contents: write
+
+jobs:
+  remediate-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply evidence-based remediation
+        run: python3 scripts/sitechecker-hardcore-fix.py
+      - name: Validate SEO invariants
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, sys, xml.etree.ElementTree as ET
+          root=Path('.')
+          ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          tree=ET.parse('sitemap.xml')
+          urls=[n.text for n in tree.findall('.//s:loc',ns)]
+          failures=[]
+          for url in urls:
+              rel=url.replace('https://avbusraturunc.com/','') or 'index.html'
+              p=root/rel
+              if not p.exists(): failures.append(f'missing sitemap target: {rel}'); continue
+              if p.suffix!='.html': continue
+              s=p.read_text(encoding='utf-8')
+              checks=[('canonical','rel="canonical"'),('robots','name="robots"'),('viewport','name="viewport"'),('og:title','property="og:title"'),('og:description','property="og:description"'),('og:url','property="og:url"'),('og:image','property="og:image"'),('twitter:card','name="twitter:card"'),('twitter:title','name="twitter:title"'),('twitter:description','name="twitter:description"'),('twitter:image','name="twitter:image"')]
+              for label,needle in checks:
+                  if needle not in s: failures.append(f'{rel}: missing {label}')
+              if re.search(r'<meta[^>]+name=["\']robots["\'][^>]+content=["\'][^"\']*noindex',s,re.I): failures.append(f'{rel}: noindex')
+          href_counts={name:0 for name in ['kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html']}
+          for p in root.glob('*.html'):
+              s=p.read_text(encoding='utf-8')
+              for name in href_counts: href_counts[name]+=len(re.findall(r'href=["\'](?:/)?'+re.escape(name)+r'["\']',s,re.I))
+          for name,count in href_counts.items():
+              if count < 1: failures.append(f'orphan calculator remains: {name}')
+          if failures:
+              print('\n'.join(failures)); sys.exit(1)
+          print('SEO invariant validation PASS')
+          print('Calculator backlink counts:', href_counts)
+          PY
+      - name: Commit remediation
+        run: |
+          if git diff --quiet; then
+            echo 'No source changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html' sitechecker-hardcore-audit.json
+          git commit -m 'Fix verified Sitechecker SEO findings'
+          git push origin HEAD:main
