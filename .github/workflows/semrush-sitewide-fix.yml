@@ -1,0 +1,77 @@
+name: One-time Semrush sitewide fix
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Normalize canonical entity fallback and minify shared JS
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('analytics.js')
+          s=p.read_text(encoding='utf-8')
+          old="function (node) { return node.textContent.indexOf('https://avbusraturunc.com/#office') !== -1; }"
+          new="function (node) { var t=node.textContent||''; return t.indexOf('https://avbusraturunc.com/#ercakir-hukuk') !== -1 || t.indexOf('https://avbusraturunc.com/#office') !== -1; }"
+          if old in s: s=s.replace(old,new)
+          oldgraph="{'@type': ['Organization', 'LegalService'], '@id': 'https://avbusraturunc.com/#office', 'name': 'Erçakır Hukuk Bürosu', 'url': 'https://avbusraturunc.com/', 'areaServed': [{'@type': 'City', 'name': 'Salihli'}, {'@type': 'AdministrativeArea', 'name': 'Manisa'}]},\n        {'@type': 'Person', '@id': 'https://avbusraturunc.com/#busra', 'name': 'Büşra Turunç', 'honorificPrefix': 'Av.', 'jobTitle': 'Avukat', 'url': 'https://avbusraturunc.com/', 'worksFor': {'@id': 'https://avbusraturunc.com/#office'}},\n        {'@type': 'WebSite', '@id': 'https://avbusraturunc.com/#website', 'url': 'https://avbusraturunc.com/', 'name': 'Erçakır Hukuk Bürosu', 'inLanguage': 'tr-TR', 'publisher': {'@id': 'https://avbusraturunc.com/#office'}}"
+          newgraph="{'@type': ['Organization', 'LegalService'], '@id': 'https://avbusraturunc.com/#ercakir-hukuk', 'name': 'Erçakır Hukuk Bürosu', 'url': 'https://avbusraturunc.com/', 'address': {'@type':'PostalAddress','streetAddress':'Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1, Kat: 3, No: 316','addressLocality':'Salihli','addressRegion':'Manisa','postalCode':'45300','addressCountry':'TR'}, 'areaServed': [{'@type': 'City', 'name': 'Salihli'}, {'@type': 'AdministrativeArea', 'name': 'Manisa'}]},\n        {'@type': 'Person', '@id': 'https://avbusraturunc.com/#busra-turunc', 'name': 'Büşra Turunç', 'honorificPrefix': 'Av.', 'jobTitle': 'Avukat', 'url': 'https://avbusraturunc.com/hakkimizda.html', 'worksFor': {'@id': 'https://avbusraturunc.com/#ercakir-hukuk'}},\n        {'@type': 'WebSite', '@id': 'https://avbusraturunc.com/#website', 'url': 'https://avbusraturunc.com/', 'name': 'Erçakır Hukuk Bürosu', 'inLanguage': 'tr-TR', 'publisher': {'@id': 'https://avbusraturunc.com/#ercakir-hukuk'}}"
+          if oldgraph in s: s=s.replace(oldgraph,newgraph)
+          p.write_text(s,encoding='utf-8')
+          PY
+          npx --yes terser analytics.js --compress --mangle --comments false -o analytics.js
+      - name: Validate sitewide JSON-LD and canonical entity graph
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import json,sys
+          errors=[]; blocks=0; htmls=0
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.inld=False; self.buf=[]; self.blocks=[]
+            def handle_starttag(self,t,a):
+              if t=='script' and dict(a).get('type')=='application/ld+json': self.inld=True; self.buf=[]
+            def handle_data(self,d):
+              if self.inld:self.buf.append(d)
+            def handle_endtag(self,t):
+              if t=='script' and self.inld: self.blocks.append(''.join(self.buf)); self.inld=False
+          for f in Path('.').glob('*.html'):
+            text=f.read_text(encoding='utf-8',errors='ignore')
+            if 'noindex' in text.lower() and f.name in {'404.html','articles.html','is-kazasi-isveren-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html'}: continue
+            htmls+=1; p=P(); p.feed(text)
+            for raw in p.blocks:
+              blocks+=1
+              try: data=json.loads(raw)
+              except Exception as e: errors.append(f'{f}: invalid JSON-LD: {e}'); continue
+              nodes=data.get('@graph',[]) if isinstance(data,dict) and isinstance(data.get('@graph'),list) else [data]
+              for n in nodes:
+                if not isinstance(n,dict): continue
+                typ=n.get('@type',[]); types=typ if isinstance(typ,list) else [typ]
+                if ('LocalBusiness' in types or 'LegalService' in types) and n.get('@id')=='https://avbusraturunc.com/#ercakir-hukuk':
+                  a=n.get('address')
+                  if not isinstance(a,dict) or a.get('@type')!='PostalAddress' or not a.get('streetAddress'): errors.append(f'{f}: canonical LegalService lacks PostalAddress')
+          if '#office' in Path('analytics.js').read_text(encoding='utf-8') and '#ercakir-hukuk' not in Path('analytics.js').read_text(encoding='utf-8'): errors.append('analytics.js retains only legacy office id')
+          print(f'Validated {htmls} HTML files and {blocks} JSON-LD blocks')
+          if errors:
+            print('\n'.join(errors)); sys.exit(1)
+          PY
+          node --check analytics.js
+      - name: Commit fixes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add analytics.js
+          git commit -m 'Fix canonical schema fallback and minify analytics JS'
+          git push origin main
