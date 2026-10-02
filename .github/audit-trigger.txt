@@ -1,1 +1,1 @@
-entity normalization deploy/regression trigger 2026-10-02
+sitechecker hardcore remediation deploy/regression trigger 2026-10-03
