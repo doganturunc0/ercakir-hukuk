@@ -1,1 +1,1 @@
-browser audit trigger 2026-10-01 final verification
+entity normalization deploy/regression trigger 2026-10-02
