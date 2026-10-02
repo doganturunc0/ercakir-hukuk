@@ -1,0 +1,35 @@
+name: One-time structured data normalization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/schema-normalize-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Normalize and validate JSON-LD
+        run: python scripts/fix_structured_data_semrush.py
+      - name: Commit normalized structured data
+        run: |
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html'
+          git commit -m 'fix: normalize structured data business references'
+          git push origin HEAD:main
