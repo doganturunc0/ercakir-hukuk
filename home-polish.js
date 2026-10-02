@@ -7,8 +7,13 @@
   document.querySelector('.office-map-compact')?.classList.add('map-card');
   const contactCopy=document.querySelector('.contact-copy');
   if(contactCopy&&!contactCopy.querySelector('.social-links')){
-    const social=document.createElement('div');social.className='social-links';social.innerHTML=`<span>SOSYAL MEDYA</span><div><a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Instagram hesabı">${instagramIcon}<span>Instagram</span><b>@ercakirhukuk</b></a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Facebook hesabı">${facebookIcon}<span>Facebook</span><b>Erçakır Hukuk Bürosu</b></a></div>`;contactCopy.appendChild(social)
+    const social=document.createElement('div');social.className='social-links';social.innerHTML=`<span>SOSYAL MEDYA</span><div><a href="${instagramUrl}" target="_blank" rel="noopener noreferrer">${instagramIcon}<span>Instagram</span><b>@ercakirhukuk</b></a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer">${facebookIcon}<span>Facebook</span><b>Erçakır Hukuk Bürosu</b></a></div>`;contactCopy.appendChild(social)
   }
+  document.querySelector('.brand')?.removeAttribute('aria-label');
+  document.querySelector('.directions-button')?.removeAttribute('aria-label');
+  document.querySelectorAll('.social-links > div > a').forEach((link)=>link.removeAttribute('aria-label'));
+  const socialLabel=document.querySelector('.social-links > span');
+  if(socialLabel) socialLabel.style.color='#8a6815';
   const footer=document.querySelector('footer');
   if(footer&&!footer.querySelector('.footer-social')){
     const footerSocial=document.createElement('div');footerSocial.className='footer-social';footerSocial.innerHTML=`<a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Instagram hesabı" title="Instagram">${instagramIcon}</a><a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Erçakır Hukuk Bürosu Facebook hesabı" title="Facebook">${facebookIcon}</a>`;footer.appendChild(footerSocial)
