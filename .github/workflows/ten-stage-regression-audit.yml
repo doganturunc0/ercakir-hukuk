@@ -105,8 +105,10 @@ jobs:
               if t.endswith('.html') and t not in files: err(5,f'{n} broken internal link {href}')
 
           about=files['hakkimizda.html'].read_text('utf-8')
-          for token in ['Dokuz Eylül Üniversitesi Hukuk Fakültesi','Manisa Barosu','baro sicil numarası 2150','@type":"Person','@type":["Organization","LegalService","LocalBusiness"','sameAs','alumniOf','hakkimizda.html']:
-            if token not in about: err(6,f'Hakkımızda missing E-E-A-T marker: {token}')
+          for token in ['Manisa Barosu','@type":"Person','@type":["Organization","LegalService","LocalBusiness"','sameAs','"jobTitle":"Avukat"','worksFor','hakkimizda.html']:
+            if token not in about: err(6,f'Hakkımızda missing professional/entity marker: {token}')
+          for forbidden in ['Dokuz Eylül Üniversitesi','alumniOf']:
+            if forbidden in about: err(6,f'Hakkımızda contains prohibited/unverified education marker: {forbidden}')
           if re.search(r'\b(en iyi|uzman|lider|garanti)\b',about,re.I): warn(6,'Hakkımızda contains a potentially promotional claim; manual review needed')
 
           nap=['+90 553 321 85 93','avbusraturunc45@gmail.com','Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1','Salihli','Manisa','45300']
