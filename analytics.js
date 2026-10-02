@@ -109,7 +109,27 @@ window.ercakirAnalyticsEnabled = false;
     }
   }
 
+  function normalizeInfoPageLandmarks() {
+    var body = document.body;
+    if (!body || !body.classList.contains('info-page')) return;
+    var hero = body.querySelector(':scope > .info-hero');
+    var oldMain = body.querySelector(':scope > main.info-main');
+    if (!hero || !oldMain || body.querySelector(':scope > main.info-page-landmark')) return;
+
+    var content = document.createElement('div');
+    content.className = oldMain.className;
+    while (oldMain.firstChild) content.appendChild(oldMain.firstChild);
+
+    var main = document.createElement('main');
+    main.className = 'info-page-landmark';
+    oldMain.parentNode.insertBefore(main, hero);
+    main.appendChild(hero);
+    main.appendChild(content);
+    oldMain.remove();
+  }
+
   function finalizeSharedPageQuality() {
+    normalizeInfoPageLandmarks();
     standardizeLegalArticles();
 
     var footer = document.querySelector('footer');
