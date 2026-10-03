@@ -1,5 +1,5 @@
 (() => {
-  const MEASUREMENT_ID = 'G-1E6W6P6281';
+  const MEASUREMENT_ID = 'G-1EGW0PG281';
   const STORAGE_KEY = 'ercakirAnalyticsConsent';
   const SCRIPT_ID = 'ga4-script';
 
@@ -62,6 +62,22 @@
     });
   };
 
+  const buildBanner = () => {
+    const el = (tag, props, children) => {
+      const node = document.createElement(tag);
+      Object.entries(props || {}).forEach(([k, v]) => node.setAttribute(k, v));
+      (children || []).forEach((c) => node.append(c));
+      return node;
+    };
+    const policy = el('a', { href: 'gizlilik-cerez-politikasi.html' }, ['Gizlilik ve Çerez Politikası']);
+    const text = el('p', {}, ['Site kullanımını anlamak ve iyileştirmek için Google Analytics kullanılabilir. Analiz ölçümü yalnızca izin verirseniz etkinleşir. Ayrıntılar için ', policy, '.']);
+    const actions = el('div', { class: 'analytics-consent-actions' }, [
+      el('button', { class: 'reject', id: 'analyticsReject', type: 'button' }, ['Reddet']),
+      el('button', { class: 'accept', id: 'analyticsAccept', type: 'button' }, ['İzin Ver'])
+    ]);
+    return el('div', { class: 'analytics-consent', id: 'analyticsConsent', role: 'region', 'aria-label': 'Analiz tercihi' }, [text, actions]);
+  };
+
   if (saved === 'granted') enableAnalytics();
   else disableAnalytics();
 
@@ -74,6 +90,11 @@
         node.style.contentVisibility = 'visible';
         node.style.containIntrinsicSize = 'none';
       });
+    }
+
+    // index.html ships the banner as static markup; every other page gets the same banner built here.
+    if (!document.getElementById('analyticsConsent') && saved !== 'granted' && saved !== 'denied' && document.body) {
+      document.body.appendChild(buildBanner());
     }
 
     const banner = document.getElementById('analyticsConsent');

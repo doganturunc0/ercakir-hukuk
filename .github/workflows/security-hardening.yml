@@ -29,15 +29,17 @@ jobs:
           from pathlib import Path
           import re
           csp_default = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
-          csp_home = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          csp_home = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
+          csp_ga = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests\">"
           referrer='<meta name="referrer" content="strict-origin-when-cross-origin">'; changed=[]
           for p in sorted(Path('.').glob('*.html')):
               text=p.read_text(encoding='utf-8'); original=text
               text=re.sub(r'\s*<!--\s*Google tag \(gtag\.js\)\s*-->\s*','\n',text,flags=re.I)
-              text=re.sub(r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=G-1E6W6P6281["\'][^>]*>\s*</script>\s*','\n',text,flags=re.I)
+              text=re.sub(r'\s*<script\b[^>]*src=["\']https://www\.googletagmanager\.com/gtag/js\?id=[^"\']*["\'][^>]*>\s*</script>\s*','\n',text,flags=re.I)
               text=re.sub(r'("postalCode"\s*:\s*")45120(")',r'\g<1>45300\2',text)
               text=text.replace('45120 Salihli / Manisa','45300 Salihli / Manisa')
-              csp=csp_home if p.name=='index.html' else csp_default; csp_re=r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>'
+              ga_page=p.name!='404.html' and not re.search(r'<meta\b[^>]*name=["\']robots["\'][^>]*content=["\'][^"\']*noindex',text,re.I)
+              csp=csp_home if p.name=='index.html' else (csp_ga if ga_page else csp_default); csp_re=r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>'
               if re.search(csp_re,text,re.I): text=re.sub(csp_re,csp,text,count=1,flags=re.I)
               else:
                   viewport=re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>',text,re.I); charset=re.search(r'<meta\b[^>]*charset=[^>]*>',text,re.I); anchor=viewport or charset
@@ -95,12 +97,19 @@ jobs:
               else:
                   if "frame-src 'none'" not in t: problems.append(f'{p.name}: frame-src none eksik')
                   if '<iframe' in low: problems.append(f'{p.name}: beklenmeyen iframe')
-                  if 'googletagmanager.com' in low or 'google-analytics.com' in low: problems.append(f'{p.name}: consent dışı analytics kaynağı')
+                  ga_page=p.name!='404.html' and not re.search(r'<meta\b[^>]*name=["\']robots["\'][^>]*content=["\'][^"\']*noindex',t,re.I)
+                  body_wo_csp=re.sub(r'<meta\b[^>]*http-equiv=["\']Content-Security-Policy["\'][^>]*>','',low,flags=re.I)
+                  if 'googletagmanager.com' in body_wo_csp or 'google-analytics.com' in body_wo_csp or "gtag('config'" in body_wo_csp: problems.append(f'{p.name}: consent dışı analytics kaynağı')
+                  if ga_page and len(re.findall(r'<script\b[^>]*src=["\']ga-consent\.js',t,re.I))!=1: problems.append(f'{p.name}: ga-consent.js tam olarak bir kez yüklenmeli')
+                  if not ga_page and ('ga-consent.js' in low or 'googletagmanager.com' in low): problems.append(f'{p.name}: noindex/404 sayfasında analytics olmamalı')
               for a in re.findall(r'<a\b[^>]*target=["\']_blank["\'][^>]*>',t,re.I):
                   if not re.search(r'rel=["\'][^"\']*noopener',a,re.I): problems.append(f'{p.name}: noopener eksik')
                   if not re.search(r'rel=["\'][^"\']*noreferrer',a,re.I): problems.append(f'{p.name}: noreferrer eksik')
               if re.search(r'(?:href|src|action)\s*=\s*["\']\s*javascript:',t,re.I): problems.append(f'{p.name}: javascript URL')
               if re.search(r'(?:href|src|action)\s*=\s*["\']http://',t,re.I): problems.append(f'{p.name}: HTTP kaynak')
+          ga=Path('ga-consent.js').read_text(encoding='utf-8')
+          if ga.count("const MEASUREMENT_ID = 'G-1EGW0PG281';")!=1: problems.append('ga-consent.js: GA4 ölçüm kimliği G-1EGW0PG281 olmalı')
+          if "analytics_storage: 'denied'" not in ga or 'gtag/js?id=' not in ga: problems.append('ga-consent.js: varsayılan red / izinle yükleme yapısı bozulmuş')
           contact=Path('iletisim.html').read_text(encoding='utf-8')
           if re.search(r'<form\b',contact,re.I): problems.append('iletisim.html: beklenmeyen form')
           if not Path('.well-known/security.txt').exists(): problems.append('.well-known/security.txt: eksik')
