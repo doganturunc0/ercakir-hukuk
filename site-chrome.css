@@ -1,0 +1,63 @@
+/* Ortak üst menü, alt bilgi ve iletişim kutusu (ana sayfa dışındaki sayfalar). Tüm sınıflar sc- önekiyle izole edilmiştir. */
+.sc-header,.sc-header *,.sc-footer,.sc-footer *,.sc-cta,.sc-cta *{box-sizing:border-box}
+.sc-header{position:sticky;top:0;z-index:70;background:#183447;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);box-shadow:0 8px 26px rgba(24,52,71,.1);font-family:Arial,Helvetica,sans-serif;line-height:1.4}
+.sc-bar{max-width:1240px;margin:0 auto;min-height:66px;display:flex;align-items:center;gap:22px;padding:0 max(20px,4vw);flex-wrap:wrap}
+.sc-header a{color:inherit;text-decoration:none}
+.sc-brand{display:flex;align-items:center;gap:11px;margin-right:auto;padding:10px 0}
+.sc-seal{width:38px;height:38px;border-radius:50%;border:1px solid #c69a2b;color:#e1b640;display:flex;align-items:center;justify-content:center;font-family:Georgia,'Times New Roman',serif;font-size:15px;letter-spacing:.02em;flex:0 0 auto}
+.sc-name{display:flex;flex-direction:column;line-height:1.1}
+.sc-name strong{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:18px;letter-spacing:.12em}
+.sc-name small{font-size:8.5px;letter-spacing:.24em;color:#c9d6de;margin-top:3px}
+.sc-nav{display:flex;align-items:center;gap:20px}
+.sc-nav a{font-size:12px;font-weight:700;letter-spacing:.02em;color:#e8eef2;padding:6px 0;border-bottom:2px solid transparent}
+.sc-nav a:hover,.sc-nav a:focus-visible,.sc-nav a[aria-current="page"]{color:#fff;border-bottom-color:#c69a2b}
+.sc-call{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#183447!important;font-size:12px;font-weight:700;padding:10px 15px;border-radius:2px;white-space:nowrap}
+.sc-call:hover,.sc-call:focus-visible{background:#f4f0e7}
+.sc-toggle{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.sc-header .sc-toggle-label{display:none;margin:0;cursor:pointer;font-size:13px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:2px;padding:8px 12px;line-height:1;gap:0;letter-spacing:.02em}
+.sc-toggle:focus-visible+.sc-toggle-label{outline:2px solid #e1b640;outline-offset:2px}
+@media(max-width:1020px){
+.sc-bar{gap:12px}
+.sc-header .sc-toggle-label{display:inline-block}
+.sc-call{display:none}
+.sc-nav{display:none;order:3;flex-basis:100%;flex-direction:column;align-items:stretch;gap:0;padding:4px 0 12px;border-top:1px solid rgba(255,255,255,.12)}
+.sc-nav a{font-size:14px;padding:12px 2px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sc-nav a[aria-current="page"]{border-bottom-color:rgba(255,255,255,.08);color:#e1b640}
+.sc-toggle:checked~.sc-nav{display:flex}
+.sc-nav .sc-nav-call{display:block;margin-top:10px;text-align:center;background:#fff;color:#183447;border-radius:2px;border:0}
+}
+@media(min-width:1021px){.sc-nav .sc-nav-call{display:none}}
+@media(max-width:420px){.sc-name strong{font-size:16px}.sc-seal{width:34px;height:34px;font-size:13px}}
+
+.sc-cta{max-width:880px;margin:44px auto 8px;padding:26px 28px;background:#fff;border:1px solid #dce1e5;border-left:4px solid #c69a2b;border-radius:6px;color:#1d3340;font-family:Arial,Helvetica,sans-serif;line-height:1.6;text-align:left}
+.sc-cta .sc-cta-title{margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.3;color:#183447}
+.sc-cta p{margin:0 0 14px;font-size:15px;color:#3d5260}
+.sc-cta .sc-cta-actions{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px}
+.sc-cta .sc-cta-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border-radius:3px;font-size:14px;font-weight:700;text-decoration:none;border:1px solid #183447;color:#183447;background:#fff}
+.sc-cta .sc-cta-actions a.sc-cta-call{background:#183447;color:#fff}
+.sc-cta .sc-cta-actions a.sc-cta-wa{background:#147a52;border-color:#147a52;color:#fff}
+.sc-cta .sc-cta-actions a:hover,.sc-cta .sc-cta-actions a:focus-visible{filter:brightness(1.08);text-decoration:underline}
+.sc-cta .sc-cta-hours{margin:0;font-size:13px;color:#5b6b75}
+.info-page .sc-cta,.sc-cta-outer{margin-left:max(20px,5vw);margin-right:max(20px,5vw)}
+@media(min-width:980px){.info-page .sc-cta{margin-left:auto;margin-right:auto}}
+@media(max-width:600px){.sc-cta{padding:22px 18px}.sc-cta .sc-cta-actions a{flex:1 1 100%}}
+
+.sc-footer{background:#183447;color:#dce5e9;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;text-align:left;padding:44px max(20px,4vw) 28px;margin-top:56px;border-top:3px solid #c69a2b}
+.sc-footer a{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.35);text-underline-offset:3px}
+.sc-footer a:hover,.sc-footer a:focus-visible{text-decoration-color:#e1b640}
+.sc-footer-grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:28px}
+.sc-footer .sc-footer-title{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.16em;color:#e1b640;text-transform:uppercase}
+.sc-footer p{margin:0 0 8px}
+.sc-footer ul{list-style:none;margin:0;padding:0}
+.sc-footer li{margin:0 0 6px}
+.sc-footer .sc-footer-brand{font-family:Georgia,'Times New Roman',serif;font-size:18px;letter-spacing:.08em;color:#fff;margin-bottom:8px}
+.sc-footer .sc-footer-bottom{max-width:1240px;margin:28px auto 0;padding-top:18px;border-top:1px solid rgba(255,255,255,.14);font-size:12px;color:#b9c8d1;text-align:center}
+.sc-footer .sc-footer-bottom p{margin:0 0 6px}
+.sc-footer>.consent-preferences-inline{display:block;max-width:1240px;margin:22px auto 0;text-align:center;font-size:0}
+.sc-footer>.consent-preferences-inline button{font-size:12px;color:#fff}
+.sc-social{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:8px}
+@media(max-width:900px){.sc-footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.sc-footer-grid{grid-template-columns:1fr;gap:22px}.sc-footer{padding-bottom:120px}}
+.sc-footer .sc-footer-bottom.footer-social{display:block;gap:0;margin:28px auto 0}
+.sc-footer .sc-footer-bottom a{width:auto;height:auto;display:inline;place-items:initial;border:0;border-radius:0;color:#fff}
+.sc-header~main .top>.brand{display:none}
