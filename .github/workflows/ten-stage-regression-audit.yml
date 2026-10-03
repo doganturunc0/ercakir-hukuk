@@ -55,6 +55,7 @@ jobs:
               if self.current_tag: self.tags[self.current_tag]+=data.strip()
 
           files={p.name:p for p in ROOT.glob('*.html')}
+          txt_all={n:p.read_text('utf-8',errors='ignore') for n,p in files.items()}
           parsed={}
           for n,p in files.items():
             q=P(); q.feed(p.read_text('utf-8',errors='ignore')); parsed[n]=q
@@ -63,13 +64,13 @@ jobs:
           def warn(stage,msg): warnings.append(f'STAGE {stage}: {msg}')
 
           hub=parsed[HUB]; cards=[x.split('#')[0].split('?')[0].lstrip('/') for x in hub.cards]
-          if len(cards)!=26: err(1,f'expected 26 hub cards, got {len(cards)}')
-          if len(set(cards))!=26: err(2,'duplicate hub cards found')
+          if len(cards)!=31: err(1,f'expected 31 hub cards, got {len(cards)}')
+          if len(set(cards))!=len(cards): err(2,'duplicate hub cards found')
           for c in cards:
             if c not in files: err(2,f'card target missing: {c}')
             if not hub.tags.get(c,'').strip(): err(2,f'category tag missing: {c}')
           wa='whatsapp-yazismalari-delil-olur-mu.html'
-          if wa in cards and hub.tags.get(wa,'').strip()!='İSPAT HUKUKU · ELEKTRONİK DELİLLER': err(2,f'WhatsApp category is {hub.tags.get(wa)!r}')
+          if wa in cards and hub.tags.get(wa,'').strip()!='ELEKTRONİK DELİL': err(2,f'WhatsApp category is {hub.tags.get(wa)!r}')
           article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and 'noindex' not in q.robots}
           if article_pages != set(cards): err(1,f'article inventory mismatch: hub-only={sorted(set(cards)-article_pages)}, orphan={sorted(article_pages-set(cards))}')
 
@@ -99,6 +100,8 @@ jobs:
               expected='https://avbusraturunc.com/' if n=='index.html' else f'https://avbusraturunc.com/{n}'
               if q.canonical != expected: err(5,f'{n} canonical mismatch: {q.canonical}')
               if n not in sitemap: err(5,f'{n} missing from sitemap')
+              for k in ('twitter:site','twitter:creator'):
+                if len(re.findall(r'<meta name="'+k+r'" content="@avbusraturunc">',txt_all[n]))!=1: err(5,f'{n} must carry exactly one {k}=@avbusraturunc')
             for href in q.links:
               if href.startswith(('http://','https://','mailto:','tel:','#','javascript:')): continue
               t=href.split('#')[0].split('?')[0].lstrip('/') or 'index.html'
@@ -107,6 +110,7 @@ jobs:
           about=files['hakkimizda.html'].read_text('utf-8')
           for token in ['Manisa Barosu','@type":"Person','@type":["Organization","LegalService","LocalBusiness"','sameAs','"jobTitle":"Avukat"','worksFor','hakkimizda.html']:
             if token not in about: err(6,f'Hakkımızda missing professional/entity marker: {token}')
+          if 'https://x.com/avbusraturunc' not in about: err(6,'Hakkımızda Person sameAs/profile link missing X profile')
           for forbidden in ['Dokuz Eylül Üniversitesi','alumniOf']:
             if forbidden in about: err(6,f'Hakkımızda contains prohibited/unverified education marker: {forbidden}')
           if re.search(r'\b(en iyi|uzman|lider|garanti)\b',about,re.I): warn(6,'Hakkımızda contains a potentially promotional claim; manual review needed')
@@ -130,20 +134,34 @@ jobs:
             links={x.split('#')[0].split('?')[0].lstrip('/') for x in parsed[n].links}
             if not (links & set(cards)): err(8,f'{n} has no article cluster links')
 
-          required_text=['quick-answer','Hukuki dayanak','Süreç','Süreler','Önemli noktalar','faq-block','İlgili içerikler','Yazar ve içerik sorumlusu','Son güncelleme','sources-block','KAYNAKLAR']
+          # Two article templates are in production: legacy (faq-block / sources-block / fixed headings) and
+          # Q&A (Sık Sorulan Sorular H2+H3 / section.sources). Both must satisfy the same structural contract.
+          required_text=['quick-answer','İlgili içerikler','Yazar ve içerik sorumlusu','Son güncelleme','KAYNAKLAR']
+          legal_basis=re.compile(r'Hukuki dayanak|\b\d{3,4} sayılı|\b(?:m\.|madde)\s?\d+|\b(?:TMK|TBK|HMK|CMK|İİK|TTK|TCK|İYUK|KTK)\b|\bKanunu?\b|\bYargıtay\b|\bDanıştay\b')
           for n in cards:
             txt=files[n].read_text('utf-8')
+            main=re.search(r'<main.*?</main>',txt,re.S); main=main.group(0) if main else txt
             missing=[x for x in required_text if x not in txt]
             if missing: err(9,f'{n} missing template markers: {missing}')
+            faq_legacy='faq-block' in txt and len(re.findall(r'<details',main))>=2
+            faq_qa=bool(re.search(r'<h2[^>]*>\s*Sık Sorulan Sorular\s*</h2>',main,re.I)) and len(re.findall(r'<h3',main))>=2
+            if not (faq_legacy or faq_qa): err(9,f'{n} missing FAQ block (faq-block details or Sık Sorulan Sorular H2 + >=2 H3)')
+            src=re.search(r'<section class="(?:sources-block|sources)">(.*?)</section>',main,re.S)
+            if not src or not re.search(r'<li',src.group(1)): err(9,f'{n} missing sources section with at least one cited source')
+            body=re.split(r'<section class="(?:sources-block|sources)">',main)[0]
+            if len(re.findall(r'<h2',body))<4: err(9,f'{n} has fewer than 4 H2 content sections')
+            if not legal_basis.search(re.sub(r'<[^>]+>',' ',body)): err(9,f'{n} body has neither a Hukuki dayanak section nor a statute/case-law reference')
+            rel=re.search(r'İlgili içerikler(.*?)(?:</div>|</p>)',main,re.S)
+            if not rel or len(re.findall(r'href="(?!https?://)[^"#]+\.html',rel.group(1)))<2: err(9,f'{n} related-content block has fewer than 2 internal links')
             if '"@type":"Article"' not in txt or 'dateModified' not in txt: err(9,f'{n} missing Article/dateModified schema')
-            if '<h1' not in txt: err(9,f'{n} missing H1')
+            if txt.count('<h1')!=1: err(9,f'{n} must have exactly one H1')
 
           smoke=Path('.github/workflows/browser-smoke.yml').read_text('utf-8')
           full=Path('.github/workflows/full-site-audit.yml').read_text('utf-8')
           link=Path('.github/workflows/link-integrity.yml').read_text('utf-8')
-          for marker in ['width:390','width:1440','hrefs.length,26','horizontal overflow','failed resources']:
+          for marker in ['width:390','width:1440','hrefs.length,31','horizontal overflow','failed resources']:
             if marker not in smoke: err(10,f'browser smoke missing coverage marker: {marker}')
-          if 'expected 26 cards' not in full: err(10,'full-site audit no longer enforces 26-card inventory')
+          if 'expected 31 cards' not in full: err(10,'full-site audit no longer enforces 31-card inventory')
           if 'broken' not in link.lower(): warn(10,'link-integrity workflow wording changed; manually verify link checks')
 
           print(f'RE-AUDIT: {len(files)} HTML files; {len(article_pages)} editorial articles; {len(cards)} hub cards')
