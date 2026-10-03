@@ -1,96 +1,100 @@
-name: Production validation temp
+name: A3 one-time content cluster remediation
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
-  audit:
+  remediate:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - name: Install audit tooling
+          fetch-depth: 0
+      - name: Apply verified cluster links
         run: |
-          npm install --no-save playwright@1.55.0 @axe-core/playwright@4.10.2 lighthouse@12.8.2
-          npx playwright install --with-deps chromium
-      - name: Production browser accessibility and calculator audit
+          python3 <<'PY'
+          from pathlib import Path
+          clusters = {
+            'ceza-hukuku.html': [('tutuklama-kararina-itiraz.html','Tutuklama kararına itiraz'),('adli-kontrol-kararina-itiraz.html','Adli kontrol kararına itiraz'),('whatsapp-yazismalari-delil-olur-mu.html','WhatsApp yazışmaları ve elektronik deliller')],
+            'aile-bosanma-hukuku.html': [('anlasmali-bosanma-davasi.html','Anlaşmalı boşanma davası'),('cekismeli-bosanma-davasi.html','Çekişmeli boşanma davası'),('velayet-davasi-velayetin-degistirilmesi.html','Velayet davası'),('6284-uzaklastirma-koruma-tedbirleri.html','6284 kapsamında koruma tedbirleri')],
+            'is-hukuku.html': [('kidem-ihbar-tazminati.html','Kıdem ve ihbar tazminatı'),('fazla-mesai-alacagi-fazla-calismanin-ispati.html','Fazla mesai alacağı'),('is-kazasinda-isverenin-sorumlulugu.html','İş kazasında işverenin sorumluluğu')],
+            'icra-iflas-hukuku.html': [('icra-takibine-itiraz.html','İcra takibine itiraz'),('itirazin-iptali-davasi.html','İtirazın iptali davası'),('menfi-tespit-davasi.html','Menfi tespit davası')],
+            'gayrimenkul-hukuku.html': [('tapu-iptal-tescil-davasi.html','Tapu iptal ve tescil davası'),('kamulastirmasiz-el-atma-davasi.html','Kamulaştırmasız el atma davası'),('ortakligin-giderilmesi-davasi.html','Ortaklığın giderilmesi davası')],
+            'miras-hukuku.html': [('sakli-pay-tenkis-davasi.html','Saklı pay ve tenkis davası'),('mirasciliktan-cikarma-mirastan-iskat.html','Mirasçılıktan çıkarma'),('ortakligin-giderilmesi-davasi.html','Ortaklığın giderilmesi davası'),('gaiplik-karari.html','Gaiplik kararı')],
+            'ticaret-hukuku.html': [('ticari-alacak-dava-sarti-arabuluculuk.html','Ticari alacaklarda dava şartı arabuluculuk'),('banka-dekontu-borcun-varligini-ispatlar-mi.html','Banka dekontunun ispat değeri')],
+            'idare-hukuku.html': [('iptal-davasi-yurutmenin-durdurulmasi.html','İptal davası ve yürütmenin durdurulması'),('kamulastirmasiz-el-atma-davasi.html','Kamulaştırmasız el atma davası')],
+            'kira-hukuku.html': [('tahliye-davasi.html','Tahliye davası'),('tahliye-taahhutnamesi-gecerlilik-sartlari.html','Tahliye taahhütnamesinin geçerlilik şartları')],
+            'sigorta-hukuku.html': [('sigorta-tahkim-komisyonuna-basvuru.html','Sigorta Tahkim Komisyonuna başvuru'),('trafik-kazasinda-tutanak-kusur-sigorta.html','Trafik kazasında tutanak, kusur ve sigorta')],
+          }
+          primary = {}
+          for pillar, items in clusters.items():
+            for f,_ in items:
+              primary.setdefault(f,pillar)
+          labels = {'ceza-hukuku.html':'Ceza Hukuku','aile-bosanma-hukuku.html':'Aile ve Boşanma Hukuku','is-hukuku.html':'İş Hukuku','icra-iflas-hukuku.html':'İcra ve İflas Hukuku','gayrimenkul-hukuku.html':'Gayrimenkul Hukuku','miras-hukuku.html':'Miras Hukuku','ticaret-hukuku.html':'Ticaret Hukuku','idare-hukuku.html':'İdare Hukuku','kira-hukuku.html':'Kira Hukuku','sigorta-hukuku.html':'Sigorta Hukuku'}
+          # Pillar -> article links: only add a compact related block when links are not already all present.
+          for pillar, items in clusters.items():
+            p=Path(pillar); s=p.read_text()
+            missing=[(f,l) for f,l in items if f not in s]
+            if missing:
+              links=' · '.join(f'<a href="{f}">{l}</a>' for f,l in missing)
+              block=f'<p class="cluster-links"><strong>İlgili hukuki içerikler:</strong> {links}</p>'
+              marker='</article>'
+              if marker not in s: raise SystemExit(f'No article marker in {pillar}')
+              s=s.replace(marker,block+marker,1); p.write_text(s)
+          # Article -> primary pillar backlink, inserted into existing related section when absent.
+          for article,pillar in primary.items():
+            p=Path(article); s=p.read_text()
+            if pillar in s: continue
+            label=labels[pillar]
+            anchor=f'<a href="{pillar}">{label}</a>'
+            marker='<div class="related">'
+            if marker in s:
+              s=s.replace(marker,marker+anchor,1)
+            else:
+              # All current editorial pages should have related; fail instead of broad rewriting.
+              raise SystemExit(f'Missing related block: {article}')
+            p.write_text(s)
+          # Hub -> all ten pillar pages without altering the 26-card selector/count.
+          p=Path('hukuki-icerikler.html'); s=p.read_text()
+          if 'class="cluster-nav"' not in s:
+            links=' · '.join(f'<a href="{f}">{labels[f]}</a>' for f in clusters)
+            nav=f'<nav class="cluster-nav" aria-label="Hukuk alanlarına göre içerikler"><strong>Hukuk alanları:</strong> {links}</nav>'
+            marker='<a class="content-back" href="/">← Ana sayfaya dön</a>'
+            if marker not in s: raise SystemExit('Hub insertion marker missing')
+            s=s.replace(marker,marker+nav,1); p.write_text(s)
+          PY
+      - name: Static acceptance
         run: |
-          node <<'JS'
-          const { chromium, request } = require('playwright');
-          const { AxeBuilder } = require('@axe-core/playwright');
-          const fs = require('fs');
-          const base='https://avbusraturunc.com';
-          (async()=>{
-            const browser=await chromium.launch({headless:true});
-            const api=await request.newContext();
-            const sm=await api.get(base+'/sitemap.xml');
-            if(!sm.ok()) throw new Error('sitemap HTTP '+sm.status());
-            const xml=await sm.text();
-            const urls=[...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m=>m[1].trim()).filter(u=>u.startsWith(base));
-            if(!urls.length) throw new Error('No sitemap URLs');
-            const results=[];
-            for(const vp of [{device:'mobile',width:390,height:844},{device:'desktop',width:1440,height:900}]){
-              const context=await browser.newContext({viewport:{width:vp.width,height:vp.height}});
-              for(const url of urls){
-                const page=await context.newPage(); const errors=[],warnings=[],failed=[],bad=[];
-                page.on('pageerror',e=>errors.push('pageerror: '+e.message));
-                page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());else if(m.type()==='warning')warnings.push(m.text())});
-                page.on('requestfailed',r=>failed.push({url:r.url(),error:r.failure()?.errorText||''}));
-                page.on('response',r=>{if(r.status()>=400)bad.push({status:r.status(),url:r.url()})});
-                let status=null,finalUrl='',title='',h1=0,canonical='',overflow=false,axe=[];
-                try{
-                  const res=await page.goto(url,{waitUntil:'networkidle',timeout:45000}); status=res?.status()||null; finalUrl=page.url(); title=await page.title(); h1=await page.locator('h1').count(); canonical=await page.locator('link[rel=canonical]').getAttribute('href').catch(()=>null)||''; overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+2); axe=(await new AxeBuilder({page}).analyze()).violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.length,targets:v.nodes.slice(0,5).map(n=>n.target)}));
-                }catch(e){errors.push('audit: '+e.message)}
-                results.push({device:vp.device,url,status,finalUrl,title,h1,canonical,overflow,errors,warnings,failed,bad,axe}); await page.close();
-              }
-              await context.close();
-            }
-            const calc=[];
-            const scenarios=[
-              {name:'normal',crime:'general'},
-              {name:'tck188',crime:'drug188'},
-              {name:'recidivist',crime:'general',check:'recidivist'},
-              {name:'secondRecidivist',crime:'general',check:'secondRecidivist'},
-              {name:'child',crime:'general',check:'childOffender'}
-            ];
-            for(const vp of [{device:'mobile',width:390,height:844},{device:'desktop',width:1440,height:900}]){
-              const context=await browser.newContext({viewport:{width:vp.width,height:vp.height}});
-              for(const s of scenarios){
-                const page=await context.newPage(); const errors=[]; page.on('pageerror',e=>errors.push(e.message)); page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-                const r=await page.goto(base+'/infaz-hesaplama.html',{waitUntil:'networkidle',timeout:45000});
-                await page.selectOption('#crimeType',s.crime); await page.fill('#crimeDate','2025-01-01'); await page.fill('#birthDate',s.name==='child'?'2009-01-01':'1990-01-01'); await page.fill('#startDate','2026-01-01'); await page.fill('#sentenceYear','6'); if(s.check) await page.check('#'+s.check); await page.click('#calculateBtn'); await page.waitForTimeout(800); const result=(await page.locator('#result').innerText()).trim(); const produced=result.length>0; await page.click('#resetBtn'); const resetCrime=await page.locator('#crimeType').inputValue(); calc.push({device:vp.device,scenario:s.name,status:r?.status(),produced,result:result.slice(0,500),resetPassed:resetCrime==='',errors}); await page.close();
-              }
-              await context.close();
-            }
-            await api.dispose(); await browser.close();
-            const out={generatedAt:new Date().toISOString(),urlCount:urls.length,urls,results,calculator:calc}; fs.writeFileSync('production-browser-audit.json',JSON.stringify(out,null,2));
-            const allAxe=results.flatMap(r=>r.axe.map(a=>({device:r.device,url:r.url,...a})));
-            console.log(JSON.stringify({urlCount:urls.length,loads:results.length,httpNon200:results.filter(x=>x.status!==200).length,errorPages:results.filter(x=>x.errors.length).length,failedRequestPages:results.filter(x=>x.failed.length).length,badResponsePages:results.filter(x=>x.bad.length).length,overflowPages:results.filter(x=>x.overflow).length,h1Problems:results.filter(x=>x.h1!==1).length,canonicalMissing:results.filter(x=>!x.canonical).length,axeViolations:allAxe.length,calculatorFailures:calc.filter(x=>!x.produced||!x.resetPassed||x.errors.length).length},null,2));
-          })().catch(e=>{console.error(e);process.exit(1)});
-          JS
-      - name: Lighthouse production samples
-        continue-on-error: true
+          python3 <<'PY'
+          from pathlib import Path
+          import re,json
+          sm=Path('sitemap.xml').read_text(); urls=re.findall(r'<loc>https://avbusraturunc.com/(.*?)</loc>',sm)
+          html=[u for u in urls if u.endswith('.html')]
+          broken=[]; json_errors=[]
+          for f in html:
+            p=Path(f)
+            if not p.exists(): broken.append(('missing',f)); continue
+            s=p.read_text()
+            for href in re.findall(r'href=["\']([^"\']+)',s):
+              if href.startswith(('http:','https:','mailto:','tel:','#','/')): continue
+              target=href.split('#')[0].split('?')[0]
+              if target and not Path(target).exists(): broken.append((f,target))
+            for raw in re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',s,re.S):
+              try: json.loads(raw)
+              except Exception as e: json_errors.append((f,str(e)))
+          if broken or json_errors:
+            print('broken',broken); print('json',json_errors); raise SystemExit(1)
+          hub=Path('hukuki-icerikler.html').read_text()
+          if hub.count('class="content-card"') != 26: raise SystemExit('Hub card count changed')
+          print('STATIC PASS',len(html),'HTML sitemap pages; 26 hub cards; no missing local targets; JSON-LD parse PASS')
+          PY
+      - name: Commit remediation
         run: |
-          mkdir -p lighthouse
-          for u in / /ceza-hukuku.html /aile-bosanma-hukuku.html /is-hukuku.html /icra-iflas-hukuku.html /hukuki-icerikler.html /infaz-hesaplama.html; do
-            n=$(echo "$u" | sed 's#^/$#home#; s#[/.]#-#g')
-            npx lighthouse "https://avbusraturunc.com$u" --chrome-flags='--headless --no-sandbox' --only-categories=performance,accessibility,seo --output=json --output-path="lighthouse/${n}.json" --quiet || true
-          done
-          node <<'JS'
-          const fs=require('fs'),path=require('path'); const out=[];
-          for(const f of fs.readdirSync('lighthouse').filter(x=>x.endsWith('.json'))){const j=JSON.parse(fs.readFileSync(path.join('lighthouse',f)));out.push({file:f,url:j.finalUrl,categories:Object.fromEntries(Object.entries(j.categories).map(([k,v])=>[k,Math.round(v.score*100)])),metrics:{FCP:j.audits['first-contentful-paint']?.numericValue,LCP:j.audits['largest-contentful-paint']?.numericValue,CLS:j.audits['cumulative-layout-shift']?.numericValue,TBT:j.audits['total-blocking-time']?.numericValue,SI:j.audits['speed-index']?.numericValue},lcpElement:j.audits['largest-contentful-paint-element']?.details?.items?.[0]?.node?.snippet||null})} fs.writeFileSync('lighthouse-summary.json',JSON.stringify(out,null,2)); console.log(JSON.stringify(out,null,2));
-          JS
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: production-validation
-          path: |
-            production-browser-audit.json
-            lighthouse-summary.json
-            lighthouse/*.json
-          retention-days: 3
+          if git diff --quiet; then echo 'No changes required'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html'
+          git commit -m 'A3 strengthen content clusters and internal linking'
+          git push origin HEAD:main
