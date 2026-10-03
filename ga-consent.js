@@ -6,6 +6,7 @@
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
 
+  // Consent Mode v2 defaults: nothing is granted until the visitor chooses "İzin Ver".
   window.gtag('consent', 'default', {
     analytics_storage: 'denied',
     ad_storage: 'denied',
@@ -15,14 +16,19 @@
   });
   window.gtag('js', new Date());
 
-  const saved = (() => {
+  const readChoice = () => {
     try { return localStorage.getItem(STORAGE_KEY); }
     catch (_) { return null; }
-  })();
+  };
+  const storeChoice = (value) => {
+    try { localStorage.setItem(STORAGE_KEY, value); } catch (_) {}
+  };
+  const saved = readChoice();
 
   let configured = false;
   let loading = false;
 
+  // gtag.js is only requested after consent; before that no Google request is made at all.
   const loadAnalyticsScript = () => {
     if (document.getElementById(SCRIPT_ID) || loading) return;
     loading = true;
@@ -62,6 +68,17 @@
     });
   };
 
+  // Removes Google Analytics cookies (_ga, _ga_<id>) for this host and its parent domain.
+  const deleteAnalyticsCookies = () => {
+    const host = location.hostname;
+    const domains = ['', host, '.' + host, '.' + host.replace(/^www\./, '')];
+    document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((n) => /^_ga(_|$)/.test(n)).forEach((name) => {
+      domains.forEach((d) => {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${d ? '; domain=' + d : ''}`;
+      });
+    });
+  };
+
   const buildBanner = () => {
     const el = (tag, props, children) => {
       const node = document.createElement(tag);
@@ -78,6 +95,31 @@
     return el('div', { class: 'analytics-consent', id: 'analyticsConsent', role: 'region', 'aria-label': 'Analiz tercihi' }, [text, actions]);
   };
 
+  // "Çerez Tercihleri" control: in the existing footer when there is one, otherwise a small line at the end of the page.
+  const addPreferencesControl = (openBanner) => {
+    if (document.querySelector('[data-consent-preferences]')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'consent-preferences-button';
+    button.setAttribute('data-consent-preferences', '');
+    button.setAttribute('aria-controls', 'analyticsConsent');
+    button.textContent = 'Çerez Tercihleri';
+    button.addEventListener('click', openBanner);
+    const footer = document.querySelector('footer');
+    if (footer) {
+      const social = footer.querySelector('.footer-social');
+      const wrap = document.createElement('span');
+      wrap.className = 'consent-preferences-inline';
+      wrap.append(' · ', button);
+      if (social) footer.insertBefore(wrap, social); else footer.appendChild(wrap);
+    } else {
+      const bar = document.createElement('div');
+      bar.className = 'consent-preferences-bar';
+      bar.appendChild(button);
+      document.body.appendChild(bar);
+    }
+  };
+
   if (saved === 'granted') enableAnalytics();
   else disableAnalytics();
 
@@ -91,10 +133,13 @@
         node.style.containIntrinsicSize = 'none';
       });
     }
+    if (!document.body) return;
 
     // index.html ships the banner as static markup; every other page gets the same banner built here.
-    if (!document.getElementById('analyticsConsent') && saved !== 'granted' && saved !== 'denied' && document.body) {
-      document.body.appendChild(buildBanner());
+    if (!document.getElementById('analyticsConsent')) {
+      const built = buildBanner();
+      built.hidden = saved === 'granted' || saved === 'denied';
+      document.body.appendChild(built);
     }
 
     const banner = document.getElementById('analyticsConsent');
@@ -104,16 +149,26 @@
 
     if (saved === 'granted' || saved === 'denied') banner.hidden = true;
 
+    const openBanner = () => {
+      banner.hidden = false;
+      (readChoice() === 'granted' ? reject : accept).focus();
+    };
+    addPreferencesControl(openBanner);
+
     accept.addEventListener('click', () => {
-      try { localStorage.setItem(STORAGE_KEY, 'granted'); } catch (_) {}
+      storeChoice('granted');
       enableAnalytics();
       banner.hidden = true;
     });
 
     reject.addEventListener('click', () => {
-      try { localStorage.setItem(STORAGE_KEY, 'denied'); } catch (_) {}
+      const wasActive = configured || !!document.getElementById(SCRIPT_ID);
+      storeChoice('denied');
       disableAnalytics();
+      deleteAnalyticsCookies();
       banner.hidden = true;
+      // If GA4 was already running on this page, reload so no Google tag stays loaded after withdrawal.
+      if (wasActive) location.reload();
     });
   }, { once: true });
 })();
