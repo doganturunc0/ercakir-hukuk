@@ -19,3 +19,4 @@
 .reveal{opacity:1!important;transform:none!important;transition:none!important}.page-loader{display:none!important}
 /* Performance: skip layout/paint work for below-the-fold sections until needed. */
 @media(max-width:900px){.practice-section,.calculator-wrap,.articles-section,.legal-content-showcase,.contact-section,.infaz-feature,footer{content-visibility:auto;contain-intrinsic-size:auto 900px}.hero-picture{transform:none}}
+.calc-tool-links a{color:#7d5019;text-decoration:underline;text-underline-offset:3px}
