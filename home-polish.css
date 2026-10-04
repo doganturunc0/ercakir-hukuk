@@ -29,3 +29,5 @@
 @media(min-width:761px){.practice-card{min-height:230px!important}}
 /* Makale kartları: kategori kapakta zaten yazdığı için gövdedeki tekrarı gizle */
 .legal-content-body>span{display:none!important}
+/* Makale kartları: alana özel ikonlar */
+.cover-mark.cover-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
