@@ -24,3 +24,6 @@
 .hero h1 .h1-line{display:block}
 .hero-actions .btn.infaz{background:linear-gradient(135deg,#a6482e,#bf5c39)!important;color:#fff!important;border-color:#a6482e!important}
 .hero-actions .btn.infaz:hover,.hero-actions .btn.infaz:focus{filter:brightness(1.06);transform:translateY(-1px)}
+/* Faaliyet kartları: numara başlığa binmesin, boş alan azalsın */
+.practice-card h3{padding-right:30px}
+@media(min-width:761px){.practice-card{min-height:230px!important}}
