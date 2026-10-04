@@ -9,7 +9,7 @@ Address: Zafer Mah. Belediye Cad. No:71 Zaroğlu İşhanı, Kat:3 No:316, 45300 
 Telephone: +90 553 321 85 93  
 Domain: avbusraturunc.com  
 Language: Turkish  
-Last reviewed: 2026-10-01
+Last reviewed: 2026-10-04
 
 This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu in Salihli, Manisa. The website publishes general legal information about the office's practice areas. Published information is general in nature and does not constitute legal advice for a specific matter.
 
@@ -24,6 +24,8 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 ## External identity references
 - [AvukatBilgisi profile](https://avukatbilgisi.com/manisa-barosu-avukatlari/301601-busra-turunc)
 - [Türkiye Avukatları profile](https://www.turkiyeavukatlari.com/manisa-barosu-avukatlari/busra-turunc)
+- [Google Business Profile / Google Haritalar](https://maps.app.goo.gl/3qqBRyV4uRx6gsWYA)
+- [X profile](https://x.com/avbusraturunc)
 
 ## Main practice areas
 - [Ceza Hukuku](https://avbusraturunc.com/ceza-hukuku.html)
@@ -64,6 +66,11 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 - [Ticari Alacaklarda Dava Şartı Arabuluculuk](https://avbusraturunc.com/ticari-alacak-dava-sarti-arabuluculuk.html)
 - [İptal Davası ve Yürütmenin Durdurulması](https://avbusraturunc.com/iptal-davasi-yurutmenin-durdurulmasi.html)
 - [Sigorta Tahkim Komisyonuna Başvuru](https://avbusraturunc.com/sigorta-tahkim-komisyonuna-basvuru.html)
+- [Müddetname Nedir? Yanlış İnfaz Hesabına Nasıl İtiraz Edilir?](https://avbusraturunc.com/muddetname-nedir-yanlis-muddetnameye-itiraz.html)
+- [Menfi Tespit Davasında İcra Takibi Durur mu?](https://avbusraturunc.com/menfi-tespit-davasinda-icra-takibi-durur-mu.html)
+- [İş Kazasında Kusur Oranı Tazminatı Nasıl Etkiler?](https://avbusraturunc.com/is-kazasinda-kusur-orani-tazminati-nasil-etkiler.html)
+- [Paydaşlar Arasında Ecrimisilde İntifadan Men Şartı Nedir?](https://avbusraturunc.com/paydaslar-arasinda-ecrimisil-intifadan-men.html)
+- [CMK 108 Tutukluluk İncelemesi ile Tutuklamaya İtiraz Arasındaki Fark](https://avbusraturunc.com/cmk-108-tutukluluk-incelemesi-ile-tutuklamaya-itiraz-farki.html)
 
 ## Key resources
 - [Ana sayfa](https://avbusraturunc.com/)
@@ -71,6 +78,11 @@ This is the official website of Av. Büşra Turunç and Erçakır Hukuk Bürosu 
 - [İletişim](https://avbusraturunc.com/iletisim.html)
 - [Hukuki içerikler](https://avbusraturunc.com/hukuki-icerikler.html)
 - [İnfaz hesaplama aracı](https://avbusraturunc.com/infaz-hesaplama.html)
+- [Kıdem tazminatı hesaplama](https://avbusraturunc.com/kidem-tazminati-hesaplama.html)
+- [İhbar tazminatı hesaplama](https://avbusraturunc.com/ihbar-tazminati-hesaplama.html)
+- [Fazla mesai hesaplama](https://avbusraturunc.com/fazla-mesai-hesaplama.html)
+- [Yıllık izin ücreti hesaplama](https://avbusraturunc.com/yillik-izin-ucreti-hesaplama.html)
+- [Yasal faiz hesaplama](https://avbusraturunc.com/yasal-faiz-hesaplama.html)
 - [KVKK Aydınlatma Metni](https://avbusraturunc.com/kvkk-aydinlatma-metni.html)
 - [Gizlilik ve Çerez Politikası](https://avbusraturunc.com/gizlilik-cerez-politikasi.html)
 - [RSS](https://avbusraturunc.com/rss.xml)
