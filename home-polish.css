@@ -27,3 +27,5 @@
 /* Faaliyet kartları: numara başlığa binmesin, boş alan azalsın */
 .practice-card h3{padding-right:30px}
 @media(min-width:761px){.practice-card{min-height:230px!important}}
+/* Makale kartları: kategori kapakta zaten yazdığı için gövdedeki tekrarı gizle */
+.legal-content-body>span{display:none!important}
