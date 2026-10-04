@@ -20,3 +20,7 @@
 /* Performance: skip layout/paint work for below-the-fold sections until needed. */
 @media(max-width:900px){.practice-section,.calculator-wrap,.articles-section,.legal-content-showcase,.contact-section,.infaz-feature,footer{content-visibility:auto;contain-intrinsic-size:auto 900px}.hero-picture{transform:none}}
 .calc-tool-links a{color:#7d5019;text-decoration:underline;text-underline-offset:3px}
+/* Hero: başlık satırları ve eş boyutlu infaz butonu */
+.hero h1 .h1-line{display:block}
+.hero-actions .btn.infaz{background:linear-gradient(135deg,#a6482e,#bf5c39)!important;color:#fff!important;border-color:#a6482e!important}
+.hero-actions .btn.infaz:hover,.hero-actions .btn.infaz:focus{filter:brightness(1.06);transform:translateY(-1px)}
