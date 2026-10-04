@@ -115,14 +115,14 @@ jobs:
             if forbidden in about: err(6,f'Hakkımızda contains prohibited/unverified education marker: {forbidden}')
           if re.search(r'\b(en iyi|uzman|lider|garanti)\b',about,re.I): warn(6,'Hakkımızda contains a potentially promotional claim; manual review needed')
 
-          nap=['+90 553 321 85 93','avbusraturunc45@gmail.com','Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1','Salihli','Manisa','45300']
+          nap=['+90 553 321 85 93','avbusraturunc45@gmail.com','Zafer Mah. Belediye Cad. No:71 Zaroğlu İşhanı','Salihli','Manisa','45300']
           for n in ['hakkimizda.html','iletisim.html',*ACTIVITIES]:
             txt=files[n].read_text('utf-8')
             for token in nap:
               if token not in txt: err(7,f'{n} missing NAP/local marker: {token}')
             if '45120' in txt: err(7,f'{n} contains obsolete office postal code 45120')
           contact=files['iletisim.html'].read_text('utf-8')
-          if 'hasMap' not in contact or 'google.com/maps' not in contact: err(7,'contact page lacks map/local entity reference')
+          if 'hasMap' not in contact or not ('google.com/maps' in contact or 'maps.app.goo.gl' in contact): err(7,'contact page lacks map/local entity reference')
           if 'sameAs' not in contact: err(7,'contact page lacks sameAs')
 
           stuffing=[r'aramasıyla',r'arayanlar için',r'anahtar kelime']
