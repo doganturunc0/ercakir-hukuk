@@ -5,7 +5,7 @@
 Primary entity: Av. Büşra Turunç  
 Organization: Erçakır Hukuk Bürosu  
 Location: Salihli, Manisa, Türkiye  
-Address: Zafer Mahallesi, Belediye Caddesi, Zaroğlu İş Merkezi No: 71/1, Kat: 3, No: 316, 45300 Salihli / Manisa  
+Address: Zafer Mah. Belediye Cad. No:71 Zaroğlu İşhanı, Kat:3 No:316, 45300 Salihli/Manisa  
 Telephone: +90 553 321 85 93  
 Domain: avbusraturunc.com  
 Language: Turkish  
