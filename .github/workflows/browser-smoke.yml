@@ -65,7 +65,7 @@ jobs:
                 assert(await page.locator('#crimeType').count() === 1, `${t.name}: crime selector missing`);
               }
               if (t.hub) {
-                assert.equal(await page.locator('.content-card').count(), 65, `${t.name}: expected 65 content cards`);
+                assert.equal(await page.locator('.content-card').count(), 81, `${t.name}: expected 81 content cards`);
                 assert.equal(await page.locator('.content-card[href="whatsapp-yazismalari-delil-olur-mu.html"] .tag').innerText(), 'ELEKTRONİK DELİL', `${t.name}: WhatsApp category mismatch`);
               }
               assert.equal(errors.length,0, `${t.name}: failed resources:\n${errors.join('\n')}`);
@@ -73,8 +73,8 @@ jobs:
             }
             const hubHtml = fs.readFileSync('hukuki-icerikler.html','utf8');
             const hrefs = [...hubHtml.matchAll(/class="content-card" href="([^"]+\.html)"/g)].map(m => m[1]);
-            assert.equal(hrefs.length,65,`content hub: expected 65 article links, got ${hrefs.length}`);
-            assert.equal(new Set(hrefs).size,65,'content hub: duplicate article links detected');
+            assert.equal(hrefs.length,81,`content hub: expected 81 article links, got ${hrefs.length}`);
+            assert.equal(new Set(hrefs).size,81,'content hub: duplicate article links detected');
             for (const href of hrefs) {
               for (const viewport of [{name:'mobile',width:390,height:844},{name:'desktop',width:1440,height:900}]) {
                 const page = await browser.newPage({viewport:{width:viewport.width,height:viewport.height}});
