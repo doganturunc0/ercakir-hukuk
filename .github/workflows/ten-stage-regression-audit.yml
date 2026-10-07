@@ -64,7 +64,7 @@ jobs:
           def warn(stage,msg): warnings.append(f'STAGE {stage}: {msg}')
 
           hub=parsed[HUB]; cards=[x.split('#')[0].split('?')[0].lstrip('/') for x in hub.cards]
-          if len(cards)!=60: err(1,f'expected 60 hub cards, got {len(cards)}')
+          if len(cards)!=65: err(1,f'expected 65 hub cards, got {len(cards)}')
           if len(set(cards))!=len(cards): err(2,'duplicate hub cards found')
           for c in cards:
             if c not in files: err(2,f'card target missing: {c}')
@@ -159,9 +159,9 @@ jobs:
           smoke=Path('.github/workflows/browser-smoke.yml').read_text('utf-8')
           full=Path('.github/workflows/full-site-audit.yml').read_text('utf-8')
           link=Path('.github/workflows/link-integrity.yml').read_text('utf-8')
-          for marker in ['width:390','width:1440','hrefs.length,60','horizontal overflow','failed resources']:
+          for marker in ['width:390','width:1440','hrefs.length,65','horizontal overflow','failed resources']:
             if marker not in smoke: err(10,f'browser smoke missing coverage marker: {marker}')
-          if 'expected 60 cards' not in full: err(10,'full-site audit no longer enforces 60-card inventory')
+          if 'expected 65 cards' not in full: err(10,'full-site audit no longer enforces 65-card inventory')
           if 'broken' not in link.lower(): warn(10,'link-integrity workflow wording changed; manually verify link checks')
 
           print(f'RE-AUDIT: {len(files)} HTML files; {len(article_pages)} editorial articles; {len(cards)} hub cards')
