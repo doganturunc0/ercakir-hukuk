@@ -25,7 +25,7 @@ jobs:
           HUB='hukuki-icerikler.html'
           ACTIVITIES=['ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html','miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html']
           LEGACY={'articles.html':'hukuki-icerikler.html','is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html'}
-          NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','404.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',HUB,*ACTIVITIES,*LEGACY.keys(),'infaz-hesaplama.html','avukatlik-sozlesmesi.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html'}
+          NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','404.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html',HUB,*ACTIVITIES,*LEGACY.keys(),'infaz-hesaplama.html','avukatlik-sozlesmesi.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html','miras-payi-hesaplama.html','kira-artis-hesaplama.html'}
 
           class P(HTMLParser):
             def __init__(self):

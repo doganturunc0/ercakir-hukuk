@@ -1,0 +1,21 @@
+#hesaplamalar{background:radial-gradient(900px 420px at 90% 0%,rgba(201,163,82,.14),transparent 60%),linear-gradient(180deg,#f7f2e8 0%,#efe8da 100%)!important}
+#hesaplamalar .section-heading .eyebrow{color:#9a7128}
+#hesaplamalar .calc-shell{position:relative;background:#fff!important;border:1px solid #e6dccb!important;border-radius:26px!important;padding:34px!important;box-shadow:0 30px 70px rgba(19,40,58,.14)!important;overflow:hidden}
+#hesaplamalar .calc-shell::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#9a7128,#c9a352,#e4c47e,#c9a352)}
+#hesaplamalar .calc-tabs{gap:8px!important;padding:6px!important;border:1px solid #e6dccb!important;border-radius:16px;background:#f7f2e8;margin-bottom:6px}
+#hesaplamalar .calc-tabs button{flex:1 1 auto;border:0!important;background:transparent!important;color:#3b4a55!important;padding:12px 16px!important;border-radius:12px!important;font-weight:700;font-size:15px!important;transition:background .2s,color .2s}
+#hesaplamalar .calc-tabs button:hover{background:#fff!important;color:#13283a!important}
+#hesaplamalar .calc-tabs button.active{background:linear-gradient(135deg,#13283a,#1f3c54)!important;color:#e4c47e!important;box-shadow:0 8px 18px rgba(19,40,58,.25)}
+#hesaplamalar .calc-panel h3{font:400 clamp(26px,4vw,32px)/1.2 Georgia,"Times New Roman",serif!important;color:#13283a!important;margin:6px 0 22px!important}
+#hesaplamalar .form-grid{gap:16px 20px}
+#hesaplamalar .form-grid label{font-size:14px!important;font-weight:700;color:#26313b!important}
+#hesaplamalar .form-grid input{min-height:52px;margin-top:8px;padding:13px 15px!important;border:1.5px solid #ddd3c2!important;border-radius:13px!important;background:#fbf8f2!important;font-size:16px;transition:border-color .2s,box-shadow .2s,background .2s}
+#hesaplamalar .form-grid input:focus{outline:0;border-color:#c9a352!important;background:#fff!important;box-shadow:0 0 0 4px rgba(201,163,82,.2)}
+#hesaplamalar .calc-btn{min-height:54px!important;margin-top:22px;padding:14px 30px!important;border:0!important;border-radius:14px!important;background:linear-gradient(135deg,#e4c47e 0%,#c9a352 48%,#9a7128 100%)!important;color:#13283a!important;font-size:16px;box-shadow:0 12px 26px rgba(154,113,40,.32),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .15s,box-shadow .2s}
+#hesaplamalar .calc-btn::after{content:" →"}
+#hesaplamalar .calc-btn:hover{transform:translateY(-2px);box-shadow:0 18px 32px rgba(154,113,40,.38)}
+#hesaplamalar .result{margin-top:22px!important;padding:22px 24px!important;border:0!important;border-radius:18px!important;background:linear-gradient(135deg,#13283a 0%,#1f3c54 100%)!important;color:rgba(255,255,255,.88)!important;font-size:15px!important;line-height:1.9;box-shadow:0 18px 40px rgba(19,40,58,.22)}
+#hesaplamalar .result b,#hesaplamalar .result strong{color:#e4c47e;font-size:1.12em}
+#hesaplamalar .calc-tool-links a{display:inline-block;margin:3px 0;padding:5px 12px;border-radius:999px;background:#fff;border:1px solid #e6dccb;color:#7d5019;text-decoration:none!important;font-weight:700;font-size:14px}
+#hesaplamalar .calc-tool-links a:hover{border-color:#c9a352}
+@media(max-width:640px){#hesaplamalar .calc-shell{padding:22px 16px!important;border-radius:20px!important}#hesaplamalar .calc-tabs{display:grid!important;grid-template-columns:repeat(2,1fr)}#hesaplamalar .calc-tabs button{padding:11px 8px!important;font-size:14px!important}#hesaplamalar .calc-btn{width:100%}}
