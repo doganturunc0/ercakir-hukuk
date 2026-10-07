@@ -1,0 +1,17 @@
+.check{display:flex;gap:12px;align-items:center;font-weight:700;padding:14px 16px;border:1.5px solid #e6dccb;border-radius:13px;background:#fbf8f2;cursor:pointer;align-self:end;min-height:52px}
+.check input{flex:none}
+fieldset{border:1px solid #e6dccb;border-radius:18px;padding:20px 20px 18px;margin:24px 0 0;background:linear-gradient(180deg,#fdfaf4,#fff)}
+legend{font:400 19px/1.2 Georgia,"Times New Roman",serif;color:#13283a;padding:0 10px}
+fieldset .hint{margin:12px 0 0}
+#zumre3Wrap{margin-top:16px}
+[hidden]{display:none!important}
+.calc-table-wrap{overflow-x:auto;border-radius:14px}
+.calc-table{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;background:#fff;border:1px solid #e6dccb;border-radius:14px;overflow:hidden}
+.calc-table th,.calc-table td{padding:12px 14px;border-bottom:1px solid #eee5d6;text-align:left;vertical-align:top;color:#26313b}
+.calc-table tr:last-child td{border-bottom:0}
+.calc-table th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f3e6c6;background:#1f3c54}
+.calc-table tbody tr:nth-child(even) td{background:#fbf8f2}
+.calc-table small{color:#7a7f84}
+.result .calc-table{box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.result .calc-table td:nth-child(2),.result .calc-table td:nth-child(4){font-weight:800;color:#13283a}
+@media(max-width:640px){.calc-table thead{display:none}.calc-table tr{display:block;border-bottom:1px solid #eee5d6;padding:8px 0}.calc-table tbody tr:nth-child(even) td{background:transparent}.calc-table tbody tr:nth-child(even){background:#fbf8f2}.calc-table td{display:flex;justify-content:space-between;gap:12px;border:0;padding:5px 14px;text-align:right}.calc-table td::before{content:attr(data-label);font-weight:700;color:#7a7f84;text-align:left;font-size:13px}.calc-table td small{display:block}}

@@ -27,7 +27,7 @@ jobs:
           from urllib.parse import urlparse
           ROOT=Path('.'); HUB='hukuki-icerikler.html'; CANONICAL_HUB='https://avbusraturunc.com/hukuki-icerikler.html'
           LEGACY_MIGRATIONS={'articles.html':'hukuki-icerikler.html','is-kazasi-isveren-sorumlulugu.html':'is-kazasinda-isverenin-sorumlulugu.html','tahliye-taahhutnamesi-gecerlilik.html':'tahliye-taahhutnamesi-gecerlilik-sartlari.html'}
-          TOOLS={'infaz-hesaplama.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html'}
+          TOOLS={'infaz-hesaplama.html','kidem-tazminati-hesaplama.html','ihbar-tazminati-hesaplama.html','fazla-mesai-hesaplama.html','yillik-izin-ucreti-hesaplama.html','yasal-faiz-hesaplama.html','miras-payi-hesaplama.html','kira-artis-hesaplama.html'}
           EXCLUDE={'404.html','google0ca4396d5dbe8e67.html',*LEGACY_MIGRATIONS.keys()}
           NON_ARTICLE={'index.html','hakkimizda.html','iletisim.html','gizlilik.html','cerez-politikasi.html','gizlilik-cerez-politikasi.html','kvkk-aydinlatma-metni.html','ceza-hukuku.html','aile-bosanma-hukuku.html','is-hukuku.html','icra-iflas-hukuku.html','gayrimenkul-hukuku.html','miras-hukuku.html','ticaret-hukuku.html','idare-hukuku.html','kira-hukuku.html','sigorta-hukuku.html',*TOOLS,HUB,*LEGACY_MIGRATIONS.keys()}
           class P(HTMLParser):
