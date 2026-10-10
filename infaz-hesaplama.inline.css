@@ -63,3 +63,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 [hidden]{display:none!important}
 .prev-wrap{margin-top:16px}
 #sentenceType{margin-bottom:14px}
+.extra-row{display:grid;gap:10px;margin-top:14px;padding:14px 16px;border:1px solid #e6dccb;border-radius:16px;background:#fffdf9}
+.extra-head{display:flex;justify-content:space-between;align-items:center;color:#13283a}
+.extra-remove{border:0;background:none;color:#7d5019;font-weight:700;cursor:pointer;font-size:14px}
+.add-sentence{margin-top:14px}
