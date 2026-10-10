@@ -67,3 +67,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .extra-head{display:flex;justify-content:space-between;align-items:center;color:#13283a}
 .extra-remove{border:0;background:none;color:#7d5019;font-weight:700;cursor:pointer;font-size:14px}
 .add-sentence{margin-top:14px}
+.plain-today{margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(228,196,126,.14);border:1px solid rgba(228,196,126,.35)}
+.print-btn{justify-self:start;margin-top:0}
+#againstChildWrap{margin-bottom:12px}
+@media print{.sc-header,.hero,.card:not(:has(#result)),.info,footer,.calc-control-date,.warning,.actions,.print-btn,.tech,[class*=float],[class*=whatsapp]{display:none!important}.card:has(#result)>*:not(#result){display:none!important}.card{box-shadow:none;border:0}body{background:#fff}.plain-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
