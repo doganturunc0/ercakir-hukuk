@@ -100,7 +100,7 @@ jobs:
             article_pages={n for n,q in parsed.items() if n not in NON_ARTICLE and n not in EXCLUDE and 'noindex' not in q.robots}; cards=set(card_targets)
             for x in sorted(article_pages-cards): errors.append(f'hub: missing article card {x}')
             for x in sorted(cards-article_pages): errors.append(f'hub: stale/non-article card {x}')
-            if len(card_targets)!=81: errors.append(f'hub: expected 81 cards, got {len(card_targets)}')
+            if len(card_targets)!=86: errors.append(f'hub: expected 86 cards, got {len(card_targets)}')
             print(f'Inventory: {len(files)} HTML; {len(article_pages)} editorial articles; {len(card_targets)} hub cards; {len(TOOLS)} tools; {len(LEGACY_MIGRATIONS)} legacy migrations')
           if errors:
             print('\n'.join('ERROR: '+e for e in errors)); sys.exit(1)
