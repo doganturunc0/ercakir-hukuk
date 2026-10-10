@@ -10,7 +10,7 @@ if(i.st)await p.selectOption('#sentenceType',i.st);
 if(i.y)await p.fill('#sentenceYear',String(i.y));if(i.m)await p.fill('#sentenceMonth',String(i.m));
 if(i.rec){await p.check('#recidivist');if(i.py)await p.fill('#prevYear',String(i.py));if(i.pm)await p.fill('#prevMonth',String(i.pm));}
 for(const x of (i.x||[])){await p.click('#addSentenceBtn');const r=(await p.$$('.extra-row')).pop();await (await r.$('.x-crime')).selectOption(x.c);await (await r.$('.x-date')).fill(x.cd);if(x.y)await (await r.$('.x-y')).fill(String(x.y));if(x.m)await (await r.$('.x-m')).fill(String(x.m));}
-if(i.wc)await p.check('#womanChild');if(i.ill)await p.check('#illness');
+if(i.rec2)await p.check('#secondRecidivist');if(i.cdd)await p.fill('#creditDay',String(i.cdd));if(i.wc)await p.check('#womanChild');if(i.ill)await p.check('#illness');
 await p.click('#calculateBtn');await p.waitForTimeout(900);await p.click('.tech summary').catch(()=>{});
 const t=await p.$eval('#result',x=>x.innerText);
 const exp=Object.values(e).filter(Boolean);if(e.open===null)exp.push('doğrudan açık');if(!('ds' in e))exp.push('açık cezaevine geçilemez');

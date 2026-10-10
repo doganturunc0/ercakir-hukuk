@@ -28,7 +28,7 @@ jobs:
       - name: Run reference scenarios
         run: |
           sleep 2
-          for f in genel gecis-2023-oncesi ictima cocuk; do
+          for f in genel gecis-2023-oncesi ictima cocuk denetim; do
             echo "### $f"
             CI=1 BASE=http://127.0.0.1:8000/infaz-hesaplama.html REF=.github/infaz-tests/$f.json node .github/infaz-tests/run.js
           done

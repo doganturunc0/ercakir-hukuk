@@ -10,14 +10,14 @@ function ratioLabel(r){if(r>=.749)return'3/4';if(r>=.665)return'2/3';return'1/2'
 // open: açık kuruma ayrılma ek şartı (Yönetmelik m.6/2: f5 = KS'ye 5 yıldan az, t3 = 3 yıldan az; none = m.8/1-ç),
 // ex5: doğrudan açık dışı (m.5), neg: taksirli (m.5/1-b), c7593: 5275 m.107/5 istisnası, t6: Geçici 6/1 istisnası,
 // g10x: Geçici 10/6 (31.7.2023 ve öncesi suçlarda 3 yıl erken açık/DS) istisnası,
-// g62x: Geçici 6/2 istisnası, m: müebbette KS yılı [müebbet, ağırlaştırılmış] (107/2, 107/4, 108/9).
+// g62x: Geçici 6/2 istisnası, negKill: taksirle öldürme (5275 m.110/1 dışı), sex: cinsel suç (m.110/9-b), m: müebbette KS yılı [müebbet, ağırlaştırılmış] (107/2, 107/4, 108/9).
 const CRIMES={
  general:{r:1/2,open:'g7'},theft141:{r:1/2,open:'g7'},theft142:{r:1/2,open:'f5'},robbery:{r:1/2,open:'f5'},fraud:{r:1/2,open:'g7'},
- injury86:{r:1/2,open:'g7'},injurySpouse:{r:1/2,open:'t3',t6:1},threat:{r:1/2,open:'g7'},insult:{r:1/2,open:'g7'},damage:{r:1/2,open:'g7'},
+ injury86:{r:1/2,open:'g7'},injurySpouse:{r:1/2,open:'t3',t6:1},injuryFamily:{r:1/2,open:'g7',t6:1},threat:{r:1/2,open:'g7'},insult:{r:1/2,open:'g7'},damage:{r:1/2,open:'g7'},
  liberty:{r:1/2,open:'g7'},dwelling:{r:1/2,open:'g7'},forgery:{r:1/2,open:'g7'},embezzle:{r:1/2,open:'g7'},cyber:{r:1/2,open:'g7'},
  traffic:{r:1/2,open:'g7'},weapon:{r:1/2,open:'g7'},smuggling:{r:1/2,open:'g7'},drug191:{r:1/2,open:'g7'},drug190:{r:1/2,open:'f5'},
- negligent:{r:1/2,open:'g7',neg:1},quakeDeath:{r:1/2,open:'g7',neg:1,g10x:1},stateSecurity:{r:1/2,rc:1/2,open:'g7',t6:1,g10x:1,g62x:1},
- kill:{g62x:1,r:2/3,rc:2/3,open:'g7',c7593:1,t6:1},killSpouse:{g62x:1,r:2/3,rc:2/3,open:'t3',c7593:1,t6:1,g10x:1},killChild:{g62x:1,r:2/3,rc:2/3,open:'g7',c7593:1,t6:1,g10x:1},injury87:{r:2/3,rc:2/3,open:'g7',t6:1},
+ negligent:{r:1/2,open:'g7',neg:1},negKill:{r:1/2,open:'g7',neg:1,negKill:1},quakeDeath:{r:1/2,open:'g7',neg:1,negKill:1,g10x:1},stateSecurity:{r:1/2,rc:1/2,open:'g7',t6:1,g10x:1,g62x:1},
+ kill:{g62x:1,r:2/3,rc:2/3,open:'g7',c7593:1,t6:1},killSpouse:{g62x:1,r:2/3,rc:2/3,open:'t3',c7593:1,t6:1,g10x:1},killFamily:{g62x:1,r:2/3,rc:2/3,open:'g7',c7593:1,t6:1,g10x:1},killChild:{g62x:1,r:2/3,rc:2/3,open:'g7',c7593:1,t6:1,g10x:1},injury87:{r:2/3,rc:2/3,open:'g7',t6:1},
  torture:{r:2/3,rc:2/3,open:'g7',t6:1},torment:{r:2/3,rc:2/3,open:'g7',t6:1},tormentSpouse:{r:2/3,rc:2/3,open:'t3',t6:1},
  sex102_1:{g62x:1,r:2/3,rc:2/3,open:'t3',ex5:1,c7593:1,t6:1,sex:1,g10x:1},sex104_1:{g62x:1,r:2/3,rc:2/3,open:'g7',ex5:1,t6:1,sex:1},sex105:{g62x:1,r:2/3,rc:2/3,open:'g7',ex5:1,t6:1,sex:1},
  privacy:{g62x:1,r:2/3,rc:2/3,open:'g7',t6:1},stateSecrets:{g62x:1,r:2/3,rc:2/3,open:'g7',t6:1,g10x:1},mit:{r:2/3,rc:2/3,open:'g7'},
@@ -29,6 +29,9 @@ const CRIMES={
 const crimeInfo=c=>CRIMES[c]||CRIMES.general;
 function baseRatio(crime,child){const k=crimeInfo(crime);return child?(k.rc||1/2):k.r}
 function child7593ClearException(crime){return!!crimeInfo(crime).c7593}
+// 7593 sayılı Kanunla 107/5'e eklenen istisnalar 18.8.2026'da yürürlüğe girdi; koşullu salıverilmeye ilişkin aleyhe hükümler önceki suçlara uygulanmaz (TCK m.7/3).
+const C7593_FROM=new Date('2026-08-18T00:00:00');
+function c7593Applies(k,date){return!!k.c7593&&!!date&&date>=C7593_FROM}
 function child7593SexualNeedsExactArticle(){return false}
 function pre6545TwoThirds(crime,crimeDate){return crimeDate&&crimeDate<new Date('2014-06-28T00:00:00')&&!!crimeInfo(crime).p6545}
 function temporary6DsException(crime){return!!crimeInfo(crime).t6}
@@ -88,6 +91,12 @@ function performCalculation(crime,totalDays,crimeDate){
   const ageAtStart=ageOn(birth,start);
   if(start&&crimeDate&&start<crimeDate){showStartBeforeCrime(start,crimeDate);return}
   if(start&&manualCredit>0&&crimeDate&&at(start,manualCredit,-1)<crimeDate){showCreditConflict(manualCredit,start,crimeDate);return}
+  for(const [n,r] of [...document.querySelectorAll('#extraSentences .extra-row')].entries()){const v=k=>r.querySelector(k).value,crimeV=v('.x-crime'),dateV=v('.x-date'),amt=dur3(...['.x-y','.x-m','.x-d'].map(k=>Math.max(0,Number(v(k))||0)));
+    if(!crimeV&&!dateV&&!amt)continue;
+    if(!crimeV||!dateV||!amt){showCheck(`${n+2}. ceza eksik doldurulmuş.`,`Eklenen ${n+2}. cezada ${[!crimeV&&'suç türü',!dateV&&'suç tarihi',!amt&&'ceza miktarı'].filter(Boolean).join(', ')} boş. Suç tarihi, hangi geçiş hükümlerinin uygulanacağını belirlediği için zorunludur.`,['Eksik alanları doldurun veya bu cezayı “Kaldır” düğmesiyle silin.']);return}
+    const xd=parseDate(dateV);if(birth&&xd<birth){showCheck(`${n+2}. cezanın suç tarihi doğum tarihinden önce.`,`${n+2}. ceza için suç tarihi <b>${fmtDate(xd)}</b>, doğum tarihi <b>${fmtDate(birth)}</b> yazılmış.`,['Tarihleri kontrol edin.']);return}
+  }
+  for(const r of document.querySelectorAll('.period-row')){const f=r.querySelector('.p-from').value,t=r.querySelector('.p-to').value;if(!!f!==!!t){showCheck('Tutukluluk döneminin bir tarihi eksik.',`Tarihle eklenen dönemde ${f?'tahliye (çıkış)':'gözaltı / tutuklama (giriş)'} tarihi boş.`,['İki tarihi de yazın veya dönemi “Kaldır” düğmesiyle silin.','Kişi hâlâ içerideyse dönem eklemeyin; tutuklandığı günü cezaevine giriş tarihi olarak yazın.']);return}}
   const periods=readPeriods();let periodDays=0;
   for(const pr of periods){
     if(pr.to<pr.from){showCheck('Tutukluluk dönemi tarihleri hatalı.',`Bir dönemde çıkış tarihi (<b>${fmtDate(pr.to)}</b>) giriş tarihinden (<b>${fmtDate(pr.from)}</b>) önce yazılmış.`,['Dönemin giriş (gözaltı veya tutuklama) ve çıkış (tahliye) tarihlerini kontrol edin.']);return}
@@ -95,6 +104,7 @@ function performCalculation(crime,totalDays,crimeDate){
     if(start&&pr.to>=start){showCheck('Tutukluluk dönemi cezaevine giriş tarihiyle çakışıyor.',`Dönem <b>${fmtDate(pr.to)}</b> tarihinde bitiyor; cezaevine giriş tarihi ise <b>${fmtDate(start)}</b>. Aynı günler iki kez düşülür.`,['Kişi tutuklandığı günden beri kesintisiz içerideyse: dönemi silin ve cezaevine giriş tarihine tutuklandığı günü yazın.','Tahliye edilip sonra yeniden girdiyse: dönemin çıkış tarihi, yeniden giriş tarihinden önce olmalıdır.']);return}
     periodDays+=between(pr.from,pr.to)+1;
   }
+  {const ps=[...periods].sort((a,b)=>a.from-b.from);for(let i=1;i<ps.length;i++)if(ps[i].from<=ps[i-1].to){showCheck('Tutukluluk dönemleri birbiriyle çakışıyor.',`<b>${fmtDate(ps[i-1].from)} – ${fmtDate(ps[i-1].to)}</b> ve <b>${fmtDate(ps[i].from)} – ${fmtDate(ps[i].to)}</b> dönemleri aynı günleri içeriyor; bu günler iki kez düşülür.`,['Dönemleri kontrol edin; aynı tutukluluğu iki kez eklemediğinizden emin olun.']);return}}
   credit+=periodDays;const hasCredit=credit>0;
   const rec=document.getElementById('recidivist').checked,prev=dur3(dval('prevYear'),dval('prevMonth'),dval('prevDay'));
   if(rec&&U(prev)<=0){showUnsupported('İlk tekerrür / 5275 m.108','İlk tekerrürde m.108/2 uyarınca koşullu salıverme süresine eklenecek miktar, tekerrüre esas alınan cezanın en ağırından fazla olamaz. Bu nedenle tekerrüre esas önceki cezanın miktarı girilmeden kesin tarih üretilmez.');return}
@@ -102,7 +112,7 @@ function performCalculation(crime,totalDays,crimeDate){
 
 
 
-  if(child&&(!child7593ClearException(crime)||crimeDate<=new Date('2020-03-30T23:59:59'))&&(!birth||!start)){
+  if(child&&(!c7593Applies(K,crimeDate)||crimeDate<=new Date('2020-03-30T23:59:59'))&&(!birth||!start)){
     showUnsupported('7593 sayılı Kanun / yaş verisi gerekli','Çocuk hükümlü senaryosunda 5275 m.107/5 kontrolü için doğum tarihi ile infaza başlama/cezaevine giriş tarihi birlikte gereklidir. Bu veriler olmadan 15 yaş öncesi kurum süresi güvenilir biçimde değerlendirilemez.');return;
   }
   let ratio=baseRatio(crime,child),reasons=['Süreler müddetname uygulamasındaki gibi güne çevrilerek hesaplandı (yıl 365, ay 30 gün); gün küsuratı TCK m.61/6 uyarınca hesaba katılmadı; tarihler infaza başlama tarihine gün eklenerek bulundu.'];
@@ -112,7 +122,8 @@ function performCalculation(crime,totalDays,crimeDate){
   let ksGross,recAdd=0,lifeYears=0;
   if(life){
     const againstChild=document.getElementById('againstChild')?.checked;
-    let baseY=K.m?K.m[agg?1:0]:(agg?30:24);const recY=agg?39:33;if(againstChild)baseY=Math.max(baseY,recY);
+    const pre6545=crimeDate<new Date('2014-06-28T00:00:00');let baseY=K.m&&!(K.p6545&&pre6545)?K.m[agg?1:0]:(agg?30:24);const recY=agg?39:33;if(againstChild&&!pre6545)baseY=Math.max(baseY,recY);
+    if(pre6545&&(K.p6545||againstChild))reasons.push('Suç 28.06.2014 öncesinde işlendiği için 6545 sayılı Kanunla getirilen 108/8 ve 108/9 süreleri (33/39 yıl) uygulanmadı; koşullu salıverilmeye ilişkin aleyhe hükümler geçmişe uygulanmaz (TCK m.7/3).');
     lifeYears=secondRec?Math.max(baseY,recY):baseY;ksGross=lifeYears*365;
     if(rec&&recY>baseY){recAdd=Math.min((recY-baseY)*365,prev);ksGross+=recAdd}
     reasons.push((agg?'Ağırlaştırılmış müebbet':'Müebbet')+' hapiste koşullu salıverilme için kurumda geçirilmesi gereken süre '+lifeYears+' yıl olarak alındı (5275 m.107/2, 107/4, 108; 3713 m.17).'+(recAdd?' İlk tekerrür nedeniyle '+fdurFull(recAdd)+' eklendi (m.108/2 sınırı).':''));
@@ -120,15 +131,15 @@ function performCalculation(crime,totalDays,crimeDate){
     ksGross=frac(total,ratio);
     if(rec&&!secondRec){const r2=frac(total,Math.max(2/3,ratio));recAdd=Math.min(dsub(r2,ksGross),prev);ksGross+=recAdd;reasons.push('İlk tekerrür: 5275 m.108/1-d uyarınca 2/3 oranı esas alındı; m.108/2 uyarınca eklenen süre ('+fdurFull(recAdd)+') tekerrüre esas cezanın en ağırını aşamaz.')}
   }
-  let dates=[crimeDate],multiLi='';
+  const firstKs=ksGross;let dates=[crimeDate],multiLi='';
   if(multi){
     const birthD=birth,items=[];let sumShare=0,sumTotal=total,anyOrg=!!(K.m&&K.open==='none'&&!child);
-    const opens=[K.open],flags={ex5:!!K.ex5,neg:!!K.neg,t6:!!K.t6,g10x:!!K.g10x};
+    const opens=[K.open],flags={ex5:!!K.ex5,neg:!!K.neg,t6:!!K.t6,g10x:!!K.g10x,g62x:!!K.g62x,sex:!!K.sex,negKill:!!K.negKill,c75:c7593Applies(K,crimeDate),p108:!!(K.p6545&&!child&&crimeDate>=new Date('2014-06-28T00:00:00'))};
     for(const [n,x] of extras.entries()){
       const kx=crimeInfo(x.crime),cx=birthD&&x.date?ageOn(birthD,x.date)<18:child;
       let rx=baseRatio(x.crime,cx);if(x.date&&x.date<new Date('2014-06-28T00:00:00')&&kx.p6545)rx=2/3;if(secondRec)rx=Math.max(rx,3/4);
       const share=frac(x.total,rx);sumShare+=share;sumTotal+=x.total;dates.push(x.date);opens.push(kx.open);
-      flags.ex5=flags.ex5||!!kx.ex5;flags.neg=flags.neg&&!!kx.neg;flags.t6=flags.t6||!!kx.t6;flags.g10x=flags.g10x||!!kx.g10x;
+      flags.ex5=flags.ex5||!!kx.ex5;flags.neg=flags.neg&&!!kx.neg;flags.t6=flags.t6||!!kx.t6;flags.g10x=flags.g10x||!!kx.g10x;flags.g62x=flags.g62x||!!kx.g62x;flags.sex=flags.sex||!!kx.sex;flags.negKill=flags.negKill||!!kx.negKill;flags.c75=flags.c75||c7593Applies(kx,x.date);flags.p108=flags.p108||!!(kx.p6545&&!cx&&x.date>=new Date('2014-06-28T00:00:00'));
       if(kx.open==='none'&&!cx)anyOrg=true;
       items.push(`<li>${n+2}. ceza: ${x.label}, <b>${fdur(x.total)}</b> → koşullu salıverilme payı (${ratioWords(rx)}): <b>${fdur(share)}</b></li>`);
     }
@@ -136,17 +147,20 @@ function performCalculation(crime,totalDays,crimeDate){
     K={...K,open:strict,...flags};
     let cap,capTxt;
     if(life){cap=(agg?(anyOrg?40:36):(anyOrg?34:30))*365;capTxt=(agg?(anyOrg?'40':'36'):(anyOrg?'34':'30'))+' yıl (5275 m.107/'+(anyOrg?'4':'3')+')'}
-    else{cap=(anyOrg||rec?32:28)*365;capTxt=(anyOrg||rec?'32':'28')+' yıl (5275 m.'+(anyOrg?'107/4-e':rec?'108/1-c':'107/3-e')+')'}
+    else{const c32=anyOrg||rec||secondRec||flags.p108;cap=(c32?32:28)*365;capTxt=(c32?'32':'28')+' yıl (5275 m.'+(anyOrg?'107/4-e':c32?'108/1-c':'107/3-e')+')'}
+    if(life&&firstKs>cap){cap=firstKs;capTxt=fdur(firstKs)+' (tek başına müebbet için aranan süre; içtima bu sürenin altına indiremez, 5275 m.108)'}
     const raw=ksGross+sumShare;ksGross=Math.min(raw,cap);if(!life)total=sumTotal;
-    multiLi=items.join('')+`<li>Cezalar toplanır (içtima, 5275 m.99): koşullu salıverilme için toplam süre <b>${fdur(ksGross)}</b>${raw>cap?` (kanuni üst sınır ${capTxt} uygulandı)`:''}${life?'':`; toplam ceza <b>${fdur(total)}</b>`}.</li>`;
+    multiLi=items.join('')+`<li>Cezalar toplanır (içtima, 5275 m.99): koşullu salıverilme için toplam süre <b>${fdur(ksGross)}</b>${raw>cap?` (kanuni üst sınır ${capTxt} uygulandı)`:''}${life?'':`; toplam ceza <b>${fdur(total)}</b>`}${hasCredit?` (düşülen süre çıkarılınca <b>${fdur(dsub(ksGross,credit))}</b>)`:''}.</li>`;
     reasons.push('İçtima: her cezanın koşullu salıverilme payı kendi oranıyla hesaplanıp toplandı; üst sınır '+capTxt+'. Açık kuruma ayrılmada en ağır şart esas alındı (Yönetmelik m.6/3). Geçiş hükümleri yalnızca bütün suç tarihleri ilgili döneme giriyorsa uygulandı.');
   }
+  if(!multi)K={...K,c75:c7593Applies(K,crimeDate)};
   const allDates=dates.filter(Boolean),legacyAll=allDates.length&&allDates.every(d=>needsLegacyDsReview(d)),pre2020All=allDates.length&&allDates.every(d=>d<=new Date('2020-03-30T23:59:59')),tenAny=allDates.some(d=>tenPercentRuleApplies(d));
   if(multi&&!legacyAll&&allDates.some(d=>needsLegacyDsReview(d)))reasons.push('Suç tarihleri farklı dönemlere düştüğü için 31.7.2023 öncesine ilişkin geçiş hükümleri uygulanmadı; somut dosyada ayrıca değerlendirilmelidir.');
   let ksNet=dsub(ksGross,credit);const fullNet=life?null:dsub(total,credit);
   // Çocuklarda yaş indirimli sayım: Geçici 6/4 (30.3.2020 ve öncesi: 15 yaşa kadar 1 gün = 3, 18 yaşa kadar 1 gün = 2), 107/5 (istisnalar dışında 15 yaşa kadar 1 gün = 2)
   let accelLi='';
-  const accelRule=child&&birth&&start?(crimeDate<=new Date('2020-03-30T23:59:59')?'g64':(!K.c7593?'p1075':null)):null;
+  const accelRule=child&&birth&&start?(pre2020All?'g64':(!K.c75?'p1075':null)):null;
+  if(child&&!pre2020All&&!K.c75&&(K.c7593||extras.some(x=>crimeInfo(x.crime).c7593)))reasons.push('7593 sayılı Kanunla 107/5’e eklenen suç istisnaları (81-83, 102, 103, 188, 220) 18.08.2026 ve sonrasında işlenen suçlara uygulanır; daha önceki suçlarda yaş indirimli sayım istisnasız uygulanır (TCK m.7/3).');
   if(accelRule){
     let counted=Math.min(credit,ksGross),d=0;const day=new Date(start);
     while(counted<ksGross&&d<40000){const a=ageOn(birth,day);counted+=accelRule==='g64'?(a<15?3:a<18?2:1):(a<15?2:1);d++;day.setDate(day.getDate()+1)}
@@ -155,7 +169,7 @@ function performCalculation(crime,totalDays,crimeDate){
       reasons.push((accelRule==='g64'?'Geçici 6/4':'107/5')+' uyarınca yaş indirimli sayım gün gün uygulandı; koşullu salıverilme '+saved+' gün öne geldi. Mahsup edilen süreler ihtiyatlı olarak bire bir sayıldı; denetimli serbestlik ve açık kurum eşikleri yaklaşık olarak bu tarihe göre belirlendi.');}
   }
   const ksLine=life?`<li>${agg?'Ağırlaştırılmış müebbet':'Müebbet'} hapiste koşullu salıverilme için cezaevinde geçirilmesi gereken süre: <b>${lifeYears} yıl</b>${hasCredit?` (düşülen süre çıkarılınca <b>${fdur(ksNet)}</b>)`:''}</li>`:null;
-  const recLi=recAdd?`<li>Mükerrir olduğu için bu süreye <b>${fdur(recAdd)}</b> eklendi; eklenen süre önceki cezanın en ağırını aşamaz. Toplam: <b>${fdur(ksGross)}</b>${hasCredit?` (düşülen süre çıkarılınca <b>${fdur(ksNet)}</b>)`:''}</li>`:'';
+  const recLi=recAdd?`<li>Mükerrir olduğu için bu süreye <b>${fdur(recAdd)}</b> eklendi; eklenen süre önceki cezanın en ağırını aşamaz. Toplam: <b>${fdur(firstKs)}</b>${hasCredit&&!multi?` (düşülen süre çıkarılınca <b>${fdur(ksNet)}</b>)`:''}</li>`:'';
   const crimeText=document.getElementById('crimeType').options[document.getElementById('crimeType').selectedIndex].text;
   const when=t=>start?fmtDate(at(start,t)):null;
   // Açık ceza infaz kurumu (Açık Ceza İnfaz Kurumlarına Ayrılma Yönetmeliği m.5, 6, 7, 8)
@@ -190,12 +204,16 @@ function performCalculation(crime,totalDays,crimeDate){
   let dsWindow=Math.max(g6?1095:365,womanChild?(g62?1460:730):0,age70&&g62?1460:0,illness?1095:0);
   if(ill65)dsWindow=Math.max(dsWindow,ksNet);
   const g6Closed=legacy&&pre2020&&(g6||(g62&&(womanChild||age70||ill65)));
+  // Geçici 6/3: 30.3.2020 öncesi, 6/1 istisnası olmayan örgüt suçlarında açık kuruma ayrılamasa da DS kapalı kurumdan uygulanabilir.
+  const dsFromClosed=noOpen&&!(life&&agg)&&g6Closed,noDs=noOpen&&!dsFromClosed;
+  if(dsFromClosed){const i=reasons.findIndex(r=>r.includes('m.8/1-ç'));const t='Örgüt suçlarından hükümlüler Yönetmelik m.8/1-ç uyarınca açık kuruma ayrılamaz; ancak suç 30.03.2020 ve öncesinde işlendiği ve Geçici 6/1 istisnaları arasında olmadığı için Geçici 6/3 uyarınca denetimli serbestlik kapalı kurumdan da uygulanabilir.';if(i>=0)reasons[i]=t;else reasons.push(t)}
   if(g62&&(womanChild||age70))reasons.push('Geçici 6/2-a: 30.03.2020 ve öncesi suçlarda 0-6 yaş çocuklu kadın ve 70 yaşını bitirmiş hükümlülerde 105/A-3’teki iki yıllık süre dört yıl olarak uygulandı.');
   if(ill65)reasons.push('Geçici 6/2-b: ağır hastalık, engellilik veya kocama nedeniyle hayatını yalnız idame ettiremeyen 65 yaşını bitirmiş hükümlüde koşullu salıverilmeye kadar sürenin tamamı denetimli serbestlikle geçirilebilir.');
   if(g6Closed)reasons.push('Geçici 6/3: bu süreler iyi hâlli olmak koşuluyla kapalı ceza infaz kurumunda bulunan hükümlülere de uygulanır; denetimli serbestlik için açık kuruma ayrılma şartı aranmadı.');
   if(age70&&!g62)reasons.push('70 yaş için özel denetimli serbestlik süresi yalnızca 30.03.2020 ve öncesi suçlarda (Geçici 6/2-a) öngörülmüştür; bu dosyada genel süre uygulandı.');
   if(g6)reasons.push('30.03.2020 ve öncesinde işlenen, Geçici 6/1 istisnaları dışındaki suçlarda 105/A’daki bir yıllık süre üç yıl olarak uygulandı'+(womanChild?'; 0-6 yaş çocuklu kadın hükümlüde Geçici 6/2-a uyarınca dört yıl':'')+'.');
-  if(dsWindow>365)reasons.push('5275 m.105/A-3 uyarınca '+(illness?'ağır hastalık, engellilik veya kocama nedeniyle hayatını yalnız idame ettiremeyen hükümlüde 3 yıllık':'0-6 yaş grubunda çocuğu bulunan kadın hükümlüde 2 yıllık')+' denetimli serbestlik süresi uygulandı.');
+  if(womanChild&&!g62)reasons.push('5275 m.105/A-3-a uyarınca 0-6 yaş grubunda çocuğu bulunan kadın hükümlüde denetimli serbestlik süresi 2 yıl olarak uygulandı.');
+  if(illness&&!ill65)reasons.push('5275 m.105/A-3-b uyarınca ağır hastalık, engellilik veya kocama nedeniyle hayatını yalnız idame ettiremeyen hükümlüde denetimli serbestlik süresi 3 yıl olarak uygulandı.');
   const prisonBase=dsub(ksNet,dsWindow);
   let prison=prisonBase,prisonEarly=null,tenLi='';
   if(tenAny){
@@ -209,15 +227,16 @@ function performCalculation(crime,totalDays,crimeDate){
     }
   }
   if(!g6Closed&&openAt!==null&&U(openAt)>U(prison)){prison=openAt;prisonEarly=null;reasons.push('105/A için açık kurumda bulunma şartı nedeniyle DS eşiği açık kuruma ayrılma tarihinden önce olamaz.')}
-  if(noOpen){prison=ksNet;prisonEarly=null}
-  let g10Li='';
-  if(legacy&&!juv&&!noOpen&&openAt!==null){
+  if(U(prison)>U(ksNet)){prison=ksNet;prisonEarly=null}
+  if(noDs){prison=ksNet;prisonEarly=null}
+  let g10Li='',g10On=false;
+  if(legacy&&!juv&&!noDs&&openAt!==null){
     if(K.g10x){g10Li='<li>Suç 31 Temmuz 2023 veya öncesinde işlenmiş olsa da bu suç türü Geçici 10/6 kapsamı dışında kaldığı için açık cezaevine ve denetimli serbestliğe 3 yıl erken geçiş uygulanmaz.</li>';reasons.push('Geçici 10/6 istisna suçlarından olduğu için 3 yıl erken açık/DS uygulanmadı.')}
     else{
       const cmin=(life||total>=3650)?90:30,nOpen=openAt,nDs=prison;
       const gOpen=directOpen?0:Math.min(nOpen,Math.max(cmin,nOpen-1095));
       const gDs=Math.min(nDs,Math.max(nDs-1095,gOpen+90));
-      openAt=gOpen;prison=gDs;prisonEarly=null;
+      openAt=gOpen;prison=gDs;prisonEarly=null;g10On=true;
       g10Li=`<li>Suç 31 Temmuz 2023 veya öncesinde işlendiği için açık cezaevine ve denetimli serbestliğe <b>3 yıl erken</b> geçilebilir (5275 Geçici m.10/6). Bunun için en az ${cmin===90?'3 ay':'1 ay'} kapalı cezaevinde ve en az 3 ay açık cezaevinde kalınmış olmalıdır.</li>`;
       reasons.push('Geçici 10/6 (7571 sayılı Kanunla değişik): 31.7.2023 ve öncesi suçlarda, toplam ceza 10 yıldan azsa 1 ay, fazlaysa 3 ay kapalıda kalıp açığa ayrılmasına 3 yıl veya daha az kalanlar açığa ayrılabilir; en az 3 ay açıkta kalmak şartıyla DS’den 3 yıl erken yararlanılır.');
     }
@@ -227,14 +246,14 @@ function performCalculation(crime,totalDays,crimeDate){
   const closedPart=openAt!==null?openAt:prison,openPart=openAt!==null?dsub(prison,openAt):ZERO;
   let dateCards='',timeline='';
   if(start){
-    dateCards=`${openAt!==null&&U(openAt)>0?`<div class="stat highlight"><span>AÇIK KURUMA AYRILMA (TAHMİNİ)</span><b>${when(openAt)}</b></div>`:''}${noOpen?'':`<div class="stat highlight"><span>DENETİMLİ SERBESTLİK İÇİN ARİTMETİK EŞİK</span><b>${when(prison)}</b></div>`}<div class="stat highlight"><span>KOŞULLU SALIVERİLME ARİTMETİK TARİHİ</span><b>${when(ksNet)}</b></div>`;
-    timeline=`<h3 class="result-title">Aritmetik zaman çizelgesi</h3><div class="timeline"><div class="timeline-row"><span>İNFAZA BAŞLAMA</span><strong>${fmtDate(start)}</strong></div>${openAt!==null&&U(openAt)>0?`<div class="timeline-row"><span>AÇIK KURUMA AYRILMA</span><strong>${when(openAt)}</strong></div>`:''}${noOpen?'':`<div class="timeline-row"><span>DS ARİTMETİK EŞİĞİ</span><strong>${when(prison)}</strong></div>`}<div class="timeline-row"><span>KS ARİTMETİK TARİHİ</span><strong>${when(ksNet)}</strong></div><div class="timeline-row"><span>${life?'DENETİM SÜRESİ SONU':'BİHAKKIN ARİTMETİK TARİH'}</span><strong>${when(life?dadd(ksNet,ksGross):fullNet)}</strong></div></div>`;
+    dateCards=`${openAt!==null&&U(openAt)>0?`<div class="stat highlight"><span>AÇIK KURUMA AYRILMA (TAHMİNİ)</span><b>${when(openAt)}</b></div>`:''}${noDs?'':`<div class="stat highlight"><span>DENETİMLİ SERBESTLİK İÇİN ARİTMETİK EŞİK</span><b>${when(prison)}</b></div>`}<div class="stat highlight"><span>KOŞULLU SALIVERİLME ARİTMETİK TARİHİ</span><b>${when(ksNet)}</b></div>`;
+    timeline=`<h3 class="result-title">Aritmetik zaman çizelgesi</h3><div class="timeline"><div class="timeline-row"><span>İNFAZA BAŞLAMA</span><strong>${fmtDate(start)}</strong></div>${openAt!==null&&U(openAt)>0?`<div class="timeline-row"><span>AÇIK KURUMA AYRILMA</span><strong>${when(openAt)}</strong></div>`:''}${noDs?'':`<div class="timeline-row"><span>DS ARİTMETİK EŞİĞİ</span><strong>${when(prison)}</strong></div>`}<div class="timeline-row"><span>KS ARİTMETİK TARİHİ</span><strong>${when(ksNet)}</strong></div><div class="timeline-row"><span>${life?'DENETİM SÜRESİ SONU':'BİHAKKIN ARİTMETİK TARİH'}</span><strong>${when(life?dadd(ksNet,ksGross):fullNet)}</strong></div></div>`;
   }
   const b18=birth?new Date(birth.getFullYear()+18,birth.getMonth(),birth.getDate(),12):null;
   const juvOpen=juv&&start&&b18&&b18>start&&b18<at(start,prison);
   const steps=[];
   if(start){
-    if(noOpen){
+    if(noDs){
       steps.push(`<li><span class="ps-when">${fmtDate(start)} → ${when(ksNet)}</span><strong>Kapalı cezaevi</strong><p>Yaklaşık <b>${fdur(ksNet)}</b> kapalı cezaevinde kalınır. ${agg?'Ağırlaştırılmış müebbet hapis cezasında':'Terör ve örgüt suçlarında kural olarak'} açık cezaevine geçilemez; bu yüzden denetimli serbestlik de uygulanmaz.</p></li>`);
     }else if(juv){
       if(juvOpen){
@@ -242,36 +261,37 @@ function performCalculation(crime,totalDays,crimeDate){
         steps.push(`<li><span class="ps-when">${fmtDate(b18)} → ${when(prison)}</span><strong>Açık cezaevi</strong><p>18 yaşını bitirince suç türüne bakılmaksızın açık cezaevine gönderilir; eğitime devam ediyorsa bu 21 yaşını bitirince olur. Yaklaşık <b>${fdurAbout(between(b18,at(start,prison)))}</b> açık cezaevinde kalınır. Açık cezaevinde dış güvenlik görevlisi yoktur ve hükümlülerin çalıştırılmasına öncelik verilir.</p></li>`);
       }else if(U(prison)>0)steps.push(`<li><span class="ps-when">${fmtDate(start)} → ${when(prison)}</span><strong>Çocuk eğitimevi</strong><p>Yaklaşık <b>${fdur(prison)}</b> çocuk eğitimevinde kalınır.</p></li>`);
     }else{
-      if(!directOpen&&U(closedPart)>0)steps.push(`<li><span class="ps-when">${fmtDate(start)} → ${when(closedPart)}</span><strong>Kapalı cezaevi</strong><p>Yaklaşık <b>${fdurAbout(closedPart)}</b> kapalı cezaevinde kalınır. Açık cezaevine geçmek için iyi hâlli olmak ve cezaevi idaresinin kararı gerekir.</p></li>`);
-      if(U(openPart)>0||directOpen)steps.push(`<li><span class="ps-when">${when(openAt)} → ${when(prison)}</span><strong>Açık cezaevi</strong><p>${directOpen?'Ceza 3 yıl veya daha az olduğu için doğrudan açık cezaevine alınır. ':''}Yaklaşık <b>${fdurAbout(openPart)}</b> açık cezaevinde kalınır. Açık cezaevinde dış güvenlik görevlisi yoktur ve hükümlülerin çalıştırılmasına öncelik verilir.</p></li>`);
+      if(!directOpen&&U(closedPart)>0)steps.push(`<li><span class="ps-when">${fmtDate(start)} → ${when(closedPart)}</span><strong>Kapalı cezaevi</strong><p>Yaklaşık <b>${fdurAbout(closedPart)}</b> kapalı cezaevinde kalınır. ${openAt===null?'Suç 30 Mart 2020 veya öncesinde işlendiği için denetimli serbestliğe kapalı cezaevinden de geçilebilir (5275 Geçici m.6/3); bunun için iyi hâlli olmak gerekir.':'Açık cezaevine geçmek için iyi hâlli olmak ve cezaevi idaresinin kararı gerekir.'}</p></li>`);
+      if(U(openPart)>0||directOpen)steps.push(`<li><span class="ps-when">${when(openAt)} → ${when(prison)}</span><strong>Açık cezaevi</strong><p>${directOpen?(total>1095?'Taksirli suçta toplam ceza 5 yıl':'Toplam ceza 3 yıl')+' veya daha az olduğu için doğrudan açık cezaevine alınır. ':''}Yaklaşık <b>${fdurAbout(openPart)}</b> açık cezaevinde kalınır. Açık cezaevinde dış güvenlik görevlisi yoktur ve hükümlülerin çalıştırılmasına öncelik verilir.</p></li>`);
     }
-    if(!noOpen)steps.push(`<li><span class="ps-when">${when(prison)} → ${when(ksNet)}</span><strong>Denetimli serbestlik</strong><p>Yaklaşık <b>${fdur(dsActual)}</b> dışarıda, imza ve kurallara uyarak geçirilir. Kurallara uyulmazsa cezaevine geri dönülebilir.</p></li>`);
+    if(!noDs)steps.push(`<li><span class="ps-when">${when(prison)} → ${when(ksNet)}</span><strong>Denetimli serbestlik</strong><p>Yaklaşık <b>${fdur(dsActual)}</b> dışarıda, imza ve kurallara uyarak geçirilir. Kurallara uyulmazsa cezaevine geri dönülebilir.</p></li>`);
     steps.push(`<li><span class="ps-when">${when(ksNet)}</span><strong>Koşullu salıverilme</strong><p>${life?`Cezaevinden çıkılır. Ardından <b>${fdur(ksGross)}</b> denetim süresi başlar (5275 m.107/6); bu sürede kasıtlı yeni bir suç işlenirse salıverilme geri alınabilir.`:'Cezaevi ile ilişki sona erer. Ancak cezanın asıl bitiş tarihine kadar “denetim süresi” devam eder; bu sürede kasıtlı yeni bir suç işlenirse salıverilme geri alınabilir.'}</p></li>`);
     steps.push(life?`<li><span class="ps-when">${when(dadd(ksNet,ksGross))}</span><strong>Denetim süresinin bitmesi</strong><p>Denetim süresi kurallara uyularak geçirilirse ceza infaz edilmiş sayılır (5275 m.107/14).</p></li>`:`<li><span class="ps-when">${when(fullNet)}</span><strong>Cezanın tamamen bitmesi</strong><p>Mahkemenin verdiği cezanın tamamı dolar.</p></li>`);
   }
   let head;
-  if(noOpen){
+  if(noDs){
     head=`<p class="plain-big">${start?`Koşullu salıverilme için tahmini tarih: <b>${when(ksNet)}</b>`:`Koşullu salıverilmeye kadar cezaevinde kalınacak tahmini süre: <b>${fdur(ksNet)}</b>`}</p><p class="plain-sub">${noOpenTxt}</p>`;
   }else{
     head=`${start?(U(prison)>0?`<p class="plain-big">En erken <b>${when(prison)}</b> tarihinde denetimli serbestlikle cezaevinden çıkış mümkün olabilir.</p>`:`<p class="plain-big">Hesaba göre cezaevinde kalınacak süre çok kısa; denetimli serbestlik değerlendirmesi hemen gündeme gelebilir.</p>`):`<p class="plain-big">Cezaevinde kalınacak tahmini süre: <b>${fdur(prison)}</b></p>`}${!juv&&openAt!==null&&U(prison)>0?`<p class="plain-sub">Bu sürenin ${directOpen?'tamamı açık cezaevinde geçer.':U(openPart)>0?`yaklaşık <b>${fdurAbout(closedPart)}</b> kısmı kapalı, <b>${fdurAbout(openPart)}</b> kısmı açık cezaevinde geçer.`:'tamamı kapalı cezaevinde geçer.'}</p>`:''}${juvOpen?`<p class="plain-sub">Bu sürenin yaklaşık <b>${fdurAbout(between(start,b18))}</b> kısmı çocuk eğitimevinde, <b>${fdurAbout(between(b18,at(start,prison)))}</b> kısmı açık cezaevinde geçer.</p>`:''}<p class="plain-sub">${start&&U(prison)>0?'Bu tarihten':'Bu süreden'} sonra cezanın kalanı dışarıda, imza ve kurallara uyma gibi yükümlülüklerle geçirilir. Bunun için cezaevinde iyi hâlli olmak ve infaz hâkiminin onayı gerekir.</p>${prisonEarly!==null?`<p class="plain-sub">Tutuklulukta cezaevinde geçen süre de hesaba katılırsa ${U(prisonEarly)===0?'denetimli serbestlik hemen gündeme gelebilir.':start?`çıkış tarihi öne gelebilir (en erken: <b>${when(prisonEarly)}</b>).`:`cezaevinde kalınacak süre kısalabilir (en kısa: <b>${fdur(prisonEarly)}</b>).`}</p>`:''}`;
   }
   const female=document.getElementById('female')?.checked||womanChild;
   let homeLi='';
-  if(!life&&total>0){
+  if(!life&&total>0&&(K.sex||K.open==='none'))homeLi='<li>Terör, örgüt ve cinsel dokunulmazlığa karşı suçlarda cezanın konutta, hafta sonları veya geceleri çektirilmesi mümkün değildir (5275 m.110/9).</li>';
+  else if(!life&&total>0){
     const homeLim=(ageNow>=80?2190:ageNow>=75?1825:ageNow>=70?1460:(female||child||ageNow>=65)?1095:0);
     if(homeLim&&total<=homeLim)homeLi+=`<li>Toplam ceza ${fdur(homeLim)} veya daha az olduğu için, suçtan doğan zarar giderilmişse cezanın <b>konutta çektirilmesi</b> infaz hâkiminden istenebilir (5275 m.110/2).</li>`;
     const allNeg=K.neg;
-    if(total<=(allNeg?1825:1095))homeLi+=`<li>Toplam ceza ${allNeg?'5 yıl (taksirle öldürme hariç)':'3 yıl'} veya daha az olduğu için cezanın <b>hafta sonları veya geceleri</b> cezaevinde çektirilmesi infaz hâkiminden istenebilir (5275 m.110/1).</li>`;
+    if(!K.negKill&&total<=(allNeg?1825:1095))homeLi+=`<li>Toplam ceza ${allNeg?'5 yıl (taksirle öldürme hariç)':'3 yıl'} veya daha az olduğu için cezanın <b>hafta sonları veya geceleri</b> cezaevinde çektirilmesi infaz hâkiminden istenebilir (5275 m.110/1).</li>`;
   }
   let todayTxt='';
   if(start){const today=new Date();today.setHours(12,0,0,0);const dsD=at(start,prison),ksD=at(start,ksNet);
-    if(!noOpen&&today<dsD)todayTxt=`Bugün (${fmtDate(today)}) itibarıyla denetimli serbestliğe <b>${fdurAbout(between(today,dsD))}</b>, koşullu salıverilmeye <b>${fdurAbout(between(today,ksD))}</b> kaldı.`;
+    if(!noDs&&today<dsD)todayTxt=`Bugün (${fmtDate(today)}) itibarıyla denetimli serbestliğe <b>${fdurAbout(between(today,dsD))}</b>, koşullu salıverilmeye <b>${fdurAbout(between(today,ksD))}</b> kaldı.`;
     else if(today<ksD)todayTxt=`Bugün (${fmtDate(today)}) itibarıyla koşullu salıverilmeye <b>${fdurAbout(between(today,ksD))}</b> kaldı.`;
     else todayTxt=`Hesaplanan koşullu salıverilme tarihi geçmiş görünüyor (${fmtDate(ksD)}).`;}
-  const html=`<div class="plain"><div class="plain-head"><span class="plain-kicker">KISACA SONUÇ</span>${head}${todayTxt?`<p class="plain-sub plain-today">${todayTxt}</p>`:''}${start?'':'<p class="plain-sub"><b>Tarihleri görmek için yukarıya cezaevine giriş tarihini yazın.</b></p>'}</div>${steps.length?`<ol class="plain-steps">${steps.join('')}</ol>`:''}<div class="plain-why"><h4>Bu sonuç nasıl çıktı?</h4><ul><li>${multi?'1. ceza':'Mahkemenin verdiği ceza'}: <b>${totalLabel}</b></li>${hasCredit?`<li>Gözaltı ve tutuklulukta geçen, cezadan düşülen süre: <b>${fdur(credit)}</b>${periodDays?` (tarihle girilen dönemler: ${periodDays} gün, giriş ve çıkış günleri dahil)`:''}</li>`:''}${ksLine||`<li>Bu suç türünde koşullu salıverilme için cezanın <b>${ratioWords(ratio)}</b> çekmek gerekir: <b>${fdur(ksGross-recAdd)}</b>${hasCredit&&!recAdd?` (düşülen süre çıkarılınca <b>${fdur(ksNet)}</b>)`:''}</li>`}${recLi}${multiLi}${accelLi}${openLi}${g10Li}${noOpen?'':`<li>Bu sürenin koşullu salıverilmeden önceki son kısmı (en fazla ${fdur(dsWindow)}) denetimli serbestlikle dışarıda geçirilebilir: <b>${fdur(dsActual)}</b></li>${tenLi}<li>${tenLi?'Bu nedenle cezaevinde geçirilecek süre':'Geriye kalan kısım cezaevinde geçirilir'}: <b>${fdur(prison)}</b></li>`}${noOpen?`<li>${agg?'Ağırlaştırılmış müebbet hapis cezasına mahkûm olanlar':'Terör ve örgüt suçlarından hükümlüler'} kural olarak açık cezaevine geçemez; denetimli serbestlik için açık cezaevinde bulunmak gerekir.</li>`:''}${childLi}${homeLi}</ul></div>${creditNote(manualCredit,start)}${plainWarn()}<button type="button" class="btn secondary print-btn" id="printBtn">Sonucu yazdır / PDF olarak kaydet</button>${techBlock(`<div class="summary"><div class="eyebrow inline-style-2">İNFAZ SONUÇ PARAMETRELERİ</div><div class="rate">${life?lifeYears+' yıl koşullu salıverilme süresi':ratioLabel(ratio)+' koşullu salıverilme oranı'}</div><p>${crimeText}</p></div><h3 class="result-title">Süre parametreleri</h3><div class="stats"><div class="stat"><span>TOPLAM CEZA</span><b>${life?totalLabel:fdurFull(total)}</b></div><div class="stat"><span>MAHSUP</span><b>${fdurFull(credit)}</b></div><div class="stat"><span>KOŞULLU SÜRE</span><b>${fdurFull(ksGross)}</b></div><div class="stat"><span>MAHSUP SONRASI</span><b>${fdurFull(ksNet)}</b></div><div class="stat"><span>TAHMİNİ KURUM SÜRESİ</span><b>${fdurFull(prison)}</b></div>${!juv&&openAt!==null?`<div class="stat"><span>KAPALI KURUM (TAHMİNİ)</span><b>${fdurFull(closedPart)}</b></div><div class="stat"><span>AÇIK KURUM (TAHMİNİ)</span><b>${fdurFull(openPart)}</b></div>`:''}<div class="stat"><span>TAHMİNİ DS SÜRESİ</span><b>${fdurFull(dsActual)}</b></div>${dateCards}</div>${timeline}<div class="reason"><b>Hesaplama açıklaması</b><br>${reasons.join('<br>')}<br>105/A uygulaması ayrıca açık kurum/çocuk eğitimevi statüsü, iyi hâl ve infaz hâkimi değerlendirmesine bağlıdır. Açık kuruma ayrılma idare ve gözlem kurulu kararına bağlıdır; yüksek güvenlikli kurum, disiplin cezası ve firar gibi hâller otomatik değerlendirilmez. Sonuç resmi müddetname değildir.</div>`)}</div>`;
+  const html=`<div class="plain"><div class="plain-head"><span class="plain-kicker">KISACA SONUÇ</span>${head}${todayTxt?`<p class="plain-sub plain-today">${todayTxt}</p>`:''}${start?'':'<p class="plain-sub"><b>Tarihleri görmek için yukarıya cezaevine giriş tarihini yazın.</b></p>'}</div>${steps.length?`<ol class="plain-steps">${steps.join('')}</ol>`:''}<div class="plain-why"><h4>Bu sonuç nasıl çıktı?</h4><ul><li>${multi?'1. ceza':'Mahkemenin verdiği ceza'}: <b>${totalLabel}</b></li>${hasCredit?`<li>Gözaltı ve tutuklulukta geçen, cezadan düşülen süre: <b>${fdur(credit)}</b>${periodDays?` (tarihle girilen dönemler: ${periodDays} gün, giriş ve çıkış günleri dahil)`:''}</li>`:''}${ksLine||`<li>Bu suç türünde koşullu salıverilme için cezanın <b>${ratioWords(ratio)}</b> çekmek gerekir: <b>${fdur(firstKs-recAdd)}</b>${hasCredit&&!recAdd&&!multi?` (düşülen süre çıkarılınca <b>${fdur(ksNet)}</b>)`:''}</li>`}${recLi}${multiLi}${accelLi}${openLi}${g10Li}${noDs?'':`<li>Bu sürenin koşullu salıverilmeden önceki son kısmı (${ill65?'Geçici 6/2-b uyarınca tamamı':`en fazla ${fdur(g10On?dsWindow+1095:dsWindow)}${g10On?', Geçici 10/6 ile eklenen 3 yıl dahil':''}`}) denetimli serbestlikle dışarıda geçirilebilir: <b>${fdur(dsActual)}</b></li>${tenLi}<li>${tenLi?'Bu nedenle cezaevinde geçirilecek süre':'Geriye kalan kısım cezaevinde geçirilir'}: <b>${fdur(prison)}</b></li>`}${noOpen?`<li>${agg?'Ağırlaştırılmış müebbet hapis cezasına mahkûm olanlar':'Terör ve örgüt suçlarından hükümlüler'} kural olarak açık cezaevine geçemez; ${dsFromClosed?'ancak suç 30.03.2020 ve öncesinde işlendiği için denetimli serbestlik kapalı cezaevinden de uygulanabilir (5275 Geçici m.6/3).':'denetimli serbestlik için açık cezaevinde bulunmak gerekir.'}</li>`:''}${childLi}${homeLi}</ul></div>${creditNote(manualCredit,start)}${plainWarn()}<button type="button" class="btn secondary print-btn" id="printBtn">Sonucu yazdır / PDF olarak kaydet</button>${techBlock(`<div class="summary"><div class="eyebrow inline-style-2">İNFAZ SONUÇ PARAMETRELERİ</div><div class="rate">${life?lifeYears+' yıl koşullu salıverilme süresi':ratioLabel(ratio)+' koşullu salıverilme oranı'}</div><p>${crimeText}</p></div><h3 class="result-title">Süre parametreleri</h3><div class="stats"><div class="stat"><span>TOPLAM CEZA</span><b>${life?totalLabel:fdurFull(total)}</b></div><div class="stat"><span>MAHSUP</span><b>${fdurFull(credit)}</b></div><div class="stat"><span>KOŞULLU SÜRE</span><b>${fdurFull(ksGross)}</b></div><div class="stat"><span>MAHSUP SONRASI</span><b>${fdurFull(ksNet)}</b></div><div class="stat"><span>TAHMİNİ KURUM SÜRESİ</span><b>${fdurFull(prison)}</b></div>${!juv&&openAt!==null?`<div class="stat"><span>KAPALI KURUM (TAHMİNİ)</span><b>${fdurFull(closedPart)}</b></div><div class="stat"><span>AÇIK KURUM (TAHMİNİ)</span><b>${fdurFull(openPart)}</b></div>`:''}<div class="stat"><span>TAHMİNİ DS SÜRESİ</span><b>${fdurFull(dsActual)}</b></div>${dateCards}</div>${timeline}<div class="reason"><b>Hesaplama açıklaması</b><br>${reasons.join('<br>')}<br>105/A uygulaması ayrıca açık kurum/çocuk eğitimevi statüsü, iyi hâl ve infaz hâkimi değerlendirmesine bağlıdır. Açık kuruma ayrılma idare ve gözlem kurulu kararına bağlıdır; yüksek güvenlikli kurum, disiplin cezası ve firar gibi hâller otomatik değerlendirilmez. Sonuç resmi müddetname değildir.</div>`)}</div>`;
   const result=document.getElementById('result');result.innerHTML=html;result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-function resetForm(){document.querySelectorAll('input').forEach(i=>{if(i.type==='checkbox')i.checked=false;else i.value=''});document.getElementById('crimeType').value='';const st=document.getElementById('sentenceType');if(st)st.value='sureli';const xb=document.getElementById('extraSentences');if(xb)xb.innerHTML='';const pb=document.getElementById('periods');if(pb)pb.innerHTML='';if(typeof syncSentenceType==='function'){syncSentenceType();syncRecidivist()}const r=document.getElementById('result');r.classList.remove('show');r.innerHTML=''}
+function resetForm(){document.querySelectorAll('input').forEach(i=>{if(i.type==='checkbox')i.checked=false;else i.value=''});document.getElementById('crimeType').value='';const st=document.getElementById('sentenceType');if(st)st.value='sureli';const xb=document.getElementById('extraSentences');if(xb)xb.innerHTML='';const pb=document.getElementById('periods');if(pb)pb.innerHTML='';if(typeof syncSentenceType==='function'){syncSentenceType();syncRecidivist()}if(typeof syncLifeExtras==='function')syncLifeExtras();const r=document.getElementById('result');r.classList.remove('show');r.innerHTML=''}
 document.getElementById('secondRecidivist').addEventListener('change',e=>{if(e.target.checked)document.getElementById('recidivist').checked=false});
 document.getElementById('recidivist').addEventListener('change',e=>{if(e.target.checked)document.getElementById('secondRecidivist').checked=false});
 function syncSentenceType(){const life=(document.getElementById('sentenceType')?.value||'sureli')!=='sureli';const w=document.getElementById('sentenceWrap');if(w)w.hidden=life}
