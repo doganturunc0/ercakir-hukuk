@@ -1,0 +1,5 @@
+.office-map-compact .map-load-btn{position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px;border:0;background:#e8edef;color:#18394f;font:700 14px/1.3 Arial,sans-serif;cursor:pointer;text-align:center}
+.office-map-compact .map-load-btn small{display:block;max-width:340px;font-weight:400;font-size:12px;line-height:1.45;color:#4a5d68}
+.office-map-compact .map-load-btn:hover,.office-map-compact .map-load-btn:focus-visible{background:#dfe7ea;outline:2px solid #c79518;outline-offset:-4px}
+.office-map-compact .map-load-cta{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 18px;border-radius:6px;background:#18394f!important;color:#fff!important;font:700 13px/1 Arial,sans-serif;letter-spacing:.02em;box-shadow:0 6px 18px rgba(24,52,71,.18)}
+.office-map-compact .map-load-btn:hover .map-load-cta{background:#c79518!important;color:#18394f!important}
