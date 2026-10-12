@@ -41,6 +41,7 @@ function hesapla(){
       if(!anne&&anaBir>0)heirs.push({ad:'Her bir ana bir kardeş ('+anaBir+' kişi)',adet:anaBir,pay:F(anneYarim.n,anneYarim.d*(tam+anaBir)),sakli:F(0)});
       if(!baba&&babaBir>0)heirs.push({ad:'Her bir baba bir kardeş ('+babaBir+' kişi)',adet:babaBir,pay:F(babaYarim.n,babaYarim.d*(tam+babaBir)),sakli:F(0)});
       if(!anneTaraf||!babaTaraf)note.push('Bir tarafta mirasçı bulunmadığı için o tarafın payı diğer taraftaki mirasçılara geçmiştir (TMK m.496).');
+      if(!anne||!baba)note.push('Mirasbırakandan önce ölmüş bir kardeşin çocukları varsa o kardeş de sayıya eklenmelidir; onun payını çocukları aralarında eşit paylaşır (TMK m.496).');
       note.push('Kardeşlerin saklı payı yoktur.');
     }else if(yes('zumre3')){
       if(es)esPay=F(3,4);
