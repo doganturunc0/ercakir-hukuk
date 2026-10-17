@@ -61,3 +61,5 @@
 .sc-footer .sc-footer-bottom.footer-social{display:block;gap:0;margin:28px auto 0}
 .sc-footer .sc-footer-bottom a{width:auto;height:auto;display:inline;place-items:initial;border:0;border-radius:0;color:#fff}
 .sc-header~main .top>.brand{display:none}
+
+.sc-social a{display:inline-flex;align-items:center;min-height:24px;padding:2px 0}
