@@ -4,3 +4,5 @@
 .consent-preferences-button{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .consent-preferences-button:focus-visible{outline:2px solid #c69a2b;outline-offset:2px}
 .consent-preferences-bar{text-align:center;padding:18px 16px 28px;font-size:12px;color:#5b5f62}
+
+.consent-preferences-button{display:inline-flex;align-items:center;min-height:24px;padding:2px 0}
