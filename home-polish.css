@@ -36,3 +36,4 @@
 
 article.reveal>a{display:inline-flex;align-items:center;min-height:24px}
 .all-articles-link+.all-articles-link{margin-left:34px}@media(max-width:620px){.all-articles-link+.all-articles-link{display:table;margin-left:0;margin-top:14px}}
+.contact-copy p a{text-decoration:underline;text-decoration-color:rgba(183,139,67,.6);text-decoration-thickness:1px;text-underline-offset:3px}
