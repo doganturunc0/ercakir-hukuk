@@ -111,5 +111,9 @@
 
   box.hidden = false;
   var q0 = new URLSearchParams(window.location.search).get('q');
-  if (q0) { input.value = q0.slice(0, 80); run(); }
+  if (q0) {
+    input.value = q0.slice(0, 80);
+    run();
+    box.scrollIntoView({ block: 'start' });
+  }
 })();
