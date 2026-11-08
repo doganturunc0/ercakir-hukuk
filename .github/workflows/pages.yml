@@ -32,6 +32,7 @@ jobs:
           rm -rf _site
           mkdir -p _site
           rsync -a ./ _site/ --exclude '_site/' --exclude '.git/' --exclude 'README.md' --exclude 'scripts/' --exclude '.github/' --exclude '.gitignore' --exclude '.env' --exclude '.env.*' --exclude '*.pem' --exclude '*.key' --exclude '*.p12' --exclude '*.pfx' --exclude '*.jks' --exclude '*.keystore' --exclude 'credentials.json' --exclude 'service-account*.json' --exclude 'secrets.json' --exclude '*.secret'
+          python3 scripts/build_search_index.py _site
           python - <<'PY'
           from pathlib import Path
           import re

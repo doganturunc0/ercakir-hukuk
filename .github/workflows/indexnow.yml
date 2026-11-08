@@ -1,0 +1,71 @@
+name: IndexNow notification
+
+# After a successful GitHub Pages deploy from a push to main, notify IndexNow
+# (Bing, Yandex and other participating engines) about the pages that changed
+# in that push. Failures never affect the site; this job only sends a request.
+on:
+  workflow_run:
+    workflows: ["Deploy Erçakır Hukuk site to GitHub Pages"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployed commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+      - name: Send changed URLs to IndexNow
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, re, subprocess, urllib.error, urllib.request
+          from pathlib import Path
+
+          host = 'avbusraturunc.com'
+          keys = [p for p in Path('.').glob('*.txt')
+                  if re.fullmatch(r'[0-9a-f]{32}', p.stem) and p.read_text().strip() == p.stem]
+          if not keys:
+              print('IndexNow key file not found; skipping.')
+              raise SystemExit(0)
+          key = keys[0].stem
+
+          try:
+              changed = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True).split()
+          except subprocess.CalledProcessError:
+              print('No parent commit to compare; skipping.')
+              raise SystemExit(0)
+
+          sitemap = Path('sitemap.xml').read_text(encoding='utf-8')
+          listed = set(re.findall(r'<loc>(https://avbusraturunc\.com/[^<]*)</loc>', sitemap))
+          urls = []
+          for name in changed:
+              if '/' in name or not name.endswith('.html') or not Path(name).exists():
+                  continue
+              url = f'https://{host}/' if name == 'index.html' else f'https://{host}/{name}'
+              if url in listed:
+                  urls.append(url)
+          if not urls:
+              print('No indexable page changed; nothing to send.')
+              raise SystemExit(0)
+
+          body = json.dumps({'host': host, 'key': key,
+                             'keyLocation': f'https://{host}/{key}.txt',
+                             'urlList': urls[:10000]}).encode('utf-8')
+          req = urllib.request.Request('https://api.indexnow.org/indexnow', data=body, method='POST',
+                                       headers={'Content-Type': 'application/json; charset=utf-8'})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  print(f'IndexNow HTTP {r.status}: {len(urls)} URL gönderildi')
+          except urllib.error.HTTPError as e:
+              print(f'IndexNow HTTP {e.code}: {e.read()[:300]!r}')
+          for u in urls[:50]:
+              print(' ', u)
+          PY
