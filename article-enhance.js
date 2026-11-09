@@ -84,6 +84,91 @@
   if (!anchor) anchor = main.querySelector('.legal-note');
   if (anchor) main.insertBefore(share, anchor); else main.appendChild(share);
 
+  /* 3. Belge ve delil listelerini işaretlenebilir kontrol listesine çevir */
+  var LIST_HEAD = /belge|delil|hazırlanması gerekenler/i;
+  var NOT_LIST = /veremediği|kullanılabilir mi|değerlendirme ölçütleri|^Ecrimisil davasında ispat/i;
+  function store(key, value) {
+    try {
+      if (value === undefined) {
+        var v = JSON.parse(window.localStorage.getItem(key) || '[]');
+        return Array.isArray(v) ? v : [];
+      }
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) { return []; }
+    return value;
+  }
+  function printOnly(nodes) {
+    var marked = [h1].concat(nodes).filter(Boolean);
+    marked.forEach(function (n) { n.classList.add('print-target'); });
+    document.body.classList.add('print-checklist');
+    function done() {
+      document.body.classList.remove('print-checklist');
+      marked.forEach(function (n) { n.classList.remove('print-target'); });
+      window.removeEventListener('afterprint', done);
+    }
+    window.addEventListener('afterprint', done);
+    window.print();
+    setTimeout(done, 1000);
+  }
+  var listNo = 0;
+  for (var c = 0; c < heads.length; c++) {
+    var head = heads[c], text = head.textContent.trim();
+    if (!LIST_HEAD.test(text) || NOT_LIST.test(text) || /^Kaynak/i.test(text)) continue;
+    var ul = null;
+    for (var el = head.nextElementSibling; el && el.tagName !== 'H2'; el = el.nextElementSibling) {
+      if (el.tagName === 'UL') { ul = el; break; }
+    }
+    if (!ul || ul.classList.contains('doc-checklist')) continue;
+    (function (head, ul, n) {
+      var key = 'belge-listesi:' + window.location.pathname + ':' + n;
+      var saved = store(key);
+      var lis = ul.querySelectorAll(':scope > li');
+      var boxes = [];
+      ul.classList.add('doc-checklist');
+      var bar = document.createElement('div');
+      bar.className = 'checklist-bar';
+      var count = document.createElement('span');
+      count.className = 'checklist-count';
+      count.setAttribute('aria-live', 'polite');
+      var hint = document.createElement('span');
+      hint.className = 'checklist-hint';
+      hint.textContent = 'Hazırladıklarınızı işaretleyin; işaretler yalnızca bu cihazda saklanır.';
+      function update(save) {
+        var on = [];
+        boxes.forEach(function (b, i) { if (b.checked) on.push(i); b.parentNode.parentNode.classList.toggle('is-done', b.checked); });
+        count.textContent = on.length + ' / ' + boxes.length + ' hazır';
+        if (save !== false) store(key, on);
+      }
+      for (var i = 0; i < lis.length; i++) {
+        var label = document.createElement('label');
+        var box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = saved.indexOf(i) > -1;
+        box.addEventListener('change', function () { update(); });
+        label.appendChild(box);
+        var txt = document.createElement('span');
+        while (lis[i].firstChild) txt.appendChild(lis[i].firstChild);
+        label.appendChild(txt);
+        lis[i].appendChild(label);
+        boxes.push(box);
+      }
+      bar.appendChild(count);
+      bar.appendChild(hint);
+      var pb = document.createElement('button');
+      pb.type = 'button';
+      pb.textContent = 'Listeyi yazdır';
+      pb.addEventListener('click', function () { printOnly([head, ul]); });
+      bar.appendChild(pb);
+      var rb = document.createElement('button');
+      rb.type = 'button';
+      rb.textContent = 'İşaretleri temizle';
+      rb.addEventListener('click', function () { boxes.forEach(function (b) { b.checked = false; }); update(); });
+      bar.appendChild(rb);
+      ul.parentNode.insertBefore(bar, ul);
+      update(false);
+    })(head, ul, listNo++);
+  }
+
   /* Yazdırırken kapalı soru-cevapları aç */
   var opened = [];
   window.addEventListener('beforeprint', function () {
