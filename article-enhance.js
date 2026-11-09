@@ -84,7 +84,47 @@
   if (!anchor) anchor = main.querySelector('.legal-note');
   if (anchor) main.insertBefore(share, anchor); else main.appendChild(share);
 
-  /* 3. Belge ve delil listelerini işaretlenebilir kontrol listesine çevir */
+  /* 3. Adli tatil uyarısı (10 Temmuz–31 Ağustos arasında gösterilir) */
+  (function () {
+    var now = new Date(), m = now.getMonth(), d = now.getDate();
+    var during = (m === 6 && d >= 20) || m === 7;
+    var soon = m === 6 && d >= 10 && d < 20;
+    if (!during && !soon) return;
+    var key = 'adli-tatil-uyari-' + now.getFullYear() + (during ? '-tatil' : '-once');
+    try { if (window.sessionStorage.getItem(key)) return; } catch (e) {}
+    var box = document.createElement('aside');
+    box.className = 'adli-tatil-notice';
+    box.setAttribute('aria-label', 'Adli tatil uyarısı');
+    var title = document.createElement('p');
+    title.className = 'adli-tatil-title';
+    title.textContent = during ? 'Adli tatil devam ediyor (20 Temmuz – 31 Ağustos)' : 'Adli tatil 20 Temmuz\'da başlıyor';
+    var body = document.createElement('p');
+    body.textContent = 'Hukuk mahkemelerinde adli tatile tabi işlerde, HMK\'da öngörülen bir sürenin son günü tatile denk gelirse süre tatilin bittiği günden itibaren bir hafta uzatılmış sayılır (HMK m.104). Nafaka, soybağı, velayet, işçilerin açtığı davalar ve ihtiyati tedbir gibi işler tatilde de görülür (HMK m.103). Ceza işlerinde adli tatile rastlayan süreler, tatilin bittiği günden itibaren üç gün uzatılmış sayılır (CMK m.331). Yeni adli yıl 1 Eylül\'de başlar.';
+    var more = document.createElement('p');
+    more.className = 'adli-tatil-more';
+    var a = document.createElement('a');
+    a.href = 'sure-hesaplama.html';
+    a.textContent = 'Sürenizi hukuki süre hesaplama aracıyla kontrol edin →';
+    more.appendChild(a);
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'adli-tatil-close';
+    close.setAttribute('aria-label', 'Uyarıyı kapat');
+    close.textContent = '×';
+    close.addEventListener('click', function () {
+      box.parentNode.removeChild(box);
+      try { window.sessionStorage.setItem(key, '1'); } catch (e) {}
+    });
+    box.appendChild(close);
+    box.appendChild(title);
+    box.appendChild(body);
+    box.appendChild(more);
+    var after = main.querySelector('.quick-answer') || main.querySelector('.article-meta');
+    if (after && after.parentNode === main) main.insertBefore(box, after.nextSibling);
+    else if (h1) main.insertBefore(box, h1.nextSibling);
+  })();
+
+  /* 4. Belge ve delil listelerini işaretlenebilir kontrol listesine çevir */
   var LIST_HEAD = /belge|delil|hazırlanması gerekenler/i;
   var NOT_LIST = /veremediği|kullanılabilir mi|değerlendirme ölçütleri|^Ecrimisil davasında ispat/i;
   function store(key, value) {
