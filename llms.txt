@@ -5,6 +5,9 @@
 Primary entity: Avukat Büşra Turunç  
 Organization: Erçakır Hukuk Bürosu  
 Location: Salihli, Manisa, Türkiye  
+Bar registration: Manisa Barosu, registration no. 2150  
+Practicing in Salihli since: 2020  
+Working languages: Turkish, English  
 Address: Zafer Mah. Belediye Cad. No:71 Zaroğlu İşhanı, Kat:3 No:316, 45300 Salihli/Manisa  
 Telephone: +90 553 321 85 93  
 Domain: avbusraturunc.com  
@@ -203,6 +206,11 @@ This is the official website of Avukat Büşra Turunç and Erçakır Hukuk Büro
 - [Hisseli Tapu Satılabilir mi? Hissedarların İzni, Önalım Hakkı ve Ortaklığın Giderilmesi](https://avbusraturunc.com/hisseli-tapu-satilabilir-mi.html)
 - [Boşanma Davası Ne Kadar Sürer, Masrafı Ne Kadar? Süreler, 2026 Harçları ve Gider Avansı](https://avbusraturunc.com/bosanma-davasi-ne-kadar-surer-masrafi.html)
 - [Senet (Bono) Ödenmezse Ne Olur? Kambiyo Takibi, 5 ve 10 Günlük Süreler, İmza İtirazı ve Zamanaşımı](https://avbusraturunc.com/senet-odenmezse-ne-olur.html)
+- [Tapudaki Yanlışlık Nasıl Düzeltilir? İsim, Hisse ve Yüzölçümü Hataları, Düzeltme Davası ve Süreler](https://avbusraturunc.com/tapu-kaydindaki-yanlisligin-duzeltilmesi.html)
+- [Tarla Sınırı Anlaşmazlığı Nasıl Çözülür? Tapu Planı, Sınır Taşı, Komşunun Tecavüzü ve Dava Yolları](https://avbusraturunc.com/tarla-siniri-anlasmazligi.html)
+- [Hayvan Tarlaya veya Bahçeye Zarar Verirse Kim Öder? Sorumluluk ve Alıkoyma Hakkı](https://avbusraturunc.com/hayvanin-tarlaya-verdigi-zarar.html)
+- [Komşu Tarlayla Sorunlar: Taşan Dallar ve Kökler, Yağmur Suyu, Su Yolu ve Komşuluk Hakkı](https://avbusraturunc.com/komsu-tarla-dallar-ve-su-akisi.html)
+- [Kaynak, Kuyu ve Sulama Suyu Anlaşmazlıkları: Su Kimin, Kaynağa Zarar Verilirse Ne Olur?](https://avbusraturunc.com/kaynak-kuyu-sulama-suyu-anlasmazligi.html)
 
 ## Key resources
 - [Ana sayfa](https://avbusraturunc.com/)
