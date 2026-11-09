@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   var OPS = [{"id": "cevap", "g": "Hukuk davaları (HMK)", "t": "Cevap dilekçesi", "n": 2, "u": "hafta", "r": "HMK", "bas": "Dava dilekçesinin tebliğ tarihi", "d": "HMK m.127"}, {"id": "hmk_istinaf", "g": "Hukuk davaları (HMK)", "t": "Hukuk mahkemesi kararına istinaf", "n": 2, "u": "hafta", "r": "HMK", "bas": "Gerekçeli kararın tebliğ tarihi", "d": "HMK m.345"}, {"id": "hmk_temyiz", "g": "Hukuk davaları (HMK)", "t": "Bölge adliye mahkemesi kararına temyiz", "n": 2, "u": "hafta", "r": "HMK", "bas": "Kararın tebliğ tarihi", "d": "HMK m.361"}, {"id": "cmk_istinaf", "g": "Ceza davaları (CMK)", "t": "Ceza mahkemesi hükmüne istinaf", "n": 2, "u": "hafta", "r": "CMK", "bas": "Gerekçeli hükmün tebliğ tarihi", "d": "CMK m.273"}, {"id": "cmk_temyiz", "g": "Ceza davaları (CMK)", "t": "Ceza hükmüne temyiz", "n": 2, "u": "hafta", "r": "CMK", "bas": "Gerekçeli hükmün tebliğ tarihi", "d": "CMK m.291"}, {"id": "cmk_itiraz", "g": "Ceza davaları (CMK)", "t": "Hâkim veya mahkeme kararına itiraz (tutuklama, adli kontrol vb.)", "n": 2, "u": "hafta", "r": "CMK", "bas": "Kararın öğrenildiği tarih", "d": "CMK m.268"}, {"id": "kyok", "g": "Ceza davaları (CMK)", "t": "Kovuşturmaya yer olmadığı kararına itiraz", "n": 2, "u": "hafta", "r": "CMK", "bas": "Kararın tebliğ tarihi", "d": "CMK m.173"}, {"id": "odeme_emri", "g": "İcra takipleri (İİK)", "t": "Ödeme emrine itiraz (genel haciz yolu)", "n": 7, "u": "gun", "r": "IIK", "bas": "Ödeme emrinin tebliğ tarihi", "d": "İİK m.62"}, {"id": "kambiyo", "g": "İcra takipleri (İİK)", "t": "Kambiyo senedine (çek, bono) dayalı takipte itiraz", "n": 5, "u": "gun", "r": "IIK", "bas": "Ödeme emrinin tebliğ tarihi", "d": "İİK m.168"}, {"id": "sikayet", "g": "İcra takipleri (İİK)", "t": "İcra dairesinin işlemine şikâyet", "n": 7, "u": "gun", "r": "IIK", "bas": "İşlemin öğrenildiği tarih", "d": "İİK m.16"}, {"id": "itirazin_iptali", "g": "İcra takipleri (İİK)", "t": "İtirazın iptali davası", "n": 1, "u": "yil", "r": "IIK", "bas": "Borçlunun itirazının alacaklıya tebliğ tarihi", "d": "İİK m.67"}, {"id": "iptal_davasi", "g": "İdari davalar (İYUK)", "t": "İdari işleme karşı iptal davası", "n": 60, "u": "gun", "r": "IYUK", "bas": "İşlemin yazılı bildirim tarihi", "d": "İYUK m.7"}];
-  var HOL = {"fixed": {"01-01": "Yılbaşı", "04-23": "Ulusal Egemenlik ve Çocuk Bayramı", "05-01": "Emek ve Dayanışma Günü", "05-19": "Atatürk'ü Anma, Gençlik ve Spor Bayramı", "07-15": "Demokrasi ve Milli Birlik Günü", "08-30": "Zafer Bayramı", "10-29": "Cumhuriyet Bayramı"}, "fixedHalf": {"10-28": "Cumhuriyet Bayramı arifesi (13.00'ten itibaren tatil)"}, "years": {"2026": {"full": {"2026-03-20": "Ramazan Bayramı 1. gün", "2026-03-21": "Ramazan Bayramı 2. gün", "2026-03-22": "Ramazan Bayramı 3. gün", "2026-05-27": "Kurban Bayramı 1. gün", "2026-05-28": "Kurban Bayramı 2. gün", "2026-05-29": "Kurban Bayramı 3. gün", "2026-05-30": "Kurban Bayramı 4. gün"}, "half": {"2026-03-19": "Ramazan Bayramı arifesi (13.00'ten itibaren tatil)", "2026-05-26": "Kurban Bayramı arifesi (13.00'ten itibaren tatil)"}}}};
+  var HOL = {"fixed": {"01-01": "Yılbaşı", "04-23": "Ulusal Egemenlik ve Çocuk Bayramı", "05-01": "Emek ve Dayanışma Günü", "05-19": "Atatürk'ü Anma, Gençlik ve Spor Bayramı", "07-15": "Demokrasi ve Milli Birlik Günü", "08-30": "Zafer Bayramı", "10-29": "Cumhuriyet Bayramı"}, "fixedHalf": {"10-28": "Cumhuriyet Bayramı arifesi (13.00'ten itibaren tatil)"}, "years": {"2026": {"full": {"2026-03-20": "Ramazan Bayramı 1. gün", "2026-03-21": "Ramazan Bayramı 2. gün", "2026-03-22": "Ramazan Bayramı 3. gün", "2026-05-27": "Kurban Bayramı 1. gün", "2026-05-28": "Kurban Bayramı 2. gün", "2026-05-29": "Kurban Bayramı 3. gün", "2026-05-30": "Kurban Bayramı 4. gün"}, "half": {"2026-03-19": "Ramazan Bayramı arifesi (13.00'ten itibaren tatil)", "2026-05-26": "Kurban Bayramı arifesi (13.00'ten itibaren tatil)"}}, "2027": {"full": {"2027-03-09": "Ramazan Bayramı 1. gün", "2027-03-10": "Ramazan Bayramı 2. gün", "2027-03-11": "Ramazan Bayramı 3. gün", "2027-05-16": "Kurban Bayramı 1. gün", "2027-05-17": "Kurban Bayramı 2. gün", "2027-05-18": "Kurban Bayramı 3. gün", "2027-05-19": "Kurban Bayramı 4. gün"}, "half": {"2027-03-08": "Ramazan Bayramı arifesi (13.00'ten itibaren tatil)", "2027-05-15": "Kurban Bayramı arifesi (13.00'ten itibaren tatil)"}}}};
   var box = document.getElementById('sure-hesapla');
   if (!box) return;
   var sel = document.getElementById('shIslem');
@@ -10,7 +10,7 @@
   var chk = document.getElementById('shTatilDisi');
   var btn = document.getElementById('shBtn');
   var out = document.getElementById('shSonuc');
-  var COVERED_UNTIL = '2026-12-31';
+  var COVERED_UNTIL = '2027-12-31';
   var GUN = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
   var AY = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   var UNIT = { gun: 'gün', hafta: 'hafta', ay: 'ay', yil: 'yıl' };
@@ -29,10 +29,10 @@
     var s = iso(d), md = s.slice(5), yr = HOL.years[s.slice(0, 4)];
     if (HOL.fixed[md]) return { full: true, name: HOL.fixed[md] };
     if (yr && yr.full[s]) return { full: true, name: yr.full[s] };
-    if (HOL.fixedHalf[md]) return { full: false, name: HOL.fixedHalf[md] };
-    if (yr && yr.half[s]) return { full: false, name: yr.half[s] };
     var w = d.getUTCDay();
     if (w === 0 || w === 6) return { full: true, name: w === 6 ? 'Cumartesi' : 'Pazar' };
+    if (HOL.fixedHalf[md]) return { full: false, name: HOL.fixedHalf[md] };
+    if (yr && yr.half[s]) return { full: false, name: yr.half[s] };
     return null;
   }
   function inAdliTatil(d) {
@@ -80,7 +80,7 @@
     var half = holiday(end);
     var warn = [];
     if (half && !half.full) warn.push('Son gün ' + half.name + '. Bu gün saat 13.00\'ten itibaren tatil olduğundan araç süreyi uzatmadı; başvurunuzu öğleden önce yapmanız güvenli olur.');
-    if (iso(end) > COVERED_UNTIL) warn.push('Son gün 2027 yılına denk geliyor. Araçta 2027 dini bayram tarihleri henüz yer almadığından sonucu resmî tatil takvimiyle ayrıca kontrol edin.');
+    if (iso(end) > COVERED_UNTIL) warn.push('Son gün 2028 yılına denk geliyor. Araçta 2028 dini bayram tarihleri henüz yer almadığından sonucu resmî tatil takvimiyle ayrıca kontrol edin.');
     if (inp.value < '2026-01-01') warn.push('Başlangıç tarihi 2025 yılında; 2025 tatillerinin süreye etkisi ayrıca kontrol edilmelidir.');
 
     var h3 = document.createElement('p');
