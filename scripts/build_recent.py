@@ -23,9 +23,12 @@ def added_at(root, name):
     try:
         out = subprocess.run(['git', 'log', '--diff-filter=A', '--format=%ct', '--', name],
                              cwd=root, capture_output=True, text=True, check=True).stdout.split()
-        return int(out[-1]) if out else 0
+        if out:
+            return int(out[-1])
     except (OSError, subprocess.CalledProcessError):
-        return 0
+        pass
+    # Henüz commit edilmemiş yeni dosya: en yeni sayılır.
+    return int(os.path.getmtime(os.path.join(root, name)))
 
 
 def short_title(title):
