@@ -9,7 +9,7 @@
 .info-article .law-table th{background:#1f3a4d;color:#fff;text-align:left;font-weight:600;padding:10px 12px;font-size:13px}
 .info-article .law-table td{padding:10px 12px;border-top:1px solid #ece6da;vertical-align:top;color:#3e5561}
 .info-article .law-table tbody tr:nth-child(even) td{background:#faf7f1}
-.info-article .law-table td:last-child{color:#555;white-space:nowrap}
+.info-article .law-table td:last-child{color:#555}
 .info-article .law-table a{font-weight:600}
 .info-article ol.guide-steps{margin:16px 0 28px;padding:0;list-style:none;counter-reset:gstep}
 .info-article ol.guide-steps li{position:relative;margin:0 0 12px;padding:12px 14px 12px 52px;border:1px solid #e3ddd1;border-radius:10px;background:#fffdf8;counter-increment:gstep}
