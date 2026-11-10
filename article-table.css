@@ -1,12 +1,16 @@
 /* Tables inside article pages (loaded only by pages that contain a table) */
 .article-page .table-wrap{margin:18px 0 28px;overflow-x:auto}
 .article-page .law-table{width:100%;border-collapse:collapse;font-size:.95rem;line-height:1.45;background:#fff;border:1px solid #e3ddd1;border-radius:10px;overflow:hidden}
+.article-page .law-table caption{caption-side:top;text-align:left;font-weight:700;color:#1b2f3a;font-size:1.05rem;line-height:1.82;padding:0 0 18px;background:transparent}
+.article-page .law-table caption.visually-hidden-caption{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .article-page .law-table th{background:#1f3a4d;color:#fff;text-align:left;font-weight:600;padding:10px 12px;font-size:.9rem}
 .article-page .law-table td{padding:10px 12px;border-top:1px solid #ece6da;vertical-align:top}
 .article-page .law-table tbody tr:nth-child(even) td{background:#faf7f1}
 .article-page .law-table td:nth-child(2) strong{color:#8a6a1f;white-space:nowrap}
 .article-page .law-table td:last-child{color:#555;white-space:nowrap}
 @media (max-width:700px){
+ .article-page .law-table caption{display:block;font-size:1rem;line-height:1.75}
+ .article-page .law-table caption.visually-hidden-caption{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
  .article-page .table-wrap{overflow:visible}
  .article-page .law-table,.article-page .law-table tbody,.article-page .law-table tr,.article-page .law-table td{display:block;width:100%}
  .article-page .law-table thead{display:none}
