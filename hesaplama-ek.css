@@ -7,6 +7,7 @@ fieldset .hint{margin:12px 0 0}
 [hidden]{display:none!important}
 .calc-table-wrap{overflow-x:auto;border-radius:14px}
 .calc-table{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;background:#fff;border:1px solid #e6dccb;border-radius:14px;overflow:hidden}
+.calc-table caption.visually-hidden-caption{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .calc-table th,.calc-table td{padding:12px 14px;border-bottom:1px solid #eee5d6;text-align:left;vertical-align:top;color:#26313b}
 .calc-table tr:last-child td{border-bottom:0}
 .calc-table th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f3e6c6;background:#1f3c54}
