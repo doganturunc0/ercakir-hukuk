@@ -1,0 +1,30 @@
+/* Rehber bölümleri: faaliyet alanı sayfalarında özet kutusu, tablolar ve adım listeleri */
+.info-article .guide-summary{margin:0 0 34px;padding:22px 24px;border:1px solid #d9e3e7;border-left:4px solid #315a6d;border-radius:10px;background:#f3f7f8}
+.info-article .guide-summary .guide-eyebrow{margin:0 0 8px;color:#315a6d;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.info-article .guide-summary p{margin:0;color:#26414f}
+.info-article .guide-summary .guide-updated{margin-top:12px;color:#6b7c85;font-size:13px}
+.info-article .table-wrap{margin:18px 0 28px;overflow-x:auto}
+.info-article .law-table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.5;background:#fff;border:1px solid #e3ddd1;border-radius:10px;overflow:hidden}
+.info-article .law-table caption{caption-side:top;text-align:left;font-weight:700;color:#183447;font-size:15px;line-height:1.6;padding:0 0 12px}
+.info-article .law-table th{background:#1f3a4d;color:#fff;text-align:left;font-weight:600;padding:10px 12px;font-size:13px}
+.info-article .law-table td{padding:10px 12px;border-top:1px solid #ece6da;vertical-align:top;color:#3e5561}
+.info-article .law-table tbody tr:nth-child(even) td{background:#faf7f1}
+.info-article .law-table td:last-child{color:#555;white-space:nowrap}
+.info-article .law-table a{font-weight:600}
+.info-article ol.guide-steps{margin:16px 0 28px;padding:0;list-style:none;counter-reset:gstep}
+.info-article ol.guide-steps li{position:relative;margin:0 0 12px;padding:12px 14px 12px 52px;border:1px solid #e3ddd1;border-radius:10px;background:#fffdf8;counter-increment:gstep}
+.info-article ol.guide-steps li::before{content:counter(gstep);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:50%;background:#1f3a4d;color:#fff;font-size:13px;font-weight:700;line-height:26px;text-align:center}
+@media (max-width:700px){
+ .info-article .guide-summary{padding:18px 16px}
+ .info-article .table-wrap{overflow:visible}
+ .info-article .law-table,.info-article .law-table tbody,.info-article .law-table tr,.info-article .law-table td{display:block;width:100%}
+ .info-article .law-table caption{display:block}
+ .info-article .law-table thead{display:none}
+ .info-article .law-table{border:0;background:transparent}
+ .info-article .law-table tr{background:#fff;border:1px solid #e3ddd1;border-radius:10px;margin:0 0 12px;padding:6px 0}
+ .info-article .law-table tbody tr:nth-child(even) td{background:transparent}
+ .info-article .law-table td{border:0;padding:4px 14px;display:flex;gap:10px}
+ .info-article .law-table td::before{content:attr(data-label);flex:0 0 92px;font-size:11px;font-weight:600;color:#6b6b6b;text-transform:uppercase;letter-spacing:.03em;padding-top:3px}
+ .info-article .law-table td:first-child{font-weight:600;color:#1f3a4d}
+ .info-article .law-table td:last-child{white-space:normal}
+}
