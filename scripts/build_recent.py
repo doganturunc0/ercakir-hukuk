@@ -74,6 +74,18 @@ def main(root):
             sys.exit('anchor not found')
         page = page.replace(anchor, block + anchor, 1)
     open(path, 'w', encoding='utf-8').write(page)
+    # Ana sayfanın içeriği değiştiği için site haritasındaki son değişiklik tarihi de güncellenir.
+    sitemap = os.path.join(root, 'sitemap.xml')
+    if rows and os.path.exists(sitemap):
+        xml = open(sitemap, encoding='utf-8').read()
+        newest = rows[0][0]
+        loc = '<loc>https://avbusraturunc.com/</loc><lastmod>'
+        i = xml.find(loc)
+        if i >= 0:
+            j = i + len(loc)
+            if xml[j:j + 10] < newest:
+                xml = xml[:j] + newest + xml[j + 10:]
+                open(sitemap, 'w', encoding='utf-8').write(xml)
     print('recent:', ', '.join(r[2] for r in rows[:COUNT]))
 
 
