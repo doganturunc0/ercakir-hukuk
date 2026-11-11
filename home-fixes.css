@@ -1,0 +1,23 @@
+/* Ana sayfaya özgü düzeltmeler (2026-11-12). home.css paketinin en sonuna eklenir; scripts/build_home_css.py. */
+/* Üst menü: telefonda iç sayfalarla aynı "☰ Menü" düğmesi. */
+@media(max-width:940px){.site-header .header-map{display:none!important}.site-header .menu-btn{font-family:Arial,Helvetica,sans-serif;font-size:13px!important;font-weight:700;line-height:1;letter-spacing:.02em;padding:8px 12px!important;border:1px solid rgba(255,255,255,.35)!important;border-radius:2px}.site-header .menu-btn::after{content:" Menü"}.site-header.menu-open .menu-btn::after{content:" Kapat"}}
+/* İletişim bölümündeki "Konuma Git" bağlantısı, yanındaki "Telefon" düğmesiyle aynı biçimde. */
+.contact-actions .directions-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:54px;padding:0 25px;margin-left:10px;border:1px solid #183447;border-radius:6px;background:#fff;color:#183447;font:900 11px/18.15px Arial,Helvetica,sans-serif;letter-spacing:.055em;text-decoration:none;vertical-align:top}
+.contact-actions .directions-button:hover,.contact-actions .directions-button:focus-visible{background:#183447;color:#fff}
+@media(max-width:720px){.contact-actions .directions-button{display:flex;margin-left:0;padding:0 12px}}
+/* Sık sorulan sorular: başlık diğer bölümlerle aynı yazı tipinde; sorular kutunun içinde boşluklu ve açılıp kapandığı belli. */
+.home-faq h2{font-family:Georgia,Gelasio,'Times New Roman',serif!important;font-weight:400!important;letter-spacing:-.025em}
+.home-faq details{padding:0!important}
+.home-faq summary{list-style:none;position:relative;padding:18px 52px 18px 18px!important}
+.home-faq summary::-webkit-details-marker{display:none}
+.home-faq summary::after{content:"+";position:absolute;right:20px;top:50%;transform:translateY(-50%);font:400 24px/1 Arial,Helvetica,sans-serif;color:#b08a3c}
+.home-faq details[open] summary::after{content:"\2212"}
+.home-faq details p{margin:0!important;padding:0 18px 18px!important}
+@media(min-width:721px){.home-faq summary{padding:22px 62px 22px 24px!important}.home-faq summary::after{right:24px}.home-faq details p{padding:0 24px 22px!important}}
+/* Alt bilgi: iç sayfalarla aynı sc-footer; ana sayfanın genel footer kuralları bu alt bilgiyi ezmez. */
+footer.sc-footer{background:#183447!important;color:#dce5e9!important;font-size:13px;text-align:left;padding:44px max(20px,4vw) 28px!important;margin-top:0;border-top:3px solid #c69a2b}
+footer.sc-footer p,footer.sc-footer li{color:inherit!important}
+footer.sc-footer .sc-footer-bottom{color:#b9c8d1!important}
+footer.sc-footer .sc-footer-brand{color:#fff!important}
+footer.sc-footer .sc-footer-title{color:#e1b640!important}
+@media(max-width:820px){footer.sc-footer{padding-bottom:calc(196px + env(safe-area-inset-bottom))!important}}
