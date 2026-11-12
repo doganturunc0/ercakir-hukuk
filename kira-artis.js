@@ -9,6 +9,7 @@ el('kiraBtn').addEventListener('click',function(e){
   e.preventDefault();
   var kira=num('kira'),tufe=num('tufe'),soz=num('sozlesme'),bes=el('besYil').checked;
   if(!(kira>0)||!(tufe>=0)){el('kiraResult').innerHTML='Mevcut kira bedelini ve TÜFE on iki aylık ortalama değişim oranını girin.';return}
+  if(String(el('sozlesme').value).trim()!==''&&!(soz>=0)){el('kiraResult').innerHTML='Sözleşmedeki artış oranı 0 veya daha büyük olmalıdır.';return}
   var html='';
   if(isFinite(soz)&&soz>=0){
     var oran=Math.min(soz,tufe),yeni=kira*(1+oran/100);
