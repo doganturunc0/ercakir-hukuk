@@ -10,9 +10,17 @@ function fmt(f){return f.n===0?'—':(f.d===1?String(f.n):f.n+'/'+f.d)}
 function pct(f){return '%'+(f.n/f.d*100).toLocaleString('tr-TR',{maximumFractionDigits:2})}
 function money(x){return new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2}).format(x)}
 function int(id){var v=parseInt(el(id).value,10);return isFinite(v)&&v>0?v:0}
+function tamSayiMi(s){return /^\d+$/.test(s)}
+function girdiGecerli(){
+  var sayilar=['cocuk','tamKardes','anaKardes','babaKardes'].every(function(id){var s=String(el(id).value).trim();return s===''||tamSayiMi(s)});
+  var olenler=String(el('olenCocuk').value||'').split(/[,;\s]+/).filter(Boolean).every(tamSayiMi);
+  var t=String(el('tereke').value).trim();
+  return sayilar&&olenler&&(t===''||parseFloat(t)>=0);
+}
 function yes(id){return el(id).value==='evet'}
 function list(id){return (el(id).value||'').split(/[,;\s]+/).map(function(x){return parseInt(x,10)}).filter(function(x){return isFinite(x)&&x>=0})}
 function hesapla(){
+  if(!girdiGecerli()){el('mirasResult').innerHTML='Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.';return}
   var es=yes('es'),cocuk=int('cocuk'),olen=list('olenCocuk'),estate=parseFloat(el('tereke').value)||0;
   var heirs=[],note=[];
   var torunKollari=olen.filter(function(x){return x>0});

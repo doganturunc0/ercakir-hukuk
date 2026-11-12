@@ -1,0 +1,483 @@
+[
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2020-01-01",
+   "end": "2025-01-01",
+   "salary": "50000",
+   "cap": "53919"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT KIDEM TAZMİNATI ₺250.273,97 ÇALIŞMA SÜRESİ 1827 gün TAVANA TABİ BRÜT ÜCRET ₺50.000,00 Brüt tutardır; damga vergisi kesintisi ayrıca uygulanır.",
+  "live": "polite"
+ },
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2015-03-10",
+   "end": "2026-06-30",
+   "salary": "80000",
+   "cap": "64948.77"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT KIDEM TAZMİNATI ₺734.899,78 ÇALIŞMA SÜRESİ 4130 gün TAVANA TABİ BRÜT ÜCRET ₺64.948,77 Brüt tutardır; damga vergisi kesintisi ayrıca uygulanır.",
+  "live": "polite"
+ },
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2025-01-01",
+   "end": "2025-06-01",
+   "salary": "50000",
+   "cap": "53919"
+  },
+  "kind": "ok",
+  "text": "Kıdem tazminatına hak kazanmak için aynı işverene bağlı olarak en az bir yıl çalışmış olmak gerekir (1475 sayılı Kanun m.14).",
+  "live": "polite"
+ },
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2020-01-01",
+   "end": "2025-01-01",
+   "salary": "-50000",
+   "cap": "53919"
+  },
+  "kind": "bad",
+  "text": "Geçerli tarih, ücret ve tavan bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2020-01-01",
+   "end": "2025-01-01",
+   "salary": "50000",
+   "cap": "-1"
+  },
+  "kind": "bad",
+  "text": "Geçerli tarih, ücret ve tavan bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "kidem-tazminati-hesaplama",
+  "fields": {
+   "start": "2020-01-01",
+   "end": "2025-01-01",
+   "salary": "0",
+   "cap": "53919"
+  },
+  "kind": "bad",
+  "text": "Geçerli tarih, ücret ve tavan bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "24",
+   "salary": "50000"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT İHBAR TAZMİNATI ₺70.000,00 KANUNİ BİLDİRİM SÜRESİ 6 hafta GÜNLÜK BRÜT ÜCRET ₺1.666,67",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "0",
+   "salary": "30000"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT İHBAR TAZMİNATI ₺14.000,00 KANUNİ BİLDİRİM SÜRESİ 2 hafta GÜNLÜK BRÜT ÜCRET ₺1.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "5.5",
+   "salary": "30000"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT İHBAR TAZMİNATI ₺14.000,00 KANUNİ BİLDİRİM SÜRESİ 2 hafta GÜNLÜK BRÜT ÜCRET ₺1.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "40",
+   "salary": "30000"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT İHBAR TAZMİNATI ₺56.000,00 KANUNİ BİLDİRİM SÜRESİ 8 hafta GÜNLÜK BRÜT ÜCRET ₺1.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "24",
+   "salary": "-50000"
+  },
+  "kind": "bad",
+  "text": "Geçerli çalışma süresi ve ücret girin.",
+  "live": "polite"
+ },
+ {
+  "page": "ihbar-tazminati-hesaplama",
+  "fields": {
+   "months": "-24",
+   "salary": "50000"
+  },
+  "kind": "bad",
+  "text": "Geçerli çalışma süresi ve ücret girin.",
+  "live": "polite"
+ },
+ {
+  "page": "fazla-mesai-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "hours": "10"
+  },
+  "kind": "ok",
+  "text": "%50 ZAMLI TAHMİNİ FAZLA ÇALIŞMA ÜCRETİ ₺2.000,00 SAATLİK ÇIPLAK ÜCRET ₺133,33 FAZLA ÇALIŞMA 10 saat Saatlik ücret 225 saatlik aylık çalışma varsayımıyla hesaplanmıştır.",
+  "live": "polite"
+ },
+ {
+  "page": "fazla-mesai-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "hours": "0"
+  },
+  "kind": "ok",
+  "text": "%50 ZAMLI TAHMİNİ FAZLA ÇALIŞMA ÜCRETİ ₺0,00 SAATLİK ÇIPLAK ÜCRET ₺133,33 FAZLA ÇALIŞMA 0 saat Saatlik ücret 225 saatlik aylık çalışma varsayımıyla hesaplanmıştır.",
+  "live": "polite"
+ },
+ {
+  "page": "fazla-mesai-hesaplama",
+  "fields": {
+   "salary": "-30000",
+   "hours": "10"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve fazla çalışma süresi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "fazla-mesai-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "hours": "-10"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve fazla çalışma süresi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "yillik-izin-ucreti-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "days": "14"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT KULLANILMAYAN İZİN ÜCRETİ ₺14.000,00 GÜNLÜK BRÜT ÜCRET ₺1.000,00 İZİN GÜNÜ 14 gün",
+  "live": "polite"
+ },
+ {
+  "page": "yillik-izin-ucreti-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "days": "0"
+  },
+  "kind": "ok",
+  "text": "TAHMİNİ BRÜT KULLANILMAYAN İZİN ÜCRETİ ₺0,00 GÜNLÜK BRÜT ÜCRET ₺1.000,00 İZİN GÜNÜ 0 gün",
+  "live": "polite"
+ },
+ {
+  "page": "yillik-izin-ucreti-hesaplama",
+  "fields": {
+   "salary": "-30000",
+   "days": "10"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve izin günü girin.",
+  "live": "polite"
+ },
+ {
+  "page": "yillik-izin-ucreti-hesaplama",
+  "fields": {
+   "salary": "30000",
+   "days": "-10"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve izin günü girin.",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "10000",
+   "rate": "24",
+   "start": "2025-01-01",
+   "end": "2026-01-01"
+  },
+  "kind": "ok",
+  "text": "ANA PARA + FAİZ ₺12.400,00 BASİT FAİZ ₺2.400,00 SÜRE 365 gün",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "250000",
+   "rate": "39.75",
+   "start": "2026-02-15",
+   "end": "2026-11-12"
+  },
+  "kind": "ok",
+  "text": "ANA PARA + FAİZ ₺323.510,27 BASİT FAİZ ₺73.510,27 SÜRE 270 gün",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "10000",
+   "rate": "24",
+   "start": "2026-01-01",
+   "end": "2026-01-01"
+  },
+  "kind": "ok",
+  "text": "ANA PARA + FAİZ ₺10.000,00 BASİT FAİZ ₺0,00 SÜRE 0 gün",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "-10000",
+   "rate": "24",
+   "start": "2025-01-01",
+   "end": "2026-01-01"
+  },
+  "kind": "bad",
+  "text": "Geçerli ana para, yıllık oran ve tarih bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "10000",
+   "rate": "-24",
+   "start": "2025-01-01",
+   "end": "2026-01-01"
+  },
+  "kind": "bad",
+  "text": "Geçerli ana para, yıllık oran ve tarih bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "yasal-faiz-hesaplama",
+  "fields": {
+   "principal": "10000",
+   "rate": "24",
+   "start": "2026-01-01",
+   "end": "2025-01-01"
+  },
+  "kind": "bad",
+  "text": "Geçerli ana para, yıllık oran ve tarih bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "35.5",
+   "sozlesme": "30"
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK KİRA (EN FAZLA) ₺13.000,00 UYGULANABİLECEK ARTIŞ ORANI %30 SÖZLEŞMEDEKİ ORAN %30 YASAL ÜST SINIR (TÜFE) %35,5 AYLIK FARK ₺3.000,00 YILLIK FARK ₺36.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "35.5",
+   "sozlesme": "50"
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK KİRA (EN FAZLA) ₺13.550,00 UYGULANABİLECEK ARTIŞ ORANI %35,5 SÖZLEŞMEDEKİ ORAN %50 YASAL ÜST SINIR (TÜFE) %35,5 AYLIK FARK ₺3.550,00 YILLIK FARK ₺42.600,00 Sözleşmedeki oran yasal üst sınırı aşıyor. TBK m.344'e göre anlaşma, TÜFE on iki aylık ortalama değişim oranını geçmemek koşuluyla geçerlidir.",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "35.5",
+   "sozlesme": ""
+  },
+  "kind": "ok",
+  "text": "YASAL ÜST SINIRA GÖRE EN YÜKSEK AYLIK KİRA ₺13.550,00 YASAL ÜST SINIR (TÜFE) %35,5 AYLIK ARTIŞ ₺3.550,00 Sözleşmede artış oranı belirtilmedi. Taraflar anlaşamazsa kira bedeli, bu oranı geçmemek koşuluyla hâkim tarafından hakkaniyete göre belirlenir (TBK m.344/2).",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "35.5",
+   "sozlesme": "0"
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK KİRA (EN FAZLA) ₺10.000,00 UYGULANABİLECEK ARTIŞ ORANI %0 SÖZLEŞMEDEKİ ORAN %0 YASAL ÜST SINIR (TÜFE) %35,5 AYLIK FARK ₺0,00 YILLIK FARK ₺0,00",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "-10000",
+   "tufe": "40",
+   "sozlesme": "30"
+  },
+  "kind": "bad",
+  "text": "Mevcut kira bedelini ve TÜFE on iki aylık ortalama değişim oranını girin.",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "-40",
+   "sozlesme": "30"
+  },
+  "kind": "bad",
+  "text": "Mevcut kira bedelini ve TÜFE on iki aylık ortalama değişim oranını girin.",
+  "live": "polite"
+ },
+ {
+  "page": "kira-artis-hesaplama",
+  "fields": {
+   "kira": "10000",
+   "tufe": "40",
+   "sozlesme": "-5"
+  },
+  "kind": "bad",
+  "text": "Sözleşmedeki artış oranı 0 veya daha büyük olmalıdır.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "2",
+   "tereke": "1000000"
+  },
+  "kind": "ok",
+  "text": "MİRASÇI YASAL MİRAS PAYI SAKLI PAY YASAL PAYA DÜŞEN TUTAR Sağ kalan eş 1/4 %25 1/4 %25 ₺250.000,00 Her bir çocuk (2 kişi) 3/8 %37,5 3/16 %18,75 ₺375.000,00 Payların toplamı: 1.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "1",
+   "olenCocuk": "2",
+   "tereke": "600000"
+  },
+  "kind": "ok",
+  "text": "MİRASÇI YASAL MİRAS PAYI SAKLI PAY YASAL PAYA DÜŞEN TUTAR Sağ kalan eş 1/4 %25 1/4 %25 ₺150.000,00 Her bir çocuk (1 kişi) 3/8 %37,5 3/16 %18,75 ₺225.000,00 Önce ölen 1. çocuğun her bir çocuğu (2 kişi) 3/16 %18,75 3/32 %9,38 ₺112.500,00 Payların toplamı: 1.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "0",
+   "anne": "evet",
+   "baba": "hayir",
+   "tamKardes": "2",
+   "tereke": "900000"
+  },
+  "kind": "ok",
+  "text": "MİRASÇI YASAL MİRAS PAYI SAKLI PAY YASAL PAYA DÜŞEN TUTAR Sağ kalan eş 1/2 %50 1/2 %50 ₺450.000,00 Anne 1/4 %25 1/16 %6,25 ₺225.000,00 Her bir ana-baba bir kardeş (2 kişi) 1/8 %12,5 — ₺112.500,00 Payların toplamı: 1. Mirasbırakandan önce ölmüş bir kardeşin çocukları varsa o kardeş de sayıya eklenmelidir; onun payını çocukları aralarında eşit paylaşır (TMK m.496). Kardeşlerin saklı payı yoktur.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "hayir",
+   "cocuk": "0",
+   "anne": "hayir",
+   "baba": "hayir",
+   "tamKardes": "1",
+   "anaKardes": "1",
+   "babaKardes": "0",
+   "tereke": ""
+  },
+  "kind": "ok",
+  "text": "MİRASÇI YASAL MİRAS PAYI SAKLI PAY Her bir ana-baba bir kardeş (1 kişi) 3/4 %75 — Her bir ana bir kardeş (1 kişi) 1/4 %25 — Payların toplamı: 1. Mirasbırakandan önce ölmüş bir kardeşin çocukları varsa o kardeş de sayıya eklenmelidir; onun payını çocukları aralarında eşit paylaşır (TMK m.496). Kardeşlerin saklı payı yoktur.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "3",
+   "tereke": ""
+  },
+  "kind": "ok",
+  "text": "MİRASÇI YASAL MİRAS PAYI SAKLI PAY Sağ kalan eş 1/4 %25 1/4 %25 Her bir çocuk (3 kişi) 1/4 %25 1/8 %12,5 Payların toplamı: 1.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "-2",
+   "tereke": "100000"
+  },
+  "kind": "bad",
+  "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "2",
+   "tereke": "-100000"
+  },
+  "kind": "bad",
+  "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "hayir",
+   "cocuk": "0",
+   "anne": "hayir",
+   "baba": "hayir",
+   "tamKardes": "-1"
+  },
+  "kind": "bad",
+  "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "1",
+   "olenCocuk": "-2"
+  },
+  "kind": "bad",
+  "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
+  "live": "polite"
+ },
+ {
+  "page": "miras-payi-hesaplama",
+  "fields": {
+   "es": "evet",
+   "cocuk": "1.5"
+  },
+  "kind": "bad",
+  "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
+  "live": "polite"
+ }
+]

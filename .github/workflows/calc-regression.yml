@@ -1,0 +1,37 @@
+name: Hesaplama araçları regresyon testi
+on:
+  pull_request:
+    paths:
+      - 'hesaplama-araclari.js'
+      - 'miras-payi.js'
+      - 'kira-artis.js'
+      - '*-hesaplama.html'
+      - '.github/calc-tests/**'
+      - '.github/workflows/calc-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hesaplama-araclari.js'
+      - 'miras-payi.js'
+      - 'kira-artis.js'
+      - '*-hesaplama.html'
+      - '.github/calc-tests/**'
+      - '.github/workflows/calc-regression.yml'
+permissions:
+  contents: read
+jobs:
+  calc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright Chromium
+        run: npm i --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Serve site locally
+        run: python3 -m http.server 8000 >/dev/null 2>&1 &
+      - name: Run calculator scenarios
+        run: |
+          sleep 2
+          BASE=http://127.0.0.1:8000/ node .github/calc-tests/run.js
