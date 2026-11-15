@@ -1,5 +1,5 @@
 // Hesaplama araçları test senaryoları (bkz. run.js)
-// [sayfa, {alan:değer}, buton, sonuçId, tür] tür: 'ok' geçerli girdi, 'bad' geçersiz girdi
+// [sayfa, {alan:değer}, buton, sonuçId, tür, önceTıkla] tür: 'ok' geçerli girdi, 'bad' geçersiz girdi; önceTıkla: isteğe bağlı sekme düğmesi
 const H='main button:has-text("Hesapla")';
 module.exports=[
 ['kidem-tazminati-hesaplama',{start:'2020-01-01',end:'2025-01-01',salary:'50000',cap:'53919'},H,'result','ok'],
@@ -45,4 +45,46 @@ module.exports=[
 ['miras-payi-hesaplama',{es:'hayir',cocuk:'0',anne:'hayir',baba:'hayir',tamKardes:'-1'},'#mirasBtn','mirasResult','bad'],
 ['miras-payi-hesaplama',{es:'evet',cocuk:'1',olenCocuk:'-2'},'#mirasBtn','mirasResult','bad'],
 ['miras-payi-hesaplama',{es:'evet',cocuk:'1.5'},'#mirasBtn','mirasResult','bad'],
+// İşsizlik maaşı: beklenen net tutarlar İŞKUR 2026 hesap tablosuyla aynıdır (13.111,72 / 21.833,02 / 26.223,44)
+['issizlik-maasi-hesaplama',{ay1:'33030',ay2:'33030',ay3:'33030',ay4:'33030',primGun:'700',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
+['issizlik-maasi-hesaplama',{ay1:'55000',ay2:'55000',ay3:'55000',ay4:'55000',primGun:'950',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
+['issizlik-maasi-hesaplama',{ay1:'80000',ay2:'80000',ay3:'80000',ay4:'80000',primGun:'1100',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'42000',ay3:'44000',ay4:'46000',primGun:'1080',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'599',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'900',son120:'hayir',neden:'evet'},'#issizBtn','issizResult','bad'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'900',son120:'evet',neden:'hayir'},'#issizBtn','issizResult','bad'],
+['issizlik-maasi-hesaplama',{ay1:'-40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'900',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'900.5',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'85000'},'#hacizBtn','hacizResult','ok'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'85000',onceki:'30000'},'#hacizBtn','hacizResult','ok'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'50000',oran:'30',borc:'150000'},'#hacizBtn','hacizResult','ok'],
+['maas-haczi-hesaplama',{tur:'emekli',emekliNeden:'nafaka',maas:'20000',oran:'25',borc:'30000'},'#hacizBtn','hacizResult','ok'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'-40000',oran:'25',borc:'85000'},'#hacizBtn','hacizResult','bad'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'20',borc:'85000'},'#hacizBtn','hacizResult','bad'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'0'},'#hacizBtn','hacizResult','bad'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'85000',onceki:'-5'},'#hacizBtn','hacizResult','bad'],
+['maas-haczi-hesaplama',{tur:'emekli',emekliNeden:'diger',maas:'20000',oran:'25',borc:'30000'},'#hacizBtn','hacizResult','bad'],
+['nafaka-artis-hesaplama',{nafaka:'5000',oran:'30',ay:'4'},'#nafakaBtn','nafakaResult','ok'],
+['nafaka-artis-hesaplama',{nafaka:'6500',oran:'25',ay:''},'#nafakaBtn','nafakaResult','ok'],
+['nafaka-artis-hesaplama',{nafaka:'8000',oran:'20',ay:''},'#nafakaBtn','nafakaResult','ok'],
+['nafaka-artis-hesaplama',{nafaka:'5000',oran:'0',ay:''},'#nafakaBtn','nafakaResult','ok'],
+['nafaka-artis-hesaplama',{nafaka:'-5000',oran:'30',ay:''},'#nafakaBtn','nafakaResult','bad'],
+['nafaka-artis-hesaplama',{nafaka:'5000',oran:'-10',ay:''},'#nafakaBtn','nafakaResult','bad'],
+['nafaka-artis-hesaplama',{nafaka:'5000',oran:'30',ay:'-1'},'#nafakaBtn','nafakaResult','bad'],
+['nafaka-artis-hesaplama',{nafaka:'5000',oran:'30',ay:'1.5'},'#nafakaBtn','nafakaResult','bad'],
+// Ana sayfadaki hesaplayıcılar (script.js)
+['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'50000',kidemCap:'53919'},'#kidem .calc-btn','kidemResult','ok','.calc-tabs button[data-tab="kidem"]'],
+['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'50000',kidemCap:''},'#kidem .calc-btn','kidemResult','ok','.calc-tabs button[data-tab="kidem"]'],
+['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'-50000',kidemCap:'53919'},'#kidem .calc-btn','kidemResult','bad','.calc-tabs button[data-tab="kidem"]'],
+['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'50000',kidemCap:'-1'},'#kidem .calc-btn','kidemResult','bad','.calc-tabs button[data-tab="kidem"]'],
+['index',{ihbarMonths:'24',ihbarSalary:'50000'},'#ihbar .calc-btn','ihbarResult','ok','.calc-tabs button[data-tab="ihbar"]'],
+['index',{ihbarMonths:'36',ihbarSalary:'30000'},'#ihbar .calc-btn','ihbarResult','ok','.calc-tabs button[data-tab="ihbar"]'],
+['index',{ihbarMonths:'24',ihbarSalary:'-50000'},'#ihbar .calc-btn','ihbarResult','bad','.calc-tabs button[data-tab="ihbar"]'],
+['index',{mesaiSalary:'30000',mesaiHours:'10'},'#mesai .calc-btn','mesaiResult','ok','.calc-tabs button[data-tab="mesai"]'],
+['index',{mesaiSalary:'-30000',mesaiHours:'10'},'#mesai .calc-btn','mesaiResult','bad','.calc-tabs button[data-tab="mesai"]'],
+['index',{izinSalary:'30000',izinDays:'14'},'#izin .calc-btn','izinResult','ok','.calc-tabs button[data-tab="izin"]'],
+['index',{izinSalary:'-30000',izinDays:'14'},'#izin .calc-btn','izinResult','bad','.calc-tabs button[data-tab="izin"]'],
+['index',{faizPrincipal:'10000',faizRate:'24',faizStart:'2025-01-01',faizEnd:'2026-01-01'},'#faiz .calc-btn','faizResult','ok','.calc-tabs button[data-tab="faiz"]'],
+['index',{faizPrincipal:'-10000',faizRate:'24',faizStart:'2025-01-01',faizEnd:'2026-01-01'},'#faiz .calc-btn','faizResult','bad','.calc-tabs button[data-tab="faiz"]'],
+['index',{faizPrincipal:'10000',faizRate:'-24',faizStart:'2025-01-01',faizEnd:'2026-01-01'},'#faiz .calc-btn','faizResult','bad','.calc-tabs button[data-tab="faiz"]'],
 ];

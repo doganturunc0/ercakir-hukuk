@@ -7,12 +7,13 @@ const fs = require('fs'); const path = require('path');
 const cases = require('./cases.js');
 const BASE = process.env.BASE || 'http://127.0.0.1:4173/';
 const REF = path.join(__dirname, 'expected.json');
-const looksLikeResult = t => /-₺|TAHMİNİ|MİRASÇI|YASAL ÜST|YENİ AYLIK|ANA PARA|Devlete/.test(t);
+const looksLikeResult = t => /-₺|TAHMİNİ|Tahmini|MİRASÇI|Mirasçı|YASAL ÜST|YENİ AYLIK|Yeni aylık|ANA PARA|Ana para|Devlete|AYLIK NET|Aylık net|AYLIK KESİNTİ|Aylık kesinti|Faiz tutarı/.test(t);
 (async () => {
   const b = await chromium.launch(); const p = await b.newPage(); const got = []; const errs = [];
   p.on('pageerror', e => errs.push(e.message));
-  for (const [page, fields, btn, rid, kind] of cases) {
+  for (const [page, fields, btn, rid, kind, pre] of cases) {
     await p.goto(BASE + page + '.html');
+    if (pre) await p.click(pre);
     for (const [k, v] of Object.entries(fields)) {
       const tag = await p.$eval('#' + k, e => e.tagName);
       if (tag === 'SELECT') await p.selectOption('#' + k, v); else await p.fill('#' + k, v);

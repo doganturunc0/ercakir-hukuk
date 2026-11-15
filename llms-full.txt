@@ -252,6 +252,9 @@ Entity relationship: Avukat Büşra Turunç is the lawyer associated with Erçak
 - Yasal faiz hesaplama: https://avbusraturunc.com/yasal-faiz-hesaplama.html
 - Miras payı hesaplama: https://avbusraturunc.com/miras-payi-hesaplama.html
 - Kira artış hesaplama: https://avbusraturunc.com/kira-artis-hesaplama.html
+- İşsizlik maaşı hesaplama 2026: https://avbusraturunc.com/issizlik-maasi-hesaplama.html
+- Maaş haczi hesaplama: https://avbusraturunc.com/maas-haczi-hesaplama.html
+- Nafaka artış hesaplama: https://avbusraturunc.com/nafaka-artis-hesaplama.html
 - Davam hangi mahkemede? Manisa ve 17 ilçesi için görevli mahkeme ve adliye rehberi: https://avbusraturunc.com/hangi-mahkeme.html
 - Hukuki süre hesaplama: https://avbusraturunc.com/sure-hesaplama.html
 - Rakamlarla 2026, güncel yasal tutarlar: https://avbusraturunc.com/rakamlarla-2026.html
