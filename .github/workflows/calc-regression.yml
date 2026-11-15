@@ -2,6 +2,7 @@ name: Hesaplama araçları regresyon testi
 on:
   pull_request:
     paths:
+      - 'sure-hesaplama.js'
       - 'hesaplama-araclari.js'
       - 'miras-payi.js'
       - 'kira-artis.js'
@@ -16,6 +17,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'sure-hesaplama.js'
       - 'hesaplama-araclari.js'
       - 'miras-payi.js'
       - 'kira-artis.js'
@@ -45,3 +47,9 @@ jobs:
         run: |
           sleep 2
           BASE=http://127.0.0.1:8000/ node .github/calc-tests/run.js
+      - name: Random input comparison against independent reference
+        run: BASE=http://127.0.0.1:8000/ N=200 node .github/calc-tests/fuzz.js
+      - name: Inheritance share scenarios (TMK 495-506)
+        run: BASE=http://127.0.0.1:8000/ node .github/calc-tests/miras.js
+      - name: Legal deadline scenarios (HMK, CMK, İYUK, İİK)
+        run: BASE=http://127.0.0.1:8000/ node .github/calc-tests/sure.js

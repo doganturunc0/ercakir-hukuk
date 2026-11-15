@@ -77,6 +77,7 @@ module.exports=[
 ['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'50000',kidemCap:''},'#kidem .calc-btn','kidemResult','ok','.calc-tabs button[data-tab="kidem"]'],
 ['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'-50000',kidemCap:'53919'},'#kidem .calc-btn','kidemResult','bad','.calc-tabs button[data-tab="kidem"]'],
 ['index',{kidemStart:'2020-01-01',kidemEnd:'2025-01-01',kidemSalary:'50000',kidemCap:'-1'},'#kidem .calc-btn','kidemResult','bad','.calc-tabs button[data-tab="kidem"]'],
+['index',{kidemStart:'2026-01-01',kidemEnd:'2026-07-01',kidemSalary:'40000',kidemCap:''},'#kidem .calc-btn','kidemResult','bad','.calc-tabs button[data-tab="kidem"]'],
 ['index',{ihbarMonths:'24',ihbarSalary:'50000'},'#ihbar .calc-btn','ihbarResult','ok','.calc-tabs button[data-tab="ihbar"]'],
 ['index',{ihbarMonths:'36',ihbarSalary:'30000'},'#ihbar .calc-btn','ihbarResult','ok','.calc-tabs button[data-tab="ihbar"]'],
 ['index',{ihbarMonths:'24',ihbarSalary:'-50000'},'#ihbar .calc-btn','ihbarResult','bad','.calc-tabs button[data-tab="ihbar"]'],

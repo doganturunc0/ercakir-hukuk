@@ -866,6 +866,18 @@
  {
   "page": "index",
   "fields": {
+   "kidemStart": "2026-01-01",
+   "kidemEnd": "2026-07-01",
+   "kidemSalary": "40000",
+   "kidemCap": ""
+  },
+  "kind": "bad",
+  "text": "Kıdem tazminatına hak kazanmak için aynı işverene bağlı olarak en az bir yıl çalışmış olmak gerekir (1475 sayılı Kanun m.14).",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
    "ihbarMonths": "24",
    "ihbarSalary": "50000"
   },
