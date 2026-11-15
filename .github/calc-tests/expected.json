@@ -479,5 +479,494 @@
   "kind": "bad",
   "text": "Kişi sayıları 0 veya daha büyük tam sayı, terekenin değeri 0 veya daha büyük bir tutar olmalıdır.",
   "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "33030",
+   "ay2": "33030",
+   "ay3": "33030",
+   "ay4": "33030",
+   "primGun": "700",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "ok",
+  "text": "AYLIK NET İŞSİZLİK MAAŞI ₺13.111,72 AYLIK BRÜT ÖDENEK ₺13.212,00 DAMGA VERGİSİ (BİNDE 7,59) ₺100,28 ÖDENEK SÜRESİ 180 gün (6 ay) TOPLAM NET ÖDEME ₺78.670,32 SON 4 AY BRÜT ORTALAMA ₺33.030,00 2026 yılı brüt asgari ücreti (₺33.030,00) esas alınmıştır. Kesin tutarı ve hak sahipliğini İŞKUR belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "55000",
+   "ay2": "55000",
+   "ay3": "55000",
+   "ay4": "55000",
+   "primGun": "950",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "ok",
+  "text": "AYLIK NET İŞSİZLİK MAAŞI ₺21.833,02 AYLIK BRÜT ÖDENEK ₺22.000,00 DAMGA VERGİSİ (BİNDE 7,59) ₺166,98 ÖDENEK SÜRESİ 240 gün (8 ay) TOPLAM NET ÖDEME ₺174.664,16 SON 4 AY BRÜT ORTALAMA ₺55.000,00 2026 yılı brüt asgari ücreti (₺33.030,00) esas alınmıştır. Kesin tutarı ve hak sahipliğini İŞKUR belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "80000",
+   "ay2": "80000",
+   "ay3": "80000",
+   "ay4": "80000",
+   "primGun": "1100",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "ok",
+  "text": "AYLIK NET İŞSİZLİK MAAŞI ₺26.223,44 AYLIK BRÜT ÖDENEK ₺26.424,00 DAMGA VERGİSİ (BİNDE 7,59) ₺200,56 ÖDENEK SÜRESİ 300 gün (10 ay) TOPLAM NET ÖDEME ₺262.234,40 SON 4 AY BRÜT ORTALAMA ₺80.000,00 Hesaplanan tutar (₺32.000,00) 2026 yılı üst sınırını aştığı için ödenek ₺26.424,00 brüt olarak bulunmuştur. 2026 yılı brüt asgari ücreti (₺33.030,00) esas alınmıştır. Kesin tutarı ve hak sahipliğini İŞKUR belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "42000",
+   "ay3": "44000",
+   "ay4": "46000",
+   "primGun": "1080",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "ok",
+  "text": "AYLIK NET İŞSİZLİK MAAŞI ₺17.069,45 AYLIK BRÜT ÖDENEK ₺17.200,00 DAMGA VERGİSİ (BİNDE 7,59) ₺130,55 ÖDENEK SÜRESİ 300 gün (10 ay) TOPLAM NET ÖDEME ₺170.694,50 SON 4 AY BRÜT ORTALAMA ₺43.000,00 2026 yılı brüt asgari ücreti (₺33.030,00) esas alınmıştır. Kesin tutarı ve hak sahipliğini İŞKUR belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "599",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "bad",
+  "text": "Son üç yılda en az 600 gün işsizlik sigortası primi ödenmiş olması gerekir (4447 s.K. m.50). Girdiğiniz 599 gün bu şartı karşılamıyor.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "900",
+   "son120": "hayir",
+   "neden": "evet"
+  },
+  "kind": "bad",
+  "text": "İşten ayrılmadan önceki son 120 gün hizmet akdine tabi olarak çalışmış olma şartı sağlanmıyor (4447 s.K. m.50). Bu şart olmadan ödenek bağlanmaz.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "900",
+   "son120": "evet",
+   "neden": "hayir"
+  },
+  "kind": "bad",
+  "text": "Seçtiğiniz ayrılma nedeni, 4447 sayılı Kanun'un 51. maddesinde işsizlik ödeneğine hak kazandıran hâller arasında yer almıyor. Haklı bir neden olmadan istifa edenler ile ahlak ve iyiniyet kurallarına aykırı davranış nedeniyle işten çıkarılanlar ödenek alamaz.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "-40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "900",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "bad",
+  "text": "Son dört ayın her biri için 0'dan büyük brüt kazanç girin. Kazancınız her ay aynıysa aynı tutarı dört kutuya da yazın.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "900.5",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "bad",
+  "text": "Son üç yıldaki prim gün sayısını 0 veya daha büyük bir tam sayı olarak girin.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "40000",
+   "oran": "25",
+   "borc": "85000"
+  },
+  "kind": "ok",
+  "text": "AYLIK KESİNTİ ₺10.000,00 MAAŞTAN KALAN ₺30.000,00 ÖNDEKİ HACİZLER İÇİN BEKLEME Yok BU DOSYANIN KESİNTİ SÜRESİ 9 ay (yaklaşık) SON AY KESİNTİSİ ₺5.000,00 TOPLAM SÜRE 9 ay (yaklaşık) Süreler, borcun sabit kaldığı varsayımıyla bulunmuştur. Dosyada faiz ve masraflar işlemeye devam ettiği için gerçek süre daha uzun olabilir; kesinti oranını icra müdürü belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "40000",
+   "oran": "25",
+   "borc": "85000",
+   "onceki": "30000"
+  },
+  "kind": "ok",
+  "text": "AYLIK KESİNTİ ₺10.000,00 MAAŞTAN KALAN ₺30.000,00 ÖNDEKİ HACİZLER İÇİN BEKLEME 3 ay (yaklaşık) BU DOSYANIN KESİNTİ SÜRESİ 9 ay (yaklaşık) SON AY KESİNTİSİ ₺5.000,00 TOPLAM SÜRE 12 ay (yaklaşık) Süreler, borcun sabit kaldığı varsayımıyla bulunmuştur. Dosyada faiz ve masraflar işlemeye devam ettiği için gerçek süre daha uzun olabilir; kesinti oranını icra müdürü belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "50000",
+   "oran": "30",
+   "borc": "150000"
+  },
+  "kind": "ok",
+  "text": "AYLIK KESİNTİ ₺15.000,00 MAAŞTAN KALAN ₺35.000,00 ÖNDEKİ HACİZLER İÇİN BEKLEME Yok BU DOSYANIN KESİNTİ SÜRESİ 10 ay (yaklaşık) SON AY KESİNTİSİ ₺15.000,00 TOPLAM SÜRE 10 ay (yaklaşık) Süreler, borcun sabit kaldığı varsayımıyla bulunmuştur. Dosyada faiz ve masraflar işlemeye devam ettiği için gerçek süre daha uzun olabilir; kesinti oranını icra müdürü belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "emekli",
+   "emekliNeden": "nafaka",
+   "maas": "20000",
+   "oran": "25",
+   "borc": "30000"
+  },
+  "kind": "ok",
+  "text": "AYLIK KESİNTİ ₺5.000,00 MAAŞTAN KALAN ₺15.000,00 ÖNDEKİ HACİZLER İÇİN BEKLEME Yok BU DOSYANIN KESİNTİ SÜRESİ 6 ay (yaklaşık) SON AY KESİNTİSİ ₺5.000,00 TOPLAM SÜRE 6 ay (yaklaşık) Süreler, borcun sabit kaldığı varsayımıyla bulunmuştur. Dosyada faiz ve masraflar işlemeye devam ettiği için gerçek süre daha uzun olabilir; kesinti oranını icra müdürü belirler.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "-40000",
+   "oran": "25",
+   "borc": "85000"
+  },
+  "kind": "bad",
+  "text": "Aylık maaş tutarını 0'dan büyük bir sayı olarak girin.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "40000",
+   "oran": "20",
+   "borc": "85000"
+  },
+  "kind": "bad",
+  "text": "Kesinti oranı yüzde 25'ten az olamaz (İİK m.83); 25 ile 100 arasında bir oran girin.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "40000",
+   "oran": "25",
+   "borc": "0"
+  },
+  "kind": "bad",
+  "text": "Bu icra dosyasının borç tutarını 0'dan büyük bir sayı olarak girin.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "40000",
+   "oran": "25",
+   "borc": "85000",
+   "onceki": "-5"
+  },
+  "kind": "bad",
+  "text": "Sırada öndeki hacizlerin kalan borcu 0 veya daha büyük olmalıdır; yoksa boş bırakın.",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "emekli",
+   "emekliNeden": "diger",
+   "maas": "20000",
+   "oran": "25",
+   "borc": "30000"
+  },
+  "kind": "bad",
+  "text": "SGK'dan bağlanan emekli aylığı; SGK alacakları ve nafaka borçları dışında haczedilemez. Borçlunun muvafakati (yazılı onayı) yoksa haciz talebi icra müdürü tarafından reddedilir (5510 s.K. m.93).",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "5000",
+   "oran": "30",
+   "ay": "4"
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK NAFAKA ₺6.500,00 AYLIK ARTIŞ ₺1.500,00 UYGULANAN ORAN %30 YILLIK TOPLAM FARK ₺18.000,00 ÖDENMEYEN ARTIŞ FARKI (4 AY) ₺6.000,00 Artış ancak kararda yıllık artışa hükmedilmişse kendiliğinden uygulanır. Kararda böyle bir hüküm yoksa nafakanın artırılması için dava açılması gerekir.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "6500",
+   "oran": "25",
+   "ay": ""
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK NAFAKA ₺8.125,00 AYLIK ARTIŞ ₺1.625,00 UYGULANAN ORAN %25 YILLIK TOPLAM FARK ₺19.500,00 Artış ancak kararda yıllık artışa hükmedilmişse kendiliğinden uygulanır. Kararda böyle bir hüküm yoksa nafakanın artırılması için dava açılması gerekir.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "8000",
+   "oran": "20",
+   "ay": ""
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK NAFAKA ₺9.600,00 AYLIK ARTIŞ ₺1.600,00 UYGULANAN ORAN %20 YILLIK TOPLAM FARK ₺19.200,00 Artış ancak kararda yıllık artışa hükmedilmişse kendiliğinden uygulanır. Kararda böyle bir hüküm yoksa nafakanın artırılması için dava açılması gerekir.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "5000",
+   "oran": "0",
+   "ay": ""
+  },
+  "kind": "ok",
+  "text": "YENİ AYLIK NAFAKA ₺5.000,00 AYLIK ARTIŞ ₺0,00 UYGULANAN ORAN %0 YILLIK TOPLAM FARK ₺0,00 Artış ancak kararda yıllık artışa hükmedilmişse kendiliğinden uygulanır. Kararda böyle bir hüküm yoksa nafakanın artırılması için dava açılması gerekir.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "-5000",
+   "oran": "30",
+   "ay": ""
+  },
+  "kind": "bad",
+  "text": "Mevcut aylık nafaka tutarını 0'dan büyük bir sayı olarak girin.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "5000",
+   "oran": "-10",
+   "ay": ""
+  },
+  "kind": "bad",
+  "text": "Artış oranını 0 veya daha büyük bir sayı olarak girin (örneğin karardaki endeksin yıllık değişim oranı).",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "5000",
+   "oran": "30",
+   "ay": "-1"
+  },
+  "kind": "bad",
+  "text": "Fark hesaplanacak ay sayısını 0 veya daha büyük bir tam sayı olarak girin; gerekmiyorsa boş bırakın.",
+  "live": "polite"
+ },
+ {
+  "page": "nafaka-artis-hesaplama",
+  "fields": {
+   "nafaka": "5000",
+   "oran": "30",
+   "ay": "1.5"
+  },
+  "kind": "bad",
+  "text": "Fark hesaplanacak ay sayısını 0 veya daha büyük bir tam sayı olarak girin; gerekmiyorsa boş bırakın.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "kidemStart": "2020-01-01",
+   "kidemEnd": "2025-01-01",
+   "kidemSalary": "50000",
+   "kidemCap": "53919"
+  },
+  "kind": "ok",
+  "text": "Çalışma süresi: 1827 gün Tahmini brüt kıdem tazminatı: ₺250.273,97",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "kidemStart": "2020-01-01",
+   "kidemEnd": "2025-01-01",
+   "kidemSalary": "50000",
+   "kidemCap": ""
+  },
+  "kind": "ok",
+  "text": "Çalışma süresi: 1827 gün Tahmini brüt kıdem tazminatı: ₺250.273,97",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "kidemStart": "2020-01-01",
+   "kidemEnd": "2025-01-01",
+   "kidemSalary": "-50000",
+   "kidemCap": "53919"
+  },
+  "kind": "bad",
+  "text": "Geçerli tarih, ücret ve tavan bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "kidemStart": "2020-01-01",
+   "kidemEnd": "2025-01-01",
+   "kidemSalary": "50000",
+   "kidemCap": "-1"
+  },
+  "kind": "bad",
+  "text": "Geçerli tarih, ücret ve tavan bilgisi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "ihbarMonths": "24",
+   "ihbarSalary": "50000"
+  },
+  "kind": "ok",
+  "text": "Bildirim süresi: 6 hafta Tahmini brüt ihbar tazminatı: ₺70.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "ihbarMonths": "36",
+   "ihbarSalary": "30000"
+  },
+  "kind": "ok",
+  "text": "Bildirim süresi: 6 hafta Tahmini brüt ihbar tazminatı: ₺42.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "ihbarMonths": "24",
+   "ihbarSalary": "-50000"
+  },
+  "kind": "bad",
+  "text": "Geçerli çalışma süresi ve ücret girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "mesaiSalary": "30000",
+   "mesaiHours": "10"
+  },
+  "kind": "ok",
+  "text": "Tahmini brüt fazla çalışma: ₺2.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "mesaiSalary": "-30000",
+   "mesaiHours": "10"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve fazla çalışma süresi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "izinSalary": "30000",
+   "izinDays": "14"
+  },
+  "kind": "ok",
+  "text": "Tahmini brüt yıllık izin ücreti: ₺14.000,00",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "izinSalary": "-30000",
+   "izinDays": "14"
+  },
+  "kind": "bad",
+  "text": "Geçerli ücret ve izin günü girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "faizPrincipal": "10000",
+   "faizRate": "24",
+   "faizStart": "2025-01-01",
+   "faizEnd": "2026-01-01"
+  },
+  "kind": "ok",
+  "text": "Faiz tutarı: ₺2.400,00 Ana para + faiz: ₺12.400,00",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "faizPrincipal": "-10000",
+   "faizRate": "24",
+   "faizStart": "2025-01-01",
+   "faizEnd": "2026-01-01"
+  },
+  "kind": "bad",
+  "text": "Geçerli bilgi girin.",
+  "live": "polite"
+ },
+ {
+  "page": "index",
+  "fields": {
+   "faizPrincipal": "10000",
+   "faizRate": "-24",
+   "faizStart": "2025-01-01",
+   "faizEnd": "2026-01-01"
+  },
+  "kind": "bad",
+  "text": "Geçerli bilgi girin.",
+  "live": "polite"
  }
 ]
