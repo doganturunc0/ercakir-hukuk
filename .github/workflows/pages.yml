@@ -4,6 +4,9 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  schedule:
+    # Yılbaşında (Türkiye saatiyle 1 Ocak 00:05) yeniden yayınlayarak telif yılını günceller.
+    - cron: '5 21 31 12 *'
 
 permissions:
   contents: read
@@ -34,6 +37,7 @@ jobs:
           rsync -a ./ _site/ --exclude '_site/' --exclude '.git/' --exclude 'README.md' --exclude 'scripts/' --exclude '.github/' --exclude '.gitignore' --exclude '.env' --exclude '.env.*' --exclude '*.pem' --exclude '*.key' --exclude '*.p12' --exclude '*.pfx' --exclude '*.jks' --exclude '*.keystore' --exclude 'credentials.json' --exclude 'service-account*.json' --exclude 'secrets.json' --exclude '*.secret'
           python3 scripts/build_search_index.py _site
           python3 scripts/build_home_css.py _site
+          python3 scripts/update_copyright_year.py _site
           python - <<'PY'
           from pathlib import Path
           import re
