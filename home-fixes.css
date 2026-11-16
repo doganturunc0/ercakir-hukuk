@@ -1,6 +1,6 @@
 /* Ana sayfaya özgü düzeltmeler (2026-11-12). home.css paketinin en sonuna eklenir; scripts/build_home_css.py. */
 /* Üst menü: telefonda iç sayfalarla aynı "☰ Menü" düğmesi. */
-@media(max-width:940px){.site-header .header-map{display:none!important}.site-header .menu-btn{font-family:Arial,Helvetica,sans-serif;font-size:13px!important;font-weight:700;line-height:1;letter-spacing:.02em;padding:8px 12px!important;border:1px solid rgba(255,255,255,.35)!important;border-radius:2px}.site-header .menu-btn::after{content:" Menü"}.site-header.menu-open .menu-btn::after{content:" Kapat"}}
+@media(max-width:940px){.site-header .header-map{display:none!important}.site-header .menu-btn{font-family:Arial,Helvetica,sans-serif;font-size:13px!important;font-weight:700;line-height:1;letter-spacing:.02em;padding:13px 14px!important;border:1px solid rgba(255,255,255,.35)!important;border-radius:2px}.site-header .menu-btn::after{content:" Menü"}.site-header.menu-open .menu-btn::after{content:" Kapat"}}
 /* İletişim bölümündeki "Konuma Git" bağlantısı, yanındaki "Telefon" düğmesiyle aynı biçimde. */
 .contact-actions .directions-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:54px;padding:0 25px;margin-left:10px;border:1px solid #183447;border-radius:6px;background:#fff;color:#183447;font:900 11px/18.15px Arial,Helvetica,sans-serif;letter-spacing:.055em;text-decoration:none;vertical-align:top}
 .contact-actions .directions-button:hover,.contact-actions .directions-button:focus-visible{background:#183447;color:#fff}

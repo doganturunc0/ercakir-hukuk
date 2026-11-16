@@ -16,7 +16,7 @@
 .sc-call{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#183447!important;font-size:12px;font-weight:700;padding:10px 15px;border-radius:2px;white-space:nowrap}
 .sc-call:hover,.sc-call:focus-visible{background:#f4f0e7}
 .sc-toggle{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.sc-header .sc-toggle-label{display:none;margin:0;cursor:pointer;font-size:13px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:2px;padding:8px 12px;line-height:1;gap:0;letter-spacing:.02em}
+.sc-header .sc-toggle-label{display:none;margin:0;cursor:pointer;font-size:13px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:2px;padding:13px 14px;line-height:1;gap:0;letter-spacing:.02em}
 .sc-toggle:focus-visible+.sc-toggle-label{outline:2px solid #e1b640;outline-offset:2px}
 @media(max-width:1020px){
 .sc-bar{gap:12px}
@@ -48,7 +48,7 @@
 .sc-footer a{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.35);text-underline-offset:3px}
 .sc-footer a:hover,.sc-footer a:focus-visible{text-decoration-color:#e1b640}
 .sc-footer-grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:28px}
-.sc-footer .sc-footer-title{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.16em;color:#e1b640;text-transform:uppercase}
+.sc-footer .sc-footer-title{margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.16em;color:#e1b640;text-transform:uppercase}
 .sc-footer p{margin:0 0 8px}
 .sc-footer ul{list-style:none;margin:0;padding:0}
 .sc-footer li{margin:0 0 6px}
