@@ -9,6 +9,7 @@ on:
       - 'issizlik-maasi.js'
       - 'maas-haczi.js'
       - 'nafaka-artis.js'
+      - 'tutar-bicim.js'
       - 'script.js'
       - 'index.html'
       - '*-hesaplama.html'
@@ -24,6 +25,7 @@ on:
       - 'issizlik-maasi.js'
       - 'maas-haczi.js'
       - 'nafaka-artis.js'
+      - 'tutar-bicim.js'
       - 'script.js'
       - 'index.html'
       - '*-hesaplama.html'
@@ -53,3 +55,5 @@ jobs:
         run: BASE=http://127.0.0.1:8000/ node .github/calc-tests/miras.js
       - name: Legal deadline scenarios (HMK, CMK, İYUK, İİK)
         run: BASE=http://127.0.0.1:8000/ node .github/calc-tests/sure.js
+      - name: Amount fields thousands separator (typing, paste, delete)
+        run: BASE=http://127.0.0.1:8000/ node .github/calc-tests/bicim.js
