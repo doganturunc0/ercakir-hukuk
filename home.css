@@ -106,7 +106,7 @@ footer,.site-footer{background:#183447!important;color:#eef3f5!important}footer 
 /* Static-render overrides: avoid page-load class mutations for GEO/LLM crawlers. */
 .reveal{opacity:1!important;transform:none!important;transition:none!important}.page-loader{display:none!important}
 /* Performance: skip layout/paint work for below-the-fold sections until needed. */
-@media(max-width:900px){.practice-section,.calculator-wrap,.articles-section,.legal-content-showcase,.contact-section,.infaz-feature,footer{content-visibility:auto;contain-intrinsic-size:auto 900px}.hero-picture{transform:none}}
+@media(max-width:900px){.hero-picture{transform:none}}
 .calc-tool-links a{color:#7d5019;text-decoration:underline;text-underline-offset:3px}
 /* Hero: başlık satırları ve eş boyutlu infaz butonu */
 .hero h1{white-space:pre-line}
