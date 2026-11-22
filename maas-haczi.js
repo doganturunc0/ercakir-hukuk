@@ -20,7 +20,9 @@ el('hacizBtn').addEventListener('click',function(e){
   if(!(borc>0)){out.innerHTML='Bu icra dosyasının borç tutarını 0\'dan büyük bir sayı olarak girin.';return}
   if(!(onceki>=0)){out.innerHTML='Sırada öndeki hacizlerin kalan borcu 0 veya daha büyük olmalıdır; yoksa boş bırakın.';return}
   if(el('tur').value==='emekli'&&el('emekliNeden').value==='diger'){out.innerHTML='SGK\'dan bağlanan emekli aylığı; SGK alacakları ve nafaka borçları dışında haczedilemez. Borçlunun muvafakati (yazılı onayı) yoksa haciz talebi icra müdürü tarafından reddedilir (5510 s.K. m.93).';return}
-  var kesinti=r2(maas*oran/100),bekleme=onceki>0?Math.ceil(onceki/kesinti):0,sure=Math.ceil(borc/kesinti);
+  var kesinti=r2(maas*oran/100);
+  if(!(kesinti>0)){out.innerHTML='Girdiğiniz maaş tutarı ve kesinti oranıyla aylık kesinti 0,00 TL çıkıyor; bu durumda borcun kaç ayda biteceği hesaplanamaz. Lütfen maaş tutarını kontrol edin.';return}
+  var bekleme=onceki>0?Math.ceil(onceki/kesinti):0,sure=Math.ceil(borc/kesinti);
   var son=r2(borc-kesinti*(sure-1));
   out.innerHTML=tiles([['Aylık kesinti',money(kesinti),1],['Maaştan kalan',money(r2(maas-kesinti))],['Öndeki hacizler için bekleme',bekleme?ay(bekleme)+' (yaklaşık)':'Yok'],['Bu dosyanın kesinti süresi',ay(sure)+' (yaklaşık)'],['Son ay kesintisi',money(son)],['Toplam süre',ay(bekleme+sure)+' (yaklaşık)']])+
     '<p class="note">Süreler, borcun sabit kaldığı varsayımıyla bulunmuştur. Dosyada faiz ve masraflar işlemeye devam ettiği için gerçek süre daha uzun olabilir; kesinti oranını icra müdürü belirler.</p>';

@@ -521,8 +521,8 @@
    "son120": "evet",
    "neden": "evet"
   },
-  "kind": "ok",
-  "text": "AYLIK NET İŞSİZLİK MAAŞI ₺26.223,44 AYLIK BRÜT ÖDENEK ₺26.424,00 DAMGA VERGİSİ (BİNDE 7,59) ₺200,56 ÖDENEK SÜRESİ 300 gün (10 ay) TOPLAM NET ÖDEME ₺262.234,40 SON 4 AY BRÜT ORTALAMA ₺80.000,00 Hesaplanan tutar (₺32.000,00) 2026 yılı üst sınırını aştığı için ödenek ₺26.424,00 brüt olarak bulunmuştur. 2026 yılı brüt asgari ücreti (₺33.030,00) esas alınmıştır. Kesin tutarı ve hak sahipliğini İŞKUR belirler.",
+  "kind": "bad",
+  "text": "Son üç yılda en fazla 1.080 gün prim bildirilebilir (yılda 360 gün). Girdiğiniz 1100 gün bu sınırı aşıyor; SGK hizmet dökümünüzdeki son üç yıla ait gün sayısını kontrol edin.",
   "live": "polite"
  },
  {
@@ -725,6 +725,33 @@
   },
   "kind": "bad",
   "text": "SGK'dan bağlanan emekli aylığı; SGK alacakları ve nafaka borçları dışında haczedilemez. Borçlunun muvafakati (yazılı onayı) yoksa haciz talebi icra müdürü tarafından reddedilir (5510 s.K. m.93).",
+  "live": "polite"
+ },
+ {
+  "page": "maas-haczi-hesaplama",
+  "fields": {
+   "tur": "calisan",
+   "maas": "0.01",
+   "oran": "25",
+   "borc": "20000"
+  },
+  "kind": "bad",
+  "text": "Girdiğiniz maaş tutarı ve kesinti oranıyla aylık kesinti 0,00 TL çıkıyor; bu durumda borcun kaç ayda biteceği hesaplanamaz. Lütfen maaş tutarını kontrol edin.",
+  "live": "polite"
+ },
+ {
+  "page": "issizlik-maasi-hesaplama",
+  "fields": {
+   "ay1": "40000",
+   "ay2": "40000",
+   "ay3": "40000",
+   "ay4": "40000",
+   "primGun": "9999",
+   "son120": "evet",
+   "neden": "evet"
+  },
+  "kind": "bad",
+  "text": "Son üç yılda en fazla 1.080 gün prim bildirilebilir (yılda 360 gün). Girdiğiniz 9999 gün bu sınırı aşıyor; SGK hizmet dökümünüzdeki son üç yıla ait gün sayısını kontrol edin.",
   "live": "polite"
  },
  {

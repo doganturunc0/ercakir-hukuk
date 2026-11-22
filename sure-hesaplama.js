@@ -46,6 +46,7 @@
     var op = null;
     for (var i = 0; i < OPS.length; i++) if (OPS[i].id === sel.value) op = OPS[i];
     if (!op || !inp.value) { out.textContent = 'Lütfen işlemi ve tarihi seçin.'; return; }
+    if (inp.value < inp.min || inp.value > inp.max) { out.textContent = 'Araç ' + inp.min.split('-').reverse().join('.') + ' ile ' + inp.max.split('-').reverse().join('.') + ' arasındaki tebliğ tarihleri için hesaplama yapar. Lütfen tarihi bu aralıkta seçin.'; return; }
     var start = parse(inp.value);
     var steps = [];
     var end;
@@ -85,7 +86,7 @@
 
     var h3 = document.createElement('p');
     h3.className = 'sure-son';
-    h3.textContent = 'Son gün: ' + fmt(end);
+    h3.textContent = (iso(end) > COVERED_UNTIL ? 'Son gün (ön hesap): ' : 'Son gün: ') + fmt(end);
     out.appendChild(h3);
     var ul = document.createElement('ul');
     ul.className = 'sure-steps';

@@ -43,7 +43,7 @@ const T = [
    extra: (v, t) => { const k = r2(+v.maas * +v.oran / 100), s = Math.ceil(+v.borc / k), b = +v.onceki > 0 ? Math.ceil(+v.onceki / k) : 0; return t.includes(s + ' ay') && t.includes((b + s) + ' ay') } },
  { name: 'İşsizlik maaşı', page: 'issizlik-maasi-hesaplama', btn: '#issizBtn', out: 'issizResult',
    gen: () => { const a = ri(20000, 150000); const f = () => String(rnd() < .5 ? a : ri(20000, 150000)); return { ay1: f(), ay2: f(), ay3: f(), ay4: f(), primGun: String(ri(500, 1095)), son120: 'evet', neden: 'evet' } },
-   ref: v => { const g = +v.primGun; const sure = g >= 1080 ? 300 : g >= 900 ? 240 : g >= 600 ? 180 : 0; if (!sure) return 'prim'; const o = (+v.ay1 + +v.ay2 + +v.ay3 + +v.ay4) / 4; const b = Math.min(r2(o * .4), r2(33030 * .8)); const d = r2(b * .00759), n = r2(b - d); return [n, b, d, r2(n * sure / 30), r2(o)] },
+   ref: v => { const g = +v.primGun; if (g > 1080) return 'err'; const sure = g >= 1080 ? 300 : g >= 900 ? 240 : g >= 600 ? 180 : 0; if (!sure) return 'prim'; const o = (+v.ay1 + +v.ay2 + +v.ay3 + +v.ay4) / 4; const b = Math.min(r2(o * .4), r2(33030 * .8)); const d = r2(b * .00759), n = r2(b - d); return [n, b, d, r2(n * sure / 30), r2(o)] },
    extra: (v, t) => { const g = +v.primGun; const sure = g >= 1080 ? 300 : g >= 900 ? 240 : g >= 600 ? 180 : 0; return !sure || t.includes(sure + ' gün') } },
  // Ana sayfa (script.js)
  { name: 'Kıdem (ana sayfa)', page: 'index', pre: '.calc-tabs button[data-tab="kidem"]', btn: '#kidem .calc-btn', out: 'kidemResult',
