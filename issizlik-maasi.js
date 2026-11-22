@@ -16,6 +16,7 @@ el('issizBtn').addEventListener('click',function(e){
   if(aylar.some(function(v){return !(v>0)})){out.innerHTML='Son dört ayın her biri için 0\'dan büyük brüt kazanç girin. Kazancınız her ay aynıysa aynı tutarı dört kutuya da yazın.';return}
   var gun=num('primGun');
   if(!(gun>=0)||Math.floor(gun)!==gun){out.innerHTML='Son üç yıldaki prim gün sayısını 0 veya daha büyük bir tam sayı olarak girin.';return}
+  if(gun>1080){out.innerHTML='Son üç yılda en fazla 1.080 gün prim bildirilebilir (yılda 360 gün). Girdiğiniz '+gun+' gün bu sınırı aşıyor; SGK hizmet dökümünüzdeki son üç yıla ait gün sayısını kontrol edin.';return}
   if(el('neden').value==='hayir'){out.innerHTML='Seçtiğiniz ayrılma nedeni, 4447 sayılı Kanun\'un 51. maddesinde işsizlik ödeneğine hak kazandıran hâller arasında yer almıyor. Haklı bir neden olmadan istifa edenler ile ahlak ve iyiniyet kurallarına aykırı davranış nedeniyle işten çıkarılanlar ödenek alamaz.';return}
   if(el('son120').value!=='evet'){out.innerHTML='İşten ayrılmadan önceki son 120 gün hizmet akdine tabi olarak çalışmış olma şartı sağlanmıyor (4447 s.K. m.50). Bu şart olmadan ödenek bağlanmaz.';return}
   var sure=gun>=1080?300:gun>=900?240:gun>=600?180:0;

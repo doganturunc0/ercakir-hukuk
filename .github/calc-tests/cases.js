@@ -48,7 +48,7 @@ module.exports=[
 // İşsizlik maaşı: beklenen net tutarlar İŞKUR 2026 hesap tablosuyla aynıdır (13.111,72 / 21.833,02 / 26.223,44)
 ['issizlik-maasi-hesaplama',{ay1:'33030',ay2:'33030',ay3:'33030',ay4:'33030',primGun:'700',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
 ['issizlik-maasi-hesaplama',{ay1:'55000',ay2:'55000',ay3:'55000',ay4:'55000',primGun:'950',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
-['issizlik-maasi-hesaplama',{ay1:'80000',ay2:'80000',ay3:'80000',ay4:'80000',primGun:'1100',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
+['issizlik-maasi-hesaplama',{ay1:'80000',ay2:'80000',ay3:'80000',ay4:'80000',primGun:'1100',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
 ['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'42000',ay3:'44000',ay4:'46000',primGun:'1080',son120:'evet',neden:'evet'},'#issizBtn','issizResult','ok'],
 ['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'599',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
 ['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'900',son120:'hayir',neden:'evet'},'#issizBtn','issizResult','bad'],
@@ -64,6 +64,8 @@ module.exports=[
 ['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'0'},'#hacizBtn','hacizResult','bad'],
 ['maas-haczi-hesaplama',{tur:'calisan',maas:'40000',oran:'25',borc:'85000',onceki:'-5'},'#hacizBtn','hacizResult','bad'],
 ['maas-haczi-hesaplama',{tur:'emekli',emekliNeden:'diger',maas:'20000',oran:'25',borc:'30000'},'#hacizBtn','hacizResult','bad'],
+['maas-haczi-hesaplama',{tur:'calisan',maas:'0.01',oran:'25',borc:'20000'},'#hacizBtn','hacizResult','bad'],
+['issizlik-maasi-hesaplama',{ay1:'40000',ay2:'40000',ay3:'40000',ay4:'40000',primGun:'9999',son120:'evet',neden:'evet'},'#issizBtn','issizResult','bad'],
 ['nafaka-artis-hesaplama',{nafaka:'5000',oran:'30',ay:'4'},'#nafakaBtn','nafakaResult','ok'],
 ['nafaka-artis-hesaplama',{nafaka:'6500',oran:'25',ay:''},'#nafakaBtn','nafakaResult','ok'],
 ['nafaka-artis-hesaplama',{nafaka:'8000',oran:'20',ay:''},'#nafakaBtn','nafakaResult','ok'],
